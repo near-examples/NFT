@@ -15,3 +15,16 @@ pub struct Token {
     token_type_id: TokenTypeId,
     data: String
 }
+
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct TokenType {
+    id: TokenTypeId,
+    total_supply: u64,
+    data: String
+}
+
+// I think we're going to want to follow the model of the fungible token
+// in the sense of creating an Account struct+impl and a
+// NonFungibleToken struct+impl with a Map keeping track of who owns what.
+// See:
+// https://github.com/near/near-sdk-rs/blob/master/examples/fungible-token/src/lib.rs
