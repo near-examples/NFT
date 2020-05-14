@@ -1,0 +1,5 @@
+# List the start up tasks. You can start them in parallel in multiple terminals. See https://www.gitpod.io/docs/config-start-tasks/
+tasks:
+  - before: nvm use default && npm install near-shell -g --no-optional
+    init: yarn && brew install tree
+    command: clear && echo Welcome to Exploring AssemblyScript Contracts with NEAR Protocol

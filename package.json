@@ -1,0 +1,26 @@
+{
+  "name": "NEAR-non-fungible-token",
+  "version": "0.0.1",
+  "description": "Implementation of NEP4 using Rust and AssemblyScript",
+  "author": "Near, Inc. <hello@near.org>",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn build:as",
+    "build:as": "node ./contracts/assemblyscript/compile.js",
+    "build:rs": "cargo build --target wasm32-unknown-unknown --release && cp ./target/wasm32-unknown-unknown/release/status_message.wasm ./res/",
+    "clean": "rm -rf ./out",
+    "test": "yarn test:unit",
+    "test:all": "yarn test && yarn test:simulate:runtime",
+    "test:unit": "asp --verbose --nologo -c contracts/as-pect.config.js -f unit.spec",
+    "test:simulate:runtime": "jest --verbose -f simulate.spec"
+  },
+  "devDependencies": {
+    "assemblyscript": "^0.9.4",
+    "jest": "^25.5.4",
+    "near-sdk-as": "^0.3.2",
+    "near-shell": "^0.23.1"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}
