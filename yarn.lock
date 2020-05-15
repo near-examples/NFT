@@ -3113,10 +3113,10 @@ near-mock-vm@^0.1.0:
     js-base64 "^2.5.2"
     yargs "^15.3.1"
 
-near-sdk-as@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/near-sdk-as/-/near-sdk-as-0.3.2.tgz#56f2ebe9a9a40f55dc649691499a5c2cdb9d0210"
-  integrity sha512-rqYW/AW3AE+MMH/LH25nQwtaBNCvFr352c21UMwRQ2WUuSrlaPqFEpgb0/ezt90YxV7uU00lR/aEZs9TenRHhQ==
+near-sdk-as@^0.3.3:
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/near-sdk-as/-/near-sdk-as-0.3.3.tgz#9ee732e38db1d3425699b43581e9d5c25aaabe01"
+  integrity sha512-i/V1EFuDGsEEPtCIBMIly7yVnhn9yL0faYhBjVXle4gMtPbewQhKPEdt63hU8n5vCna2GTt/K36U+VgjHXl4DQ==
   dependencies:
     "@as-pect/cli" "^3.1.4"
     as-bignum "^0.1.5"
