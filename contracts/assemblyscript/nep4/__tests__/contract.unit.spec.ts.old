@@ -1,28 +1,15 @@
-import {
-  showYouKnow,
-  sayHello,
-  sayMyName,
-  saveMyName,
-  saveMyMessage,
-  getAllMessages,
-} from "../main";
+import {} from "../main";
 import { storage, PersistentDeque, Context, VM } from "near-sdk-as";
 
-const contract = "greeting";
+const contract = "nep4";
 const alice = "alice";
 const bob = "bob";
 const carol = "carol";
-const message1 = "awesomesauce!";
-const message2 = "yashilsin!";
-const message3 = "beleza!";
 
-let messages: PersistentDeque<string>;
-
-describe("01. Greeting", () => {
+describe("NEAR NFT based on NEP4", () => {
   beforeEach(() => {
     Context.setCurrent_account_id(contract);
     Context.setSigner_account_id(alice);
-    messages = new PersistentDeque<string>("messages");
   });
 
   it("should respond to showYouKnow()", () => {
