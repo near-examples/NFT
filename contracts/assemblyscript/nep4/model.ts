@@ -1,4 +1,4 @@
-import { context, storage } from "near-sdk-as";
+import { context, storage, PersistentVector } from "near-sdk-as";
 import PersistentOrderedMap from "./persistentOrderedMap";
 
 export type TokenTypeId = u32;
@@ -14,8 +14,8 @@ export type AccountId = string;
 export class Token {
   id: TokenId; // identifier for this particular token
   lockOwnerId: AccountId; // optional field. An account ID of the owner of the lock. Or the field is not set, if the token is unlocked.
-  // access: PersistentVector<AccountId>; // a set of account IDs who currently hold access to the token.
-  access: Array<AccountId>; // a set of account IDs who currently hold access to the token.
+  access: PersistentVector<AccountId>; // a set of account IDs who currently hold access to the token.
+  // access: Array<AccountId>; // a set of account IDs who currently hold access to the token.
 
   // TODO: this constructor seems over complicated
   constructor(public tokenTypeId: TokenTypeId, public ownerId: AccountId) {
@@ -110,8 +110,8 @@ export class Token {
 
   private recordAccessibility(): void {
     // pending discussion w Willem re: isArrayLike<T> vs. isArray<T> in near-sdk-as/bindgen.ts
-    // this.access = new PersistentVector<AccountId>(this.id.toString() + "a");
-    this.access = this.access || [];
+    this.access = new PersistentVector<AccountId>(this.id.toString() + "a");
+    // this.access = this.access || [];
     this.access.push(this.ownerId);
   }
 
