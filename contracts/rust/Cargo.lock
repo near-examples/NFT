@@ -290,6 +290,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "nep4-rs"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "near-sdk",
+ "serde",
+ "serde_json",
+ "wee_alloc",
+]
+
+[[package]]
 name = "opaque-debug"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -330,17 +341,6 @@ name = "regex-syntax"
 version = "0.6.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fe5bd57d1d7414c6b5ed48563a2c855d995ff777729dcd91c369ec7fea395ae"
-
-[[package]]
-name = "rust-nft"
-version = "0.1.0"
-dependencies = [
- "borsh",
- "near-sdk",
- "serde",
- "serde_json",
- "wee_alloc",
-]
 
 [[package]]
 name = "ryu"
