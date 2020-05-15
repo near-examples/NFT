@@ -5,13 +5,15 @@
   "author": "Near, Inc. <hello@near.org>",
   "license": "MIT",
   "scripts": {
-    "build": "yarn build:as",
+    "build": "yarn build:as && yarn build:rs",
     "build:as": "node ./contracts/assemblyscript/compile.js",
-    "build:rs": "cargo build --target wasm32-unknown-unknown --release && cp ./target/wasm32-unknown-unknown/release/status_message.wasm ./res/",
-    "clean": "rm -rf ./out",
+    "build:rs": "(cd contracts/rust && ./build.sh)",
+    "clean": "rm -rf ./out && (cd contracts/rust && cargo clean)",
     "test": "yarn test:unit",
     "test:all": "yarn test && yarn test:simulate:runtime",
-    "test:unit": "asp --verbose --nologo -c contracts/as-pect.config.js -f unit.spec",
+    "test:unit": "yarn test:unit:as && yarn test:unit:rs",
+    "test:unit:as": "asp --verbose --nologo -c contracts/assemblyscript/as-pect.config.js -f unit.spec",
+    "test:unit:rs": "(cd contracts/rust && cargo test -- --nocapture --color always)",
     "test:simulate:runtime": "jest --verbose -f simulate.spec"
   },
   "devDependencies": {
