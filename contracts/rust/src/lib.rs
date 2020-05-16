@@ -1,3 +1,4 @@
+#![deny(warnings)]
 //TODOs: clean up use stmts (commented out some to clean up unused warnings)
 
 use borsh::{BorshDeserialize, BorshSerialize};
