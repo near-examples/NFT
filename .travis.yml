@@ -1,0 +1,14 @@
+language: node_js
+node_js:
+  - 12.0
+os:
+  - linux
+  - osx
+  - windows
+before_install:
+  - curl https://sh.rustup.rs -sSf -m 60 | sh -s -- -y -v --default-toolchain stable
+  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then HOME="/c/Users/travis"; fi
+  - export PATH="$HOME/.cargo/bin:$PATH"
+  - rustup target add wasm32-unknown-unknown
+script:
+  - npm run test:unit:rs

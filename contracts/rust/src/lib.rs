@@ -29,8 +29,7 @@ pub struct TokenType {
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct NonFungibleToken {
-    // See more data types at https://doc.rust-lang.org/book/ch03-02-data-types.html
-    //val: i8, // i8 is signed. unsigned integers are also available: u8, u16, u32, u64, u128
+    token_types: Vec<TokenType>,
 }
 
 impl Default for NonFungibleToken {
@@ -41,16 +40,20 @@ impl Default for NonFungibleToken {
 
 #[near_bindgen]
 impl NonFungibleToken {
-    /// Initializes the contract with the given total supply owned by the given `owner_id`.
-
     // Create a new type of token within the same contract with given `data` as metadata/display data and `totalSupply`.
     // Requirements:
     // * token types should be stored in collection ordered by index with index serving as TokenTypeId.
-    //pub fn mint_token_type(&mut self, data: String, totalSupply: u64) -> TokenTypeId {
-    //    return 0;
-    //}
-    pub fn ping(&self) -> i8 {
-        return 1;
+    pub fn mint_token_type(&mut self, data: String, total_supply: u64) -> TokenTypeId {
+
+        // This simple implementation won't work if we allow deleting token types
+        let id = self.token_types.len() as u32;
+        let new_token_type = TokenType {
+            id: id,
+            total_supply: total_supply,
+            data: data
+        };
+        self.token_types.push(new_token_type);
+        return id;
     }
 }
 
@@ -92,13 +95,16 @@ mod tests {
     //     }
     // }
 
-    // mark individual unit tests with #[test] for them to be registered and fired
     #[test]
     fn passing_test() {
        // let context = get_context(vec![], false);
        // testing_env!(context);
 
-        let contract = NonFungibleToken {};
-        assert_eq!(1, contract.ping());
+        let mut contract = NonFungibleToken {
+            token_types: vec![]
+        };
+        assert_eq!(0, contract.mint_token_type("new token".to_string(), 1000));
+        assert_eq!(1, contract.mint_token_type("other new token".to_string(), 1000));
     }
+    
 }
