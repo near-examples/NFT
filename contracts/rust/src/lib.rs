@@ -17,6 +17,7 @@ pub type TokenId = u64;
 pub struct Token {
     id: TokenId,
     token_type_id: TokenTypeId,
+    owner: String,
     data: String
 }
 
@@ -62,9 +63,13 @@ impl NonFungibleToken {
     // Create a new type of token within the same contract with given `data` as metadata/display data and `totalSupply`.
     // Requirements:
     // * token types should be stored in collection ordered by index with index serving as TokenTypeId.
-    pub fn mint_token(&mut self, _owner: String, data: Token) -> Token {
+    pub fn mint_token(&mut self, data: Token) -> Token {
         self.tokens.insert(&data.id, &data);
         return data;
+    }
+
+    pub fn get_token_owner(&mut self, token_id: TokenId) -> String {
+        return self.tokens.get(&token_id).unwrap().owner;
     }
 }
 
@@ -130,10 +135,14 @@ mod tests {
         let token = Token {
             id: 0,
             data: "9123".to_string(),
+            owner: "corgi_owner_1".to_string(),
             token_type_id: 0
         };
 
-        let result = contract.mint_token("corgi_owner_1".to_string(), token.clone());
+        let result = contract.mint_token(token.clone());
         assert_eq!(token, result);
+
+        let owner = contract.get_token_owner(0);
+        assert_eq!("corgi_owner_1".to_string(), owner);
     }
 }
