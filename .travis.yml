@@ -4,7 +4,7 @@ node_js:
 os:
   - linux
   - osx
-  - windows
+
 before_install:
   - curl https://sh.rustup.rs -sSf -m 60 | sh -s -- -y -v --default-toolchain stable
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then HOME="/c/Users/travis"; fi
