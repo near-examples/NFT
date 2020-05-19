@@ -13,25 +13,25 @@ pub trait NEP4 {
     // Grant the access to the given `accountId` for the given `tokenId`.
     // Requirements:
     // * The caller of the function (`predecessor_id`) should have access to the token.
-    fn grant_access(&mut self, escrow_account_id: String);
+    fn grant_access(&mut self, escrow_account_id: AccountId);
 
     // Revoke the access to the given `accountId` for the given `tokenId`.
     // Requirements:
     // * The caller of the function (`predecessor_id`) should have access to the token.
-    fn revoke_access(&mut self, escrow_account_id: String);
+    fn revoke_access(&mut self, escrow_account_id: AccountId);
 
     // Transfer the given `tokenId` from the given `accountId`.  Account `newAccountId` becomes the new owner.
     // Requirements:
     // * The caller of the function (`predecessor_id`) should have access to the token.
-    fn transfer_from(&mut self, owner_id: String, new_owner_id: String, token_id: TokenId);
+    fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, token_id: TokenId);
 
     // Transfer the given `tokenId` to the given `accountId`.  Account `accountId` becomes the new owner.
     // Requirements:
     // * The caller of the function (`predecessor_id`) should have access to the token.
-    fn transfer(&mut self, new_owner_id: String, token_id: TokenId);
+    fn transfer(&mut self, new_owner_id: AccountId, token_id: TokenId);
 
     // Returns `true` or `false` based on caller of the function (`predecessor_id) having access to the token
-    fn check_access(&self, token_id: TokenId, owner_id: AccountId) -> bool;
+    fn check_access(&self, account_id: AccountId) -> bool;
 
     // Get an individual owner by given `tokenId`.
     fn get_token_owner(&self, token_id: TokenId) -> String;
@@ -39,10 +39,6 @@ pub trait NEP4 {
 
 /// The token ID type is also defined in the NEP
 pub type TokenId = u64;
-
-pub struct Token {
-    id: TokenId
-}
 
 // Begin implementation
 #[near_bindgen]
@@ -76,24 +72,25 @@ impl NonFungibleTokenBasic {
 }
 
 impl NEP4 for NonFungibleTokenBasic {
-    fn grant_access(&mut self, escrow_account_id: String) {
+    fn grant_access(&mut self, escrow_account_id: AccountId) {
         let escrow_hash = env::sha256(escrow_account_id.as_bytes());
         let signer = env::signer_account_id();
         let signer_hash = env::sha256(signer.as_bytes());
 
-        let mut access_list = match self.account_gives_access.get(&signer_hash) {
-            Some(existing_list) => {
-                existing_list
+        let mut access_set = match self.account_gives_access.get(&signer_hash) {
+            Some(existing_set) => {
+                existing_set
             },
             None => {
                 Set::new(b"new-access-set".to_vec())
             }
         };
-        access_list.insert(&escrow_hash);
-        self.account_gives_access.insert(&signer_hash, &access_list);
+        access_set.insert(&escrow_hash);
+        self.account_gives_access.insert(&signer_hash, &access_set);
+        // env::log(format!("{} has access to {}", escrow_account_id, signer).as_bytes());
     }
 
-    fn revoke_access(&mut self, escrow_account_id: String) {
+    fn revoke_access(&mut self, escrow_account_id: AccountId) {
         let signer = env::signer_account_id();
         let signer_hash = env::sha256(signer.as_bytes());
         match self.account_gives_access.remove(&signer_hash) {
@@ -102,16 +99,24 @@ impl NEP4 for NonFungibleTokenBasic {
         }
     }
 
-    fn transfer_from(&mut self, owner_id: String, new_owner_id: String, token_id: TokenId) {
+    fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, token_id: TokenId) {
 
     }
 
-    fn transfer(&mut self, new_owner_id: String, token_id: TokenId) {
+    fn transfer(&mut self, new_owner_id: AccountId, token_id: TokenId) {
 
     }
 
-    fn check_access(&self, token_id: TokenId, owner_id: AccountId) -> bool {
-        true // TODO
+    fn check_access(&self, account_id: AccountId) -> bool {
+        let account_hash = env::sha256(account_id.as_bytes());
+        match self.account_gives_access.get(&account_hash) {
+            Some(access) => {
+                let signer = env::signer_account_id();
+                let signer_hash = env::sha256(signer.as_bytes());
+                access.contains(&signer_hash)
+            },
+            None => false
+        }
     }
 
     fn get_token_owner(&self, token_id: TokenId) -> String {
@@ -126,10 +131,32 @@ impl NEP4 for NonFungibleTokenBasic {
 #[near_bindgen]
 impl NonFungibleTokenBasic {
     /// Creates a token for owner_id, doesn't use autoincrement, fails if id is taken
-    pub fn mint_token(owner_id: String, token_id: TokenId) {
-        let new_token = Token {
-            id: token_id
+    pub fn mint_token(&mut self, owner_id: String, token_id: TokenId) {
+        // make sure that only the owner can call this funtion
+        self.only_owner();
+        // Since Map doesn't have `contains` we use match
+        let token_check = self.token_to_account.get(&token_id);
+        if token_check.is_some() {
+            env::panic(b"Token ID already exists.")
+        }
+        // No token with that ID exists, mint and add token to data structures
+        self.token_to_account.insert(&token_id, &owner_id);
+        // Add to account_to_set
+        let mut token_set = match self.account_to_set.get(&owner_id) {
+            Some(existing_set) => {
+                existing_set
+            },
+            None => {
+                Set::new(b"new-access-set".to_vec())
+            }
         };
+        token_set.insert(&token_id);
+        self.account_to_set.insert(&owner_id, &token_set);
+    }
+
+    /// helper function determining contract ownership
+    fn only_owner(&mut self) {
+        assert_eq!(env::signer_account_id(), self.owner_id, "Only contract owner can call this method.");
     }
 }
 
@@ -196,10 +223,27 @@ mod tests {
         let context = get_context(vec![], false);
         testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
-        contract.grant_access("mike.testnet".to_string());
-        contract.revoke_access("mike.testnet".to_string());
-        // check access
-        // "robert.testnet".to_string()
-
+        contract.grant_access("robert.testnet".to_string());
+        let mut mike_has_access = contract.check_access("robert.testnet".to_string());
+        assert_eq!(true, mike_has_access);
+        contract.revoke_access("robert.testnet".to_string());
+        mike_has_access = contract.check_access("robert.testnet".to_string());
+        assert_eq!(false, mike_has_access);
     }
+
+    #[test]
+    fn mint_token_get_token_owner() {
+        let context = get_context(vec![], false);
+        testing_env!(context);
+        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
+        contract.mint_token("mike.testnet".to_string(), 19u64);
+        let owner = contract.get_token_owner(19u64);
+        assert_eq!("mike.testnet".to_string(), owner);
+    }
+
+    // #[test]
+    // #[should_panic(
+    //     expected = r#"No access entries for this account."#
+    // )]
+    // good next test
 }
