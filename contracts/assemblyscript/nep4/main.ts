@@ -1,24 +1,44 @@
-import { context, storage, PersistentMap } from 'near-sdk-as'
+type TokenId = u128
 
-const TOTAL_SUPPLY = 't'
-const balances = new PersistentMap<string, u64>('b')
+/******************/
+/* CHANGE METHODS */
+/******************/
 
-// Initialize the token types with respective supplies.
+// Grant the access to the given `accountId` for all tokens that account has.
 // Requirements:
-// * It should initilize at least the first token type and supply of tokens for type.
-// * The contract account id should be the first token holder.
-export function init(supply: u64): void {
-  assert(!storage.contains(TOTAL_SUPPLY), 'Contract has already been initialized')
-  storage.set<u64>(TOTAL_SUPPLY, supply)
-  balances.set(context.contractName, supply)
+// * The caller of the function (`predecessor_id`) should have access to the tokens.
+export function grant_access(escrow_account_id: string): void {
 }
 
-export function totalSupply(): u64 {
-  return storage.getSome<u64>(TOTAL_SUPPLY)
+// Revoke the access to the given `accountId` for the given `tokenId`.
+// Requirements:
+// * The caller of the function (`predecessor_id`) should have access to the token.
+export function revoke_access(escrow_account_id: string): void {
 }
 
-export function getBalance(accountId: string): u64 {
-  // TODO: returning default not working
-  // return balances.get(accountId, 0)
-  return balances.getSome(accountId)
+// Transfer the given `tokenId` from the given `accountId`.  Account `newAccountId` becomes the new owner.
+// Requirements:
+// * The caller of the function (`predecessor_id`) should have access to the token.
+export function transfer_from(owner_id: string, new_owner_id: string, tokenId: TokenId): void {
+}
+
+// Transfer the given `tokenId` to the given `accountId`.  Account `accountId` becomes the new owner.
+// Requirements:
+// * The caller of the function (`predecessor_id`) should have access to the token.
+export function transfer(new_owner_id: string, token_id: TokenId): void {
+}
+
+
+/****************/
+/* VIEW METHODS */
+/****************/
+
+// Returns `true` or `false` based on caller of the function (`predecessor_id`) having access to a user's tokens
+export function check_access(account_id: string): boolean {
+  return false
+}
+
+// Get an individual owner by given `tokenId`.
+export function get_token_owner(token_id: TokenId): string {
+  return 'lol'
 }

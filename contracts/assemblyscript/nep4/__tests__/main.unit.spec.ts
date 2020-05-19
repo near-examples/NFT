@@ -1,36 +1,52 @@
-import { Context, VM, Storage } from 'near-sdk-as'
 import {
-  init,
-  totalSupply,
-  getBalance,
+  grant_access,
+  revoke_access,
+  transfer_from,
+  transfer,
+  check_access,
+  get_token_owner,
 } from '../main'
 
-const accountId = 'corgis'
+describe('grant_access', () => {
+  xit('grants access to the given account_id for all the tokens that account has', () => {
+  })
 
-beforeEach(() => {
-  Context.setCurrent_account_id(accountId)
+  xit('requires the caller of the function to have access to the token.', () => {
+  })
+});
+
+describe('revoke_access', () => {
+  xit('revokes access to the given `accountId` for the given `tokenId`', () => {
+  })
+
+  xit('requires caller of the function to have access to the token.', () => {
+  })
 })
 
-// This token should allow the following:
-describe('init', () => {
-  // - Initialize contract once...
-  xit('cannot be called twice', () => {
-    init(1)
-    // TODO: not yet supported by as-pect
-    // expect(() => init(2)).toThrow()
-    expect(totalSupply()).toBe(1)
+describe('transfer_from', () => {
+  xit('transfers the given `tokenId` from the given `owner_id` to  `new_owner_id`', () => {
   })
 
-  // ...The given total supply...
-  it('creates specified supply', () => {
-    init(1_000)
-    expect(totalSupply()).toBe(1000)
+  xit('requires the caller of the function to have access to the token.', () => {
+  })
+})
+
+describe('transfer', () => {
+  xit('transfers the given `token_id` to the given `owner_id`', () => {
   })
 
-  // ...will be owned by the given account ID.
-  it('assigns all the tokens to the account of the contract', () => {
-    log('Why do this at all? What does it mean for an NFT, which needs to have an ID, to not yet be minted, not have an ID, and yet have an owner?')
-    init(10)
-    expect(getBalance(accountId)).toBe(10)
+  xit('requires the caller of the function to have access to the token', () => {
+  })
+})
+
+describe('check_access', () => {
+  xit('returns true if caller of the function has access to the token', () => {
+  })
+  xit('returns false if caller of function does not have access', () => {
+  })
+})
+
+describe('get_token_owner', () => {
+  xit('returns accountId of owner of given `tokenId`', () => {
   })
 })
