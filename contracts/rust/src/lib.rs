@@ -198,14 +198,14 @@ mod tests {
         testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         let length_before = contract.account_gives_access.len();
-        assert_eq!(0, length_before);
+        assert_eq!(0, length_before, "Expected empty account access Map.");
         contract.grant_access("mike.testnet".to_string());
         contract.grant_access("kevin.testnet".to_string());
         let length_after = contract.account_gives_access.len();
-        assert_eq!(1, length_after);
+        assert_eq!(1, length_after, "Expected an entry in the account's access Map.");
         let signer_hash = env::sha256("robert.testnet".as_bytes());
         let num_grantees = contract.account_gives_access.get(&signer_hash).unwrap();
-        assert_eq!(2, num_grantees.len());
+        assert_eq!(2, num_grantees.len(), "Expected two accounts to have access to signer.");
     }
 
     #[test]
@@ -225,11 +225,11 @@ mod tests {
         testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         contract.grant_access("robert.testnet".to_string());
-        let mut mike_has_access = contract.check_access("robert.testnet".to_string());
-        assert_eq!(true, mike_has_access);
+        let mut robert_has_access = contract.check_access("robert.testnet".to_string());
+        assert_eq!(true, robert_has_access, "After granting access, check_access call failed.");
         contract.revoke_access("robert.testnet".to_string());
-        mike_has_access = contract.check_access("robert.testnet".to_string());
-        assert_eq!(false, mike_has_access);
+        robert_has_access = contract.check_access("robert.testnet".to_string());
+        assert_eq!(false, robert_has_access, "After revoking access, check_access call failed.");
     }
 
     #[test]
@@ -239,7 +239,7 @@ mod tests {
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         contract.mint_token("mike.testnet".to_string(), 19u64);
         let owner = contract.get_token_owner(19u64);
-        assert_eq!("mike.testnet".to_string(), owner);
+        assert_eq!("mike.testnet".to_string(), owner, "Unexpected token owner.");
     }
 
     // #[test]
