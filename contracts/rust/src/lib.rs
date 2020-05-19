@@ -40,6 +40,8 @@ pub trait NEP4 {
 /// The token ID type is also defined in the NEP
 pub type TokenId = u64;
 
+pub type AccountIdHash = Vec<u8>;
+
 pub struct Token {
     id: TokenId
 }
@@ -50,7 +52,7 @@ pub struct Token {
 pub struct NonFungibleTokenBasic {
     pub token_to_account: Map<TokenId, AccountId>,
     pub account_to_set: Map<AccountId, Set<TokenId>>, // instead of AccountId Vec<u8>?
-    pub account_gives_access: Map<Vec<u8>, Set<Vec<u8>>>, // Vec<u8> is sha256 of account, makes it safer and is how fungible token also works
+    pub account_gives_access: Map<AccountIdHash, Set<AccountIdHash>>, // Vec<u8> is sha256 of account, makes it safer and is how fungible token also works
     pub owner_id: AccountId,
 }
 
