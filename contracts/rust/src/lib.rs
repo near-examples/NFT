@@ -1,8 +1,7 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Map;
 use near_sdk::collections::Set;
-use near_sdk::json_types::U128;
-use near_sdk::{env, near_bindgen, AccountId, Balance};
+use near_sdk::{env, near_bindgen, AccountId};
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -88,15 +87,22 @@ impl NEP4 for NonFungibleTokenBasic {
         };
         access_set.insert(&escrow_hash);
         self.account_gives_access.insert(&signer_hash, &access_set);
-        // env::log(format!("{} has access to {}", escrow_account_id, signer).as_bytes());
     }
 
     fn revoke_access(&mut self, escrow_account_id: AccountId) {
         let signer = env::signer_account_id();
         let signer_hash = env::sha256(signer.as_bytes());
-        match self.account_gives_access.remove(&signer_hash) {
-            Some(_) => env::log(b"Successfully removed access."),
+        let mut existing_set = match self.account_gives_access.get(&signer_hash) {
+            Some(existing_set) => existing_set,
             None => env::panic(b"Access does not exist.")
+        };
+        let escrow_hash = env::sha256(escrow_account_id.as_bytes());
+        if existing_set.contains(&escrow_hash) {
+            existing_set.remove(&escrow_hash);
+            self.account_gives_access.insert(&signer_hash, &existing_set);
+            env::log(b"Successfully removed access.")
+        } else {
+            env::panic(b"Did not find access for escrow ID.")
         }
     }
 
