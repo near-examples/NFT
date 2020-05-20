@@ -279,7 +279,6 @@ mod tests {
         contract.grant_access("robert.testnet".to_string());
 
         // Robert transfers the token to Joe
-        // TODO: figure out how to test
         testing_env!(get_context("robert.testnet".to_string()));
         contract.transfer("joe.testnet".to_string(), token_id);
 
