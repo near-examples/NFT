@@ -112,8 +112,11 @@ impl NEP4 for NonFungibleTokenBasic {
     }
 
     fn check_access(&self, account_id: AccountId) -> bool {
-        // TODO: check access needs to allow transfer if signer account is the same as account_id
         let account_hash = env::sha256(account_id.as_bytes());
+        let signer = env::signer_account_id();
+        if signer == account_id {
+            return true;
+        }
         match self.account_gives_access.get(&account_hash) {
             Some(access) => {
                 let signer = env::signer_account_id();
@@ -307,9 +310,6 @@ mod tests {
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         let token_id = 19u64;
         contract.mint_token("robert.testnet".to_string(), token_id);
-        // workaround until we can add self-check in check-access
-        // TODO: remove this line
-        contract.grant_access("robert.testnet".to_string());
 
         // Robert transfers the token to Joe
         contract.transfer("joe.testnet".to_string(), token_id);
