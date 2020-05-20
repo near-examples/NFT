@@ -3,49 +3,21 @@ use near_sdk::collections::Map;
 use near_sdk::collections::Set;
 use near_sdk::{env, near_bindgen, AccountId};
 
+// The base functions are contained in nep4/mod.rs
+// See: https://doc.rust-lang.org/stable/rust-by-example/mod/split.html
+mod nep4;
+
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-/// This trait provides the baseline of functions as described at:
-/// https://github.com/nearprotocol/NEPs/blob/nep-4/specs/Standards/Tokens/NonFungibleToken.md
-pub trait NEP4 {
-    // Grant the access to the given `accountId` for the given `tokenId`.
-    // Requirements:
-    // * The caller of the function (`predecessor_id`) should have access to the token.
-    fn grant_access(&mut self, escrow_account_id: AccountId);
-
-    // Revoke the access to the given `accountId` for the given `tokenId`.
-    // Requirements:
-    // * The caller of the function (`predecessor_id`) should have access to the token.
-    fn revoke_access(&mut self, escrow_account_id: AccountId);
-
-    // Transfer the given `tokenId` from the given `accountId`.  Account `newAccountId` becomes the new owner.
-    // Requirements:
-    // * The caller of the function (`predecessor_id`) should have access to the token.
-    fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, token_id: TokenId);
-
-    // Transfer the given `tokenId` to the given `accountId`.  Account `accountId` becomes the new owner.
-    // Requirements:
-    // * The caller of the function (`predecessor_id`) should have access to the token.
-    fn transfer(&mut self, new_owner_id: AccountId, token_id: TokenId);
-
-    // Returns `true` or `false` based on caller of the function (`predecessor_id) having access to the token
-    fn check_access(&self, account_id: AccountId) -> bool;
-
-    // Get an individual owner by given `tokenId`.
-    fn get_token_owner(&self, token_id: TokenId) -> String;
-}
-
-/// The token ID type is also defined in the NEP
-pub type TokenId = u64;
 pub type AccountIdHash = Vec<u8>;
 
 // Begin implementation
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct NonFungibleTokenBasic {
-    pub token_to_account: Map<TokenId, AccountId>,
-    pub account_to_set: Map<AccountId, Set<TokenId>>, // instead of AccountId Vec<u8>?
+    pub token_to_account: Map<nep4::TokenId, AccountId>,
+    pub account_to_set: Map<AccountId, Set<nep4::TokenId>>, // instead of AccountId Vec<u8>?
     pub account_gives_access: Map<AccountIdHash, Set<AccountIdHash>>, // Vec<u8> is sha256 of account, makes it safer and is how fungible token also works
     pub owner_id: AccountId,
 }
@@ -71,7 +43,7 @@ impl NonFungibleTokenBasic {
     }
 }
 
-impl NEP4 for NonFungibleTokenBasic {
+impl nep4::NEP4 for NonFungibleTokenBasic {
     fn grant_access(&mut self, escrow_account_id: AccountId) {
         let escrow_hash = env::sha256(escrow_account_id.as_bytes());
         let signer = env::signer_account_id();
@@ -106,11 +78,11 @@ impl NEP4 for NonFungibleTokenBasic {
         }
     }
 
-    fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, token_id: TokenId) {
+    fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, token_id: nep4::TokenId) {
 
     }
 
-    fn transfer(&mut self, new_owner_id: AccountId, token_id: TokenId) {
+    fn transfer(&mut self, new_owner_id: AccountId, token_id: nep4::TokenId) {
 
     }
 
@@ -126,7 +98,7 @@ impl NEP4 for NonFungibleTokenBasic {
         }
     }
 
-    fn get_token_owner(&self, token_id: TokenId) -> String {
+    fn get_token_owner(&self, token_id: nep4::TokenId) -> String {
         match self.token_to_account.get(&token_id) {
             Some(owner_id) => owner_id,
             None => env::panic(b"No owner of the token ID specified")
@@ -138,7 +110,7 @@ impl NEP4 for NonFungibleTokenBasic {
 #[near_bindgen]
 impl NonFungibleTokenBasic {
     /// Creates a token for owner_id, doesn't use autoincrement, fails if id is taken
-    pub fn mint_token(&mut self, owner_id: String, token_id: TokenId) {
+    pub fn mint_token(&mut self, owner_id: String, token_id: nep4::TokenId) {
         // make sure that only the owner can call this funtion
         self.only_owner();
         // Since Map doesn't have `contains` we use match
