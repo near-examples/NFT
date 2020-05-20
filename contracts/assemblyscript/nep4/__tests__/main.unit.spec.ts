@@ -12,6 +12,7 @@ import { VM, Context } from 'near-sdk-as'
 
 const alice = 'alice'
 const bob = 'bob'
+const carol = 'carol'
 
 describe('grant_access', () => {
   it('grants access to the given account_id for all the tokens that account has', () => {
@@ -58,21 +59,31 @@ describe('revoke_access', () => {
 describe('transfer_from', () => {
   it('transfers the given `token_id` from the given `owner_id` to  `new_owner_id`', () => {
     const aliceToken = nonSpec.mint_to(alice)
+
     Context.setPredecessor_account_id(alice)
+    grant_access(bob)
 
-    expect(get_token_owner(aliceToken)).toBe(alice)
-    expect(get_token_owner(aliceToken)).not.toBe(bob)
+    Context.setPredecessor_account_id(bob)
+    transfer_from(alice, carol, aliceToken)
 
-    transfer_from(alice, bob, aliceToken)
-
-    expect(get_token_owner(aliceToken)).toBe(bob)
+    expect(get_token_owner(aliceToken)).toBe(carol)
     expect(get_token_owner(aliceToken)).not.toBe(alice)
+    expect(get_token_owner(aliceToken)).not.toBe(bob)
   })
 
   it('requires the caller of the function to have access to the token.', () => {
     expect(() => {
       const aliceToken = nonSpec.mint_to(alice)
       Context.setPredecessor_account_id(bob)
+
+      transfer_from(alice, bob, aliceToken);
+    }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
+  })
+
+  it('requires the caller of the function to not have ownership of the token', () => {
+    expect(() => {
+      const aliceToken = nonSpec.mint_to(alice)
+      Context.setPredecessor_account_id(alice)
 
       transfer_from(alice, bob, aliceToken);
     }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)

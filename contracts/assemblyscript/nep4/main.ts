@@ -75,15 +75,18 @@ export function revoke_access(escrow_account_id: string): void {
 // * The caller of the function (`predecessor`) should have access to the token.
 export function transfer_from(owner_id: string, new_owner_id: string, token_id: TokenId): void {
   const predecessor = context.predecessor
-  assert(owner_id == predecessor, ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
 
-  // delegate to transfer function since this seems redundant
-  transfer(new_owner_id, token_id)
+  // fetch token escrow & verify access
+  const escrowAccounts = escrowAccess.getSome(owner_id)
+  assert(escrowAccounts.includes(predecessor), ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
+
+  // assign new owner to token
+  tokenToOwner.set(token_id, new_owner_id)
 }
 
 // Transfer the given `token_id` to the given `new_owner_id`.  Account `new_owner_id` becomes the new owner.
 // Requirements:
-// * The caller of the function (`predecessor`) should have access to the token.
+// * The caller of the function (`predecessor`) should own the token.
 export function transfer(new_owner_id: string, token_id: TokenId): void {
   const predecessor = context.predecessor
 
