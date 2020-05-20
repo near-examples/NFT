@@ -17,7 +17,10 @@
     "test:simulate:runtime": "jest --verbose -f simulate.spec"
   },
   "devDependencies": {
+    "@babel/core": "^7.9.6",
+    "@babel/preset-env": "^7.9.6",
     "assemblyscript": "^0.9.4",
+    "babel-jest": "^26.0.1",
     "jest": "^25.5.4",
     "near-sdk-as": "^0.3.3",
     "near-shell": "^0.23.1"
