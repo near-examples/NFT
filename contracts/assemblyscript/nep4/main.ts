@@ -28,7 +28,7 @@ export const ERROR_MAXIMUM_TOKEN_LIMIT_REACHED = "Maximum token limit reached."
 
 // Grant the access to the given `accountId` for all tokens that account has.
 // Requirements:
-// * The caller of the function (`predecessor_id`) should have access to the tokens.
+// * The caller of the function (`predecessor`) should have access to the tokens.
 export function grant_access(escrow_account_id: string): void {
   const predecessor = context.predecessor
 
@@ -45,7 +45,7 @@ export function grant_access(escrow_account_id: string): void {
 
 // Revoke the access to the given `accountId` for the given `tokenId`.
 // Requirements:
-// * The caller of the function (`predecessor_id`) should have access to the token.
+// * The caller of the function (`predecessor`) should have access to the token.
 export function revoke_access(escrow_account_id: string): void {
   const predecessor = context.predecessor
 
@@ -72,7 +72,7 @@ export function revoke_access(escrow_account_id: string): void {
 
 // Transfer the given `token_id` from the given `owner_id`.  Account `new_owner_id` becomes the new owner.
 // Requirements:
-// * The caller of the function (`predecessor_id`) should have access to the token.
+// * The caller of the function (`predecessor`) should have access to the token.
 export function transfer_from(owner_id: string, new_owner_id: string, token_id: TokenId): void {
   const predecessor = context.predecessor
   assert(owner_id == predecessor, ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
@@ -83,7 +83,7 @@ export function transfer_from(owner_id: string, new_owner_id: string, token_id: 
 
 // Transfer the given `token_id` to the given `new_owner_id`.  Account `new_owner_id` becomes the new owner.
 // Requirements:
-// * The caller of the function (`predecessor_id`) should have access to the token.
+// * The caller of the function (`predecessor`) should have access to the token.
 export function transfer(new_owner_id: string, token_id: TokenId): void {
   const predecessor = context.predecessor
 
@@ -99,7 +99,7 @@ export function transfer(new_owner_id: string, token_id: TokenId): void {
 /* VIEW METHODS */
 /****************/
 
-// Returns `true` or `false` based on caller of the function (`predecessor_id`) having access to a user's tokens
+// Returns `true` or `false` based on caller of the function (`predecessor`) having access to a user's tokens
 export function check_access(account_id: string): bool {
   const owner = context.predecessor
 
