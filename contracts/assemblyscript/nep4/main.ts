@@ -1,4 +1,12 @@
-type TokenId = u128
+import { PersistentMap, storage } from 'near-sdk-as'
+
+type AccountId = string
+type TokenId = u64
+
+const MAX_SUPPLY = 1_000
+
+const tokenToOwner = new PersistentMap<TokenId, AccountId>('a')
+const TOTAL_SUPPLY = 'c'
 
 /******************/
 /* CHANGE METHODS */
@@ -40,5 +48,17 @@ export function check_access(account_id: string): boolean {
 
 // Get an individual owner by given `tokenId`.
 export function get_token_owner(token_id: TokenId): string {
-  return 'lol'
+  return tokenToOwner.getSome(token_id)
+}
+
+
+/********************/
+/* NON-SPEC METHODS */
+/********************/
+
+export function mint_to(owner_id: AccountId): u64 {
+  const tokenId = storage.getPrimitive<u64>(TOTAL_SUPPLY, 0)
+  tokenToOwner.set(tokenId, owner_id)
+  storage.set<u64>(TOTAL_SUPPLY, tokenId + 1)
+  return tokenId
 }

@@ -1,3 +1,4 @@
+import * as nonSpec from '../main'
 import {
   grant_access,
   revoke_access,
@@ -6,6 +7,9 @@ import {
   check_access,
   get_token_owner,
 } from '../main'
+
+const alice = 'alice'
+const bob = 'bob'
 
 describe('grant_access', () => {
   xit('grants access to the given account_id for all the tokens that account has', () => {
@@ -47,6 +51,14 @@ describe('check_access', () => {
 })
 
 describe('get_token_owner', () => {
-  xit('returns accountId of owner of given `tokenId`', () => {
+  it('returns accountId of owner of given `tokenId`', () => {
+    const aliceToken = nonSpec.mint_to(alice)
+    const bobToken = nonSpec.mint_to(bob)
+
+    expect(get_token_owner(aliceToken)).toBe(alice)
+    expect(get_token_owner(aliceToken)).not.toBe(bob)
+
+    expect(get_token_owner(bobToken)).toBe(bob)
+    expect(get_token_owner(bobToken)).not.toBe(alice)
   })
 })
