@@ -19,11 +19,6 @@ pub trait NEP4 {
     // * The caller of the function (`predecessor_id`) should have access to the token.
     fn revoke_access(&mut self, escrow_account_id: AccountId);
 
-    // Transfer the given `tokenId` from the given `accountId`.  Account `newAccountId` becomes the new owner.
-    // Requirements:
-    // * The caller of the function (`predecessor_id`) should have access to the token.
-    fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, token_id: TokenId);
-
     // Transfer the given `tokenId` to the given `accountId`.  Account `accountId` becomes the new owner.
     // Requirements:
     // * The caller of the function (`predecessor_id`) should have access to the token.
@@ -106,12 +101,15 @@ impl NEP4 for NonFungibleTokenBasic {
         }
     }
 
-    fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, token_id: TokenId) {
-
-    }
 
     fn transfer(&mut self, new_owner_id: AccountId, token_id: TokenId) {
-
+        let token_owner_account_id = self.get_token_owner(token_id);
+        if !self.check_access(token_owner_account_id) {
+            env::panic(b"Attempt to transfer a token with no access.")
+        }
+        // We don't have a map api to update, so have to remove and insert
+        self.token_to_account.remove(&token_id);
+        self.token_to_account.insert(&token_id, &new_owner_id);
     }
 
     fn check_access(&self, account_id: AccountId) -> bool {
@@ -177,13 +175,13 @@ mod tests {
     // part of writing unit tests is setting up a mock context
     // in this example, this is only needed for env::log in the contract
     // this is also a useful list to peek at when wondering what's available in env::*
-    fn get_context(input: Vec<u8>, is_view: bool) -> VMContext {
+    fn get_context(signer_account_id: String) -> VMContext {
         VMContext {
             current_account_id: "alice.testnet".to_string(),
-            signer_account_id: "robert.testnet".to_string(),
+            signer_account_id: signer_account_id,
             signer_account_pk: vec![0, 1, 2],
             predecessor_account_id: "jane.testnet".to_string(),
-            input,
+            input: vec![],
             block_index: 0,
             block_timestamp: 0,
             account_balance: 0,
@@ -192,7 +190,7 @@ mod tests {
             attached_deposit: 0,
             prepaid_gas: 10u64.pow(18),
             random_seed: vec![0, 1, 2],
-            is_view,
+            is_view: false,
             output_data_receivers: vec![],
             epoch_height: 19,
         }
@@ -200,7 +198,7 @@ mod tests {
 
     #[test]
     fn grant_access() {
-        let context = get_context(vec![], false);
+        let context = get_context("robert.testnet".to_string());
         testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         let length_before = contract.account_gives_access.len();
@@ -219,7 +217,7 @@ mod tests {
         expected = r#"Access does not exist."#
     )]
     fn revoke_access_and_panic() {
-        let context = get_context(vec![], false);
+        let context = get_context("robert.testnet".to_string());
         testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         contract.revoke_access("kevin.testnet".to_string());
@@ -227,7 +225,7 @@ mod tests {
 
     #[test]
     fn add_revoke_access_and_check() {
-        let context = get_context(vec![], false);
+        let context = get_context("robert.testnet".to_string());
         testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         contract.grant_access("robert.testnet".to_string());
@@ -240,13 +238,74 @@ mod tests {
 
     #[test]
     fn mint_token_get_token_owner() {
-        let context = get_context(vec![], false);
+        let context = get_context("robert.testnet".to_string());
         testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         contract.mint_token("mike.testnet".to_string(), 19u64);
         let owner = contract.get_token_owner(19u64);
         assert_eq!("mike.testnet".to_string(), owner, "Unexpected token owner.");
     }
+
+    #[test]
+    #[should_panic(
+        expected = r#"Attempt to transfer a token with no access."#
+    )]
+    fn transfer_with_no_access_should_fail() {
+        // Mike owns the token.
+        // Robert is trying to transfer it to Robert's account without having access.
+        let context = get_context("robert.testnet".to_string());
+        testing_env!(context);
+        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
+        let token_id = 19u64;
+        contract.mint_token("mike.testnet".to_string(), token_id);
+
+        contract.transfer("robert.testnet".to_string(), token_id);
+    }
+
+    #[test]
+    fn transfer_with_escrow_access() {
+        // Escrow account: robert.testnet
+        // Owner account: mike.testnet
+        // New owner account: joe.testnet
+
+        testing_env!(get_context("mike.testnet".to_string()));
+        let mut contract = NonFungibleTokenBasic::new("mike.testnet".to_string());
+        let token_id = 19u64;
+        contract.mint_token("mike.testnet".to_string(), token_id);
+        // Mike grants access to Robert
+        contract.grant_access("robert.testnet".to_string());
+
+        // Robert transfers the token to Joe
+        // TODO: figure out how to test
+        // testing_env!(get_context("robert.testnet".to_string()));
+        // contract.transfer("joe.testnet".to_string(), token_id);
+
+        // Check new owner
+        // let owner = contract.get_token_owner(token_id);
+        //assert_eq!("joe.testnet".to_string(), owner, "Token was not transferred after transfer call with escrow.");
+    }
+
+    #[test]
+    fn transfer_with_your_own_token() {
+        // Owner account: robert.testnet
+        // New owner account: joe.testnet
+
+        testing_env!(get_context("robert.testnet".to_string()));
+        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
+        let token_id = 19u64;
+        contract.mint_token("robert.testnet".to_string(), token_id);
+        // workaround until we can add self-check in check-access
+        // TODO: remove this line
+        contract.grant_access("robert.testnet".to_string());
+
+        // Robert transfers the token to Joe
+        contract.transfer("joe.testnet".to_string(), token_id);
+
+        // Check new owner
+        let owner = contract.get_token_owner(token_id);
+        assert_eq!("joe.testnet".to_string(), owner, "Token was not transferred after transfer call with escrow.");
+    }
+
 
     // #[test]
     // #[should_panic(
