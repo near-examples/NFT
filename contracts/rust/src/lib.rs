@@ -116,6 +116,10 @@ impl NEP4 for NonFungibleTokenBasic {
 
     fn check_access(&self, account_id: AccountId) -> bool {
         let account_hash = env::sha256(account_id.as_bytes());
+        let signer = env::signer_account_id();
+        if signer == account_id {
+            return true;
+        }
         match self.account_gives_access.get(&account_hash) {
             Some(access) => {
                 let signer = env::signer_account_id();
