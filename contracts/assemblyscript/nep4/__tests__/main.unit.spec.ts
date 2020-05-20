@@ -137,21 +137,6 @@ describe('get_token_owner', () => {
 
 // not sure if these are needed?
 describe('nonSpec interface', () => {
-  it('should include several constants', () => {
-    expect(nonSpec.MAX_SUPPLY).toBeGreaterThan(0)
-    expect(nonSpec.ERROR_NO_TOKENS_CONTROLLED).toBeTruthy()
-    expect(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION).toBeTruthy()
-    expect(nonSpec.ERROR_INVALID_TOKEN_ID).toBeTruthy()
-    expect(nonSpec.ERROR_CLAIMED_OWNER_DOES_NOT_OWN_TOKEN).toBeTruthy()
-    expect(nonSpec.ERROR_MAXIMUM_TOKEN_LIMIT_REACHED).toBeTruthy()
-  })
-
-  it('should expose an interface for minting', () => {
-    expect(() => {
-      nonSpec.mint_to(alice)
-    }).not.toThrow()
-  })
-
   it('should throw if we attempt to mint more than the MAX_SUPPLY', () => {
     expect(() => {
       let limit = nonSpec.MAX_SUPPLY
@@ -164,27 +149,5 @@ describe('nonSpec interface', () => {
     expect(() => {
       nonSpec.mint_to(alice)
     }).toThrow(nonSpec.ERROR_MAXIMUM_TOKEN_LIMIT_REACHED)
-  })
-
-  describe('transfer_from', () => {
-    it('expects the token to exist', () => {
-      expect(() => {
-        const fakeToken = -1
-        Context.setPredecessor_account_id(bob)
-
-        transfer_from(alice, bob, fakeToken);
-      }).toThrow(nonSpec.ERROR_INVALID_TOKEN_ID)
-    })
-  })
-
-  describe('transfer', () => {
-    it('expects the token to exist', () => {
-      expect(() => {
-        const fakeToken = -1
-        Context.setPredecessor_account_id(bob)
-
-        transfer(bob, fakeToken);
-      }).toThrow(nonSpec.ERROR_INVALID_TOKEN_ID)
-    })
   })
 })

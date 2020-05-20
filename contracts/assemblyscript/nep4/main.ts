@@ -19,7 +19,6 @@ const TOTAL_SUPPLY = 'c'
 
 export const ERROR_NO_TOKENS_CONTROLLED = "Caller does not control any tokens."
 export const ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION = "Caller ID does not match expectation."
-export const ERROR_INVALID_TOKEN_ID = "Invalid token identifier"
 export const ERROR_CLAIMED_OWNER_DOES_NOT_OWN_TOKEN = "Claimed owner does not own token"
 export const ERROR_MAXIMUM_TOKEN_LIMIT_REACHED = "Maximum token limit reached."
 
@@ -89,7 +88,6 @@ export function transfer(new_owner_id: string, token_id: TokenId): void {
   const predecessor = context.predecessor
 
   // fetch token owner and assert ownership
-  assert(tokenToOwner.contains(token_id), ERROR_INVALID_TOKEN_ID)
   const owner = tokenToOwner.getSome(token_id)
   assert(owner == predecessor, ERROR_CLAIMED_OWNER_DOES_NOT_OWN_TOKEN)
 
