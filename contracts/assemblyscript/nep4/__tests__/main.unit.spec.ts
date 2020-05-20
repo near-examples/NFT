@@ -17,42 +17,30 @@ const carol = 'carol'
 describe('grant_access', () => {
   it('grants access to the given account_id for all the tokens that account has', () => {
     const aliceToken = nonSpec.mint_to(alice)
-    Context.setPredecessor_account_id(alice)
 
+    Context.setPredecessor_account_id(alice)
     grant_access(bob)
 
-    expect(check_access(bob)).toBe(true)
-  })
-
-  it('requires the caller of the function to have access to the token.', () => {
-    expect(() => {
-      const aliceToken = nonSpec.mint_to(alice)
-      Context.setPredecessor_account_id(bob)
-
-      grant_access(bob);
-    }).toThrow(nonSpec.ERROR_NO_TOKENS_CONTROLLED)
+    Context.setPredecessor_account_id(bob)
+    expect(check_access(alice)).toBe(true)
   })
 });
 
 describe('revoke_access', () => {
   it('revokes access to the given `accountId` for the given `tokenId`', () => {
     const aliceToken = nonSpec.mint_to(alice)
+
     Context.setPredecessor_account_id(alice)
-
     grant_access(bob);
-    expect(check_access(bob)).toBe(true)
 
+    Context.setPredecessor_account_id(bob)
+    expect(check_access(alice)).toBe(true)
+
+    Context.setPredecessor_account_id(alice)
     revoke_access(bob);
-    expect(check_access(bob)).toBe(false)
-  })
 
-  it('requires caller of the function to have access to the token.', () => {
-    expect(() => {
-      const aliceToken = nonSpec.mint_to(alice)
-      Context.setPredecessor_account_id(bob)
-
-      revoke_access(bob);
-    }).toThrow(nonSpec.ERROR_NO_TOKENS_CONTROLLED)
+    Context.setPredecessor_account_id(bob)
+    expect(check_access(alice)).toBe(false)
   })
 })
 
@@ -118,11 +106,12 @@ describe('transfer', () => {
 describe('check_access', () => {
   it('returns true if caller of the function has access to the token', () => {
     const aliceToken = nonSpec.mint_to(alice)
-    Context.setPredecessor_account_id(alice)
 
+    Context.setPredecessor_account_id(alice)
     grant_access(bob)
 
-    expect(check_access(bob)).toBe(true)
+    Context.setPredecessor_account_id(bob)
+    expect(check_access(alice)).toBe(true)
   })
 
   it('returns false if caller of function does not have access', () => {
