@@ -46,7 +46,7 @@ pub struct NonFungibleTokenBasic {
 
 impl Default for NonFungibleTokenBasic {
     fn default() -> Self {
-        panic!("Fun token should be initialized before usage")
+        panic!("NFT should be initialized before usage")
     }
 }
 
@@ -179,8 +179,7 @@ mod tests {
     use near_sdk::{testing_env, VMContext};
 
     // part of writing unit tests is setting up a mock context
-    // in this example, this is only needed for env::log in the contract
-    // this is also a useful list to peek at when wondering what's available in env::*
+    // this is a useful list to peek at when wondering what's available in env::*
     fn get_context(signer_account_id: String) -> VMContext {
         VMContext {
             current_account_id: "alice.testnet".to_string(),
