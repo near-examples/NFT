@@ -101,14 +101,13 @@ impl NEP4 for NonFungibleTokenBasic {
         }
     }
 
-
     fn transfer(&mut self, new_owner_id: AccountId, token_id: TokenId) {
         let token_owner_account_id = self.get_token_owner(token_id);
         if !self.check_access(token_owner_account_id) {
             env::panic(b"Attempt to transfer a token with no access.")
         }
-        // We don't have a map api to update, so have to remove and insert
-        self.token_to_account.remove(&token_id);
+        // TODO: remove this. This is a temporary workaround until the underlying root cause is addressed.
+        workaround();
         self.token_to_account.insert(&token_id, &new_owner_id);
     }
 
@@ -163,6 +162,23 @@ impl NonFungibleTokenBasic {
     fn only_owner(&mut self) {
         assert_eq!(env::signer_account_id(), self.owner_id, "Only contract owner can call this method.");
     }
+}
+
+// This is a workaround for https://github.com/near/near-sdk-rs/issues/159
+// This is a very temporary solution until this issue is fixed. We apologize for the
+// temporary need to have this.
+fn workaround() {
+    // copy pasted basic usage from tests
+    // https://github.com/near/near-sdk-rs/blob/master/near-sdk/src/collections/map.rs
+    // https://github.com/near/near-sdk-rs/blob/master/near-sdk/src/collections/set.rs
+    let mut map: Map<u64, u64> = Map::default();
+    let key1 = 1u64;
+    let value1 = 2u64;
+    map.insert(&key1, &value1);
+
+    let mut set: Set<u64> = Set::default();
+    let key1 = 1u64;
+    set.insert(&key1);
 }
 
 // use the attribute below for unit tests
@@ -277,12 +293,12 @@ mod tests {
 
         // Robert transfers the token to Joe
         // TODO: figure out how to test
-        // testing_env!(get_context("robert.testnet".to_string()));
-        // contract.transfer("joe.testnet".to_string(), token_id);
+        testing_env!(get_context("robert.testnet".to_string()));
+        contract.transfer("joe.testnet".to_string(), token_id);
 
         // Check new owner
-        // let owner = contract.get_token_owner(token_id);
-        //assert_eq!("joe.testnet".to_string(), owner, "Token was not transferred after transfer call with escrow.");
+        let owner = contract.get_token_owner(token_id);
+        assert_eq!("joe.testnet".to_string(), owner, "Token was not transferred after transfer call with escrow.");
     }
 
     #[test]
