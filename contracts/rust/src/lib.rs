@@ -115,6 +115,7 @@ impl NEP4 for NonFungibleTokenBasic {
     }
 
     fn check_access(&self, account_id: AccountId) -> bool {
+        // TODO: check access needs to allow transfer if signer account is the same as account_id
         let account_hash = env::sha256(account_id.as_bytes());
         match self.account_gives_access.get(&account_hash) {
             Some(access) => {
@@ -177,14 +178,14 @@ mod tests {
     // part of writing unit tests is setting up a mock context
     // in this example, this is only needed for env::log in the contract
     // this is also a useful list to peek at when wondering what's available in env::*
-    fn get_context(input: Vec<u8>, is_view: bool) -> VMContext {
+    fn get_context(signer_account_id: String) -> VMContext {
         VMContext {
             current_account_id: "alice.testnet".to_string(),
-            signer_account_id: "robert.testnet".to_string(),
+            signer_account_id,
             signer_account_pk: vec![0, 1, 2],
             predecessor_account_id: "jane.testnet".to_string(),
-            input,
-            block_index: 0,
+            input: vec![],
+            block_index: 0, 
             block_timestamp: 0,
             account_balance: 0,
             account_locked_balance: 0,
@@ -192,7 +193,7 @@ mod tests {
             attached_deposit: 0,
             prepaid_gas: 10u64.pow(18),
             random_seed: vec![0, 1, 2],
-            is_view,
+            is_view: false,
             output_data_receivers: vec![],
             epoch_height: 19,
         }
@@ -200,7 +201,7 @@ mod tests {
 
     #[test]
     fn grant_access() {
-        let context = get_context(vec![], false);
+        let context = get_context("robert.testnet".to_string());
         testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         let length_before = contract.account_gives_access.len();
@@ -219,7 +220,7 @@ mod tests {
         expected = r#"Access does not exist."#
     )]
     fn revoke_access_and_panic() {
-        let context = get_context(vec![], false);
+        let context = get_context("robert.testnet".to_string());
         testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         contract.revoke_access("kevin.testnet".to_string());
@@ -227,20 +228,30 @@ mod tests {
 
     #[test]
     fn add_revoke_access_and_check() {
-        let context = get_context(vec![], false);
-        testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
+
+        // joe grants access to robert
+        testing_env!(get_context("joe.testnet".to_string()));
         contract.grant_access("robert.testnet".to_string());
-        let mut robert_has_access = contract.check_access("robert.testnet".to_string());
+
+        // does robert have access to joe's account?
+        testing_env!(get_context("robert.testnet".to_string()));
+        let mut robert_has_access = contract.check_access("joe.testnet".to_string());
         assert_eq!(true, robert_has_access, "After granting access, check_access call failed.");
+
+        // joe revokes access from robert
+        testing_env!(get_context("joe.testnet".to_string()));
         contract.revoke_access("robert.testnet".to_string());
-        robert_has_access = contract.check_access("robert.testnet".to_string());
+
+        // does robert have access to joe's account?
+        testing_env!(get_context("robert.testnet".to_string()));
+        robert_has_access = contract.check_access("joe.testnet".to_string());
         assert_eq!(false, robert_has_access, "After revoking access, check_access call failed.");
     }
 
     #[test]
     fn mint_token_get_token_owner() {
-        let context = get_context(vec![], false);
+        let context = get_context("robert.testnet".to_string());
         testing_env!(context);
         let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
         contract.mint_token("mike.testnet".to_string(), 19u64);
