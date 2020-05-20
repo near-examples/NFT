@@ -20,7 +20,7 @@ describe('grant_access', () => {
 
     grant_access(bob)
 
-    expect(check_access(bob)).toBeTruthy()
+    expect(check_access(bob)).toBe(true)
   })
 
   it('requires the caller of the function to have access to the token.', () => {
@@ -39,10 +39,10 @@ describe('revoke_access', () => {
     Context.setPredecessor_account_id(alice)
 
     grant_access(bob);
-    expect(check_access(bob)).toBeTruthy()
+    expect(check_access(bob)).toBe(true)
 
     revoke_access(bob);
-    expect(check_access(bob)).toBeFalsy()
+    expect(check_access(bob)).toBe(false)
   })
 
   it('requires caller of the function to have access to the token.', () => {
@@ -77,15 +77,6 @@ describe('transfer_from', () => {
       transfer_from(alice, bob, aliceToken);
     }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
   })
-
-  it('expects the token to exist', () => {
-    expect(() => {
-      const fakeToken = -1
-      Context.setPredecessor_account_id(bob)
-
-      transfer_from(alice, bob, fakeToken);
-    }).toThrow(nonSpec.ERROR_INVALID_TOKEN_ID)
-  })
 })
 
 describe('transfer', () => {
@@ -111,15 +102,6 @@ describe('transfer', () => {
       transfer(bob, aliceToken);
     }).toThrow(nonSpec.ERROR_CLAIMED_OWNER_DOES_NOT_OWN_TOKEN)
   })
-
-  it('expects the token to exist', () => {
-    expect(() => {
-      const fakeToken = -1
-      Context.setPredecessor_account_id(bob)
-
-      transfer(bob, fakeToken);
-    }).toThrow(nonSpec.ERROR_INVALID_TOKEN_ID)
-  })
 })
 
 describe('check_access', () => {
@@ -129,14 +111,14 @@ describe('check_access', () => {
 
     grant_access(bob)
 
-    expect(check_access(bob)).toBeTruthy()
+    expect(check_access(bob)).toBe(true)
   })
 
   it('returns false if caller of function does not have access', () => {
     const aliceToken = nonSpec.mint_to(alice)
     Context.setPredecessor_account_id(alice)
 
-    expect(check_access(bob)).toBeFalsy()
+    expect(check_access(bob)).toBe(false)
   })
 })
 
@@ -182,5 +164,27 @@ describe('nonSpec interface', () => {
     expect(() => {
       nonSpec.mint_to(alice)
     }).toThrow(nonSpec.ERROR_MAXIMUM_TOKEN_LIMIT_REACHED)
+  })
+
+  describe('transfer_from', () => {
+    it('expects the token to exist', () => {
+      expect(() => {
+        const fakeToken = -1
+        Context.setPredecessor_account_id(bob)
+
+        transfer_from(alice, bob, fakeToken);
+      }).toThrow(nonSpec.ERROR_INVALID_TOKEN_ID)
+    })
+  })
+
+  describe('transfer', () => {
+    it('expects the token to exist', () => {
+      expect(() => {
+        const fakeToken = -1
+        Context.setPredecessor_account_id(bob)
+
+        transfer(bob, fakeToken);
+      }).toThrow(nonSpec.ERROR_INVALID_TOKEN_ID)
+    })
   })
 })

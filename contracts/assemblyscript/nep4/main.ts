@@ -9,8 +9,8 @@ type TokenId = u64
 
 export const MAX_SUPPLY = u64(1_000)
 
-export const tokenToOwner = new PersistentMap<TokenId, AccountId>('a')
-export const escrowAccess = new PersistentMap<AccountId, AccountId[]>('b')
+const tokenToOwner = new PersistentMap<TokenId, AccountId>('a')
+const escrowAccess = new PersistentMap<AccountId, AccountId[]>('b')
 const TOTAL_SUPPLY = 'c'
 
 /******************/
@@ -128,18 +128,17 @@ export function get_token_owner(token_id: TokenId): string {
 
 export function mint_to(owner_id: AccountId): u64 {
   // fetch the next tokenId
-  const tokenId = storage.getPrimitive<u64>(TOTAL_SUPPLY, 0)
-  const nextId = tokenId + 1
+  const tokenId = storage.getPrimitive<u64>(TOTAL_SUPPLY, 1)
 
   // enforce token limits
-  assert(nextId <= MAX_SUPPLY, ERROR_MAXIMUM_TOKEN_LIMIT_REACHED)
+  assert(tokenId <= MAX_SUPPLY, ERROR_MAXIMUM_TOKEN_LIMIT_REACHED)
 
   // assign ownership
   tokenToOwner.set(tokenId, owner_id)
   escrowAccess.set(owner_id, [])
 
   // increment and store the next tokenId
-  storage.set<u64>(TOTAL_SUPPLY, nextId)
+  storage.set<u64>(TOTAL_SUPPLY, tokenId + 1)
 
   // return the tokenId
   return tokenId
