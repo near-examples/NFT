@@ -83,7 +83,7 @@ export function on_transfer(owner_id: AccountId, token_contract: AccountId, toke
   //   case Status.Completed:
   //     // we're getting called again after finishing phase 3 for some reason
   //     break
-  //   default: 
+  //   default:
   //     // const status = Status.Completed.toString()
   //     // assert(false, 'Invalid trade status: ' + status)
   // }

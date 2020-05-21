@@ -121,7 +121,7 @@ describe('NEP4 Escrow Simulation', () => {
       // simulate(transaction)
     })
 
-    xit('should recognie the standard NEP4 interface', () => {
+    xit('should recognize the standard NEP4 interface', () => {
       // expectToFind('showYouKnow() was called', {
       //   inArray: result.outcome.logs,
       // })
@@ -141,19 +141,13 @@ describe('NEP4 Escrow Simulation', () => {
         // and grants access to the escrow account (to transfer her corgi tokens on her behalf)
         grant(accounts.sausages, accounts.jerry, accounts.escrowilla)
 
-        // escrow then conducts exchange
+        // escrowilla transfers corgi to jerry
         transfer(accounts.escrowilla, accounts.alice, accounts.jerry, accounts.corgis, aliceToken) // prettier-ignore
+        expect(getOwner(accounts.corgis, aliceToken)).toBe(accounts.jerry.account_id)
+
+        // escrowilla transfers sausage to alice
         transfer(accounts.escrowilla, accounts.jerry, accounts.alice, accounts.sausages, jerryToken) // prettier-ignore
-
-        const ownership = {
-          corgiTokenOwner: getOwner(accounts.corgis, aliceToken),
-          sausageTokenOwner: getOwner(accounts.sausages, jerryToken),
-        }
-
-        // expect that jerry now owns the corgi token
-        expect(ownership.corgiTokenOwner).toBe(accounts.jerry.account_id)
-        // expect that alice now owns the sausage token
-        expect(ownership.sausageTokenOwner).toBe(accounts.alice.account_id)
+        expect(getOwner(accounts.sausages, jerryToken)).toBe(accounts.alice.account_id)
       })
     })
   })
@@ -274,16 +268,16 @@ describe('NEP4 Escrow Simulation', () => {
 
         /*
         console.log(beforeTransfer, afterTransfer)
-        
+
         {
           state: { 'a::1': 'alice', 'b::alice': 'escrow', c: 2 },
           owner: 'alice'
-        } 
+        }
         {
           state: { 'a::1': 'escrow', 'b::alice': 'escrow', c: 2 },
           owner: 'escrow'
         }
-        
+
         */
 
         // expect that alice owned a corgi token
@@ -315,7 +309,7 @@ describe('NEP4 Escrow Simulation', () => {
           },
         }
 
-        const { calls } = simulate(transaction)
+        const { calls } = simulate(transaction, true)
 
         // we can check for call length
         expect(calls).toHaveLength(3)
@@ -349,6 +343,7 @@ describe('NEP4 Escrow Simulation', () => {
         // then escrow account fetches alice's tokens to prepare for trade
         fetch(accounts.alice, accounts.jerry, accounts.corgis, tokenId, accounts.escrow) // prettier-ignore
 
+        console.log(accounts.escrow.state)
         expect(Object.values(accounts.escrow.state)[0]).toMatchObject({
           new_owner_id: accounts.jerry.account_id,
           owner_id: accounts.alice.account_id,
