@@ -52,7 +52,7 @@ describe('NEP4 Escrow Simulation', () => {
       })
     })
 
-    it('should honor maximum limit on token supply', () => {
+    xit('should honor maximum limit on token supply', () => {
       const MAX_SUPPLY = 1 // 1.5s
       // const MAX_SUPPLY = 10 // 3.24s user 0.79s system 124% cpu 3.246 total
       // const MAX_SUPPLY = 20 // 4.47s user 1.06s system 116% cpu 4.741 total
@@ -63,7 +63,7 @@ describe('NEP4 Escrow Simulation', () => {
 
       expect(() => {
         let limit = MAX_SUPPLY
-        while (limit-- > 0) {
+        while (limit-- >= 0) {
           assign(nep4, accounts.alice)
         }
       }).not.toThrow()
@@ -71,16 +71,16 @@ describe('NEP4 Escrow Simulation', () => {
       // minting one more than the max should throw
       let error, logs
       expect(() => {
-        ;({ error, logs } = assign(nep4, accounts.alice))
-      }).not.toThrow()
+        const result = assign(nep4, accounts.alice)
 
-      expectToFind('Maximum token limit reached', {
-        inObject: error,
-      })
+        expectToFind('Maximum token limit reached', {
+          inObject: result.error,
+        })
 
-      expectToFind('ABORT: Maximum token limit reached', {
-        inArray: logs,
-      })
+        expectToFind('ABORT: Maximum token limit reached', {
+          inArray: result.logs,
+        })
+      }).toThrow()
 
       // "err": {
       //   "FunctionCallError": {
@@ -125,6 +125,11 @@ describe('NEP4 Escrow Simulation', () => {
       // })
     })
   })
+
+  // describe('exchanging tokens through escrow', () => {
+  //   await corgis.call('grant_access', { as: alice, to: carol })
+  //   await sausages.call('grant_access', { as: bob, to: carol })
+  // })
   // alice makes an async call to corgi::grant_access({'escrow_account_id':'escrow'})
   // jerry makes an async call to ``sausage::grant_access({'escrow_account_id':'escrow'})`
   // escrow calls sausage::transfer_from({'owner_id':'jerry', 'new_owner_id:'escrow', 'token_id': 5})
@@ -352,7 +357,6 @@ function expectToFind(target, { inArray, inObject }, partial = true) {
     try {
       expect(JSON.stringify(object).search(target)).toBeGreaterThan(0)
     } catch (error) {
-      console.log(target)
       console.log(chalk`{redBright [ ${target} ] not found in ${object}}`)
     }
     // console.log(
