@@ -166,6 +166,9 @@ mod tests {
     fn robert() -> AccountId {
         "robert.testnet".to_string()
     }
+    fn mike() -> AccountId {
+        "mike.testnet".to_string()
+    }
 
     // part of writing unit tests is setting up a mock context
     // this is a useful list to peek at when wondering what's available in env::*
@@ -192,16 +195,16 @@ mod tests {
 
     #[test]
     fn grant_access() {
-        let context = get_context("robert.testnet".to_string(), 0);
+        let context = get_context(robert(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
+        let mut contract = NonFungibleTokenBasic::new(robert());
         let length_before = contract.account_gives_access.len();
         assert_eq!(0, length_before, "Expected empty account access Map.");
-        contract.grant_access("mike.testnet".to_string());
-        contract.grant_access("kevin.testnet".to_string());
+        contract.grant_access(mike());
+        contract.grant_access(joe());
         let length_after = contract.account_gives_access.len();
         assert_eq!(1, length_after, "Expected an entry in the account's access Map.");
-        let signer_hash = env::sha256("robert.testnet".as_bytes());
+        let signer_hash = env::sha256(robert().as_bytes());
         let num_grantees = contract.account_gives_access.get(&signer_hash).unwrap();
         assert_eq!(2, num_grantees.len(), "Expected two accounts to have access to signer.");
     }
@@ -211,10 +214,10 @@ mod tests {
         expected = r#"Access does not exist."#
     )]
     fn revoke_access_and_panic() {
-        let context = get_context("robert.testnet".to_string(), 0);
+        let context = get_context(robert(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
-        contract.revoke_access("kevin.testnet".to_string());
+        let mut contract = NonFungibleTokenBasic::new(robert());
+        contract.revoke_access(joe());
     }
 
     #[test]
@@ -245,12 +248,12 @@ mod tests {
 
     #[test]
     fn mint_token_get_token_owner() {
-        let context = get_context("robert.testnet".to_string(), 0);
+        let context = get_context(robert(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
-        contract.mint_token("mike.testnet".to_string(), 19u64);
+        let mut contract = NonFungibleTokenBasic::new(robert());
+        contract.mint_token(mike(), 19u64);
         let owner = contract.get_token_owner(19u64);
-        assert_eq!("mike.testnet".to_string(), owner, "Unexpected token owner.");
+        assert_eq!(mike(), owner, "Unexpected token owner.");
     }
 
     #[test]
@@ -260,12 +263,12 @@ mod tests {
     fn transfer_with_no_access_should_fail() {
         // Mike owns the token.
         // Robert is trying to transfer it to Robert's account without having access.
-        let context = get_context("robert.testnet".to_string(), 0);
+        let context = get_context(robert(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
+        let mut contract = NonFungibleTokenBasic::new(robert());
         let token_id = 19u64;
-        contract.mint_token("mike.testnet".to_string(), token_id);
-        contract.transfer("robert.testnet".to_string(), token_id);
+        contract.mint_token(mike(), token_id);
+        contract.transfer(robert(), token_id.clone());
     }
 
     #[test]
@@ -273,22 +276,22 @@ mod tests {
         // Escrow account: robert.testnet
         // Owner account: mike.testnet
         // New owner account: joe.testnet
-        let mut context = get_context("mike.testnet".to_string(), 0);
+        let mut context = get_context(mike(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new("mike.testnet".to_string());
+        let mut contract = NonFungibleTokenBasic::new(mike());
         let token_id = 19u64;
-        contract.mint_token("mike.testnet".to_string(), token_id);
+        contract.mint_token(mike(), token_id);
         // Mike grants access to Robert
-        contract.grant_access("robert.testnet".to_string());
+        contract.grant_access(robert());
 
         // Robert transfers the token to Joe
-        context = get_context("robert.testnet".to_string(), env::storage_usage());
+        context = get_context(robert(), env::storage_usage());
         testing_env!(context);
-        contract.transfer("joe.testnet".to_string(), token_id.clone());
+        contract.transfer(joe(), token_id.clone());
 
         // Check new owner
         let owner = contract.get_token_owner(token_id.clone());
-        assert_eq!("joe.testnet".to_string(), owner, "Token was not transferred after transfer call with escrow.");
+        assert_eq!(joe(), owner, "Token was not transferred after transfer call with escrow.");
     }
 
     #[test]
@@ -296,22 +299,16 @@ mod tests {
         // Owner account: robert.testnet
         // New owner account: joe.testnet
 
-        testing_env!(get_context("robert.testnet".to_string(), 0));
-        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
+        testing_env!(get_context(robert(), 0));
+        let mut contract = NonFungibleTokenBasic::new(robert());
         let token_id = 19u64;
-        contract.mint_token("robert.testnet".to_string(), token_id);
+        contract.mint_token(robert(), token_id);
 
         // Robert transfers the token to Joe
-        contract.transfer("joe.testnet".to_string(), token_id.clone());
+        contract.transfer(joe(), token_id.clone());
 
         // Check new owner
         let owner = contract.get_token_owner(token_id.clone());
-        assert_eq!("joe.testnet".to_string(), owner, "Token was not transferred after transfer call with escrow.");
+        assert_eq!(joe(), owner, "Token was not transferred after transfer call with escrow.");
     }
-
-    // #[test]
-    // #[should_panic(
-    //     expected = r#"No access entries for this account."#
-    // )]
-    // good next test
 }
