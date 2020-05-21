@@ -19,7 +19,6 @@ const TOTAL_SUPPLY = 'c'
 
 export const ERROR_NO_ESCROW_REGISTERED = "Caller has no escrow registered."
 export const ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION = "Caller ID does not match expectation."
-export const ERROR_CLAIMED_OWNER_DOES_NOT_OWN_TOKEN = "Claimed owner does not own token"
 export const ERROR_MAXIMUM_TOKEN_LIMIT_REACHED = "Maximum token limit reached."
 
 /******************/
@@ -36,29 +35,16 @@ export function revoke_access(escrow_account_id: string): void {
   escrowAccess.delete(context.predecessor)
 }
 
-// Transfer the given `token_id` from the given `owner_id`.  Account `new_owner_id` becomes the new owner.
-// Requirements:
-// * The caller of the function (`predecessor`) should have access to the token.
-export function transfer_from(owner_id: string, new_owner_id: string, token_id: TokenId): void {
-  const predecessor = context.predecessor
-
-  // fetch token escrow & verify access
-  const escrow = escrowAccess.getSome(owner_id)
-  assert(escrow == predecessor, ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
-
-  // assign new owner to token
-  tokenToOwner.set(token_id, new_owner_id)
-}
-
 // Transfer the given `token_id` to the given `new_owner_id`.  Account `new_owner_id` becomes the new owner.
 // Requirements:
-// * The caller of the function (`predecessor`) should own the token.
+// * The caller of the function (`predecessor`) should own or have access to the token.
 export function transfer(new_owner_id: string, token_id: TokenId): void {
   const predecessor = context.predecessor
 
-  // fetch token owner and assert ownership
+  // fetch token owner and escrow; assert access
   const owner = tokenToOwner.getSome(token_id)
-  assert(owner == predecessor, ERROR_CLAIMED_OWNER_DOES_NOT_OWN_TOKEN)
+  const escrow = escrowAccess.get(owner)
+  assert([owner, escrow].includes(predecessor), ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
 
   // assign new owner to token
   tokenToOwner.set(token_id, new_owner_id)
