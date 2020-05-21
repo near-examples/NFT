@@ -206,7 +206,7 @@ mod tests {
             block_timestamp: 0,
             account_balance: 0,
             account_locked_balance: 0,
-            storage_usage: 0,
+            storage_usage: 100,
             attached_deposit: 0,
             prepaid_gas: 10u64.pow(18),
             random_seed: vec![0, 1, 2],
