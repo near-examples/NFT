@@ -37,6 +37,11 @@ describe('revoke_access', () => {
     expect(check_access(alice)).toBe(true)
 
     Context.setPredecessor_account_id(alice)
+
+    // Work around error `InconsistentStateError(IntegerOverflow)` thrown by near-sdk-rs
+    // This is being tracked in https://github.com/near/near-sdk-rs/issues/159
+    Context.setStorage_usage(100)
+
     revoke_access(bob);
 
     Context.setPredecessor_account_id(bob)

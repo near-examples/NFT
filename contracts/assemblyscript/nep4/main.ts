@@ -33,7 +33,6 @@ export function grant_access(escrow_account_id: string): void {
 
 // Revoke the access to the given `accountId` for all tokens that account has.
 export function revoke_access(escrow_account_id: string): void {
-  workaround()
   escrowAccess.delete(context.predecessor)
 }
 
@@ -91,11 +90,6 @@ export function get_token_owner(token_id: TokenId): string {
 /********************/
 /* NON-SPEC METHODS */
 /********************/
-
-// removing last item from PersistentMap throws error when testing; this works around it
-function workaround(): void {
-  escrowAccess.set('garbage', 'nonsense')
-}
 
 export function mint_to(owner_id: AccountId): u64 {
   // fetch the next tokenId
