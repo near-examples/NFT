@@ -349,22 +349,10 @@ function assign(aToken, toAccount) {
 // ---------------------------------------------------------------
 // Simulation Testing Helpers
 // ---------------------------------------------------------------
-const chalk = require('chalk') // note: this is included w Jest
-
 function expectToFind(target, { inArray, inObject }, partial = true) {
   if (partial) {
-    const object = inArray || inObject
-    try {
-      expect(JSON.stringify(object).search(target)).toBeGreaterThan(0)
-    } catch (error) {
-      console.log(chalk`{redBright [ ${target} ] not found in ${object}}`)
-    }
-    // console.log(
-    //   target,
-    //   object,
-    //   JSON.stringify(object),
-    //   JSON.stringify(object).search(target)
-    // )
+    const string = JSON.stringify(inArray || inObject)
+    expect(string).toEqual(expect.stringContaining(target))
   } else {
     if (inArray) {
       expect(inArray).toEqual(expect.arrayContaining([target]))
