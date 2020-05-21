@@ -64,6 +64,7 @@ impl NonFungibleTokenBasic {
     }
 }
 
+#[near_bindgen]
 impl NEP4 for NonFungibleTokenBasic {
     fn grant_access(&mut self, escrow_account_id: AccountId) {
         let escrow_hash = env::sha256(escrow_account_id.as_bytes());
