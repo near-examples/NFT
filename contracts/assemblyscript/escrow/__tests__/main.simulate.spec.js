@@ -1,37 +1,38 @@
 const { Runtime } = require('near-sdk-as/runtime')
 const path = require('path')
 
-const WASM_FILE = path.join(__dirname, '../../../../out/nep4-as.wasm')
+const buildFolder = '../../../../out'
+const NEP4_WASM_FILE = path.join(__dirname, `${buildFolder}/nep4-as.wasm`)
+const ESCROW_WASM_FILE = path.join(__dirname, `${buildFolder}/escrow-as.wasm`)
+
+const runtime = new Runtime()
+let accounts
 
 describe('NEP4 Escrow Simulation', () => {
-  const users = ['alice', 'escrow']
-
-  let runtime
-  let nep4
-
   beforeAll(() => {
-    runtime = new Runtime()
-
-    // configure contract account
-    nep4 = runtime.newAccount('nep4', WASM_FILE)
-
-    // configure user accounts
-    accounts = users
-      .map((name) => runtime.newAccount(name))
-      .reduce((acc, user) => {
-        acc[user.account_id] = user
-        return acc
-      }, {})
+    accounts = setup([
+      // user accounts are strings of the format 'name'
+      'alice',
+      'jerry',
+      // contract accounts are objects of the format { name: contract }
+      { nep4: NEP4_WASM_FILE },
+      { corgis: NEP4_WASM_FILE },
+      { sausages: NEP4_WASM_FILE },
+      { escrow: ESCROW_WASM_FILE },
+    ])
   })
 
   afterEach(() => {
     // reset contract state
-    nep4.state = {}
+    accounts.nep4.state = {}
+    accounts.corgis.state = {}
+    accounts.sausages.state = {}
+    accounts.escrow.state = {}
   })
 
   describe('Non-spec methods on Token contract', () => {
-    it('should respond to mint_to', () => {
-      let transaction = {
+    xit('should respond to mint_to', () => {
+      const transaction = {
         signer: accounts.alice,
         contract: nep4,
         method: {
@@ -93,9 +94,9 @@ describe('NEP4 Escrow Simulation', () => {
     })
   })
 
-  describe('basics', () => {
+  describe('NEP4 basics', () => {
     beforeEach(() => {
-      let transaction = {
+      const transaction = {
         signer: accounts.alice,
         contract: nep4,
         method: {
@@ -126,206 +127,237 @@ describe('NEP4 Escrow Simulation', () => {
     })
   })
 
-  // describe('exchanging tokens through escrow', () => {
-  //   await corgis.call('grant_access', { as: alice, to: carol })
-  //   await sausages.call('grant_access', { as: bob, to: carol })
-  // })
-  // alice makes an async call to corgi::grant_access({'escrow_account_id':'escrow'})
-  // jerry makes an async call to ``sausage::grant_access({'escrow_account_id':'escrow'})`
-  // escrow calls sausage::transfer_from({'owner_id':'jerry', 'new_owner_id:'escrow', 'token_id': 5})
-  // attaches callback escrow::on_transfer({'owner_id':'jerry', 'token_contract':'sausage', 'token_id': 5})
-  // escrow calls corgi::transfer_from({'owner_id':'alice', 'new_owner_id:'escrow', 'token_id': 3})
-  // attaches callback escrow::on_transfer({'owner_id':'alice', 'token_contract':'corgi', 'token_id': 3})
-  // In one Promise:
-  // escrow calls corgi::transfer_from({'owner_id':'escrow', 'new_owner_id:'jerry', 'token_id': 3})
-  // attaches callback escrow::on_transfer({'owner_id':'alice', 'token_contract:'corgi', 'token_id': 3})
-  // escrow calls sausage::transfer_from({'owner_id':'jerry', 'new_owner_id:'escrow', 'token_id': 5})
-  // attaches callback escrow::on_transfer({'owner_id':'jerry', 'token_contract':'corgi', 'token_id': 3})
+  describe('Token Transfer', () => {
+    /**
+     * ----------------------------------------------------------------------------
+     * (Phase 1) traders grant access to escrow account
+     * ----------------------------------------------------------------------------
+     *
+     * In this phase, alice and jerry each give permission to an escrow account.
+     *
+     * This account can be controlled by a trusted friend or a marketplace OpenSea.
+     *
+     *
+     * sample:
+     * -------
+     *
+     * alice calls
+     *
+     *    - corgi::grant_access({'escrow_account_id':'escrow'})
+     *
+     * jerry calls
+     *
+     *    - sausage::grant_access({'escrow_account_id':'escrow'})
+     */
 
-  /*
-  describe('View methods', () => {
-    it('responds to showYouKnow()', () => {
-      const transaction = {
-        signer: accounts.alice,
-        contract: nep4,
-        method: {
-          type: 'view',
-          name: 'showYouKnow',
-        },
-      };
+    describe('Phase 1', () => {
+      it('owners should grant access to escrow account', () => {
+        // alice owns corgi tokens
+        assign(accounts.corgis, accounts.alice)
 
-      const { result } = simulate(transaction);
-
-      expectToFind('showYouKnow() was called', {
-        inArray: result.outcome.logs,
-      });
-    });
-
-    it('responds to sayHello()', () => {
-      const transaction = {
-        signer: accounts.alice,
-        contract: nep4,
-        method: {
-          type: 'view',
-          name: 'sayHello',
-        },
-      };
-
-      const { result, data } = simulate(transaction);
-
-      expect(data).toEqual('Hello!');
-      expectToFind('sayHello() was called', {
-        inArray: result.outcome.logs,
-      });
-    });
-
-    describe('responds to getAllMessages()', () => {
-      it('works with 0 messages', () => {
-        const transaction = {
-          contract: nep4,
-          method: {
-            type: 'call',
-            name: 'getAllMessages',
-          },
-        };
-
-        const { result, data } = simulate(transaction);
-
-        expectToFind('getAllMessages() was called', {
-          inArray: result.outcome.logs,
-        });
-      });
-
-      it('works with 1 message', () => {
-        sendMessage(accounts.alice, { message: messages[0] });
-
+        // and grants access to the escrow account
+        // (to transfer her corgi tokens on her behalf)
         const transaction = {
           signer: accounts.alice,
-          contract: nep4,
+          contract: accounts.corgis,
           method: {
-            type: 'call',
-            name: 'getAllMessages',
+            type: 'change',
+            name: 'grant_access',
+            params: { escrow_account_id: accounts.escrow.account_id },
           },
-        };
+        }
 
-        // useful for visualizing contract state
-        // console.log(greeting.state);
+        let { state } = simulate(transaction)
 
-        const { result, data } = simulate(transaction);
+        // expect that alice owns corgi tokens
+        expectToFind('alice', {
+          inObject: state,
+        })
 
-        expectToFind('alice says awesomesauce!', {
-          inArray: data,
-        });
+        // expect that she has granted access to the corgis account
+        expectToFind('escrow', {
+          inObject: state,
+        })
+      })
+    })
 
-        expectToFind('getAllMessages() was called', {
-          inArray: result.outcome.logs,
-        });
-      });
+    /**
+     * ----------------------------------------------------------------------------
+     * (Phase 2) escrow account takes control of tokens in trade
+     * ----------------------------------------------------------------------------
+     *
+     * In this phase, the escrow account reaches in to each of alice and jerry's
+     * accounts and pulls out their respective trades into its own account.
+     *
+     *
+     * sample:
+     * -------
+     *
+     * escrow calls
+     *
+     *    - corgi::transfer_from({'owner_id':'alice', 'new_owner_id:'escrow', 'token_id': 3})
+     *               \
+     *                `- callback escrow::on_transfer({'owner_id':'alice', 'token_contract':'corgi', 'token_id': 3})
+     *
+     * escrow calls
+     *
+     *    - sausage::transfer_from({'owner_id':'jerry', 'new_owner_id:'escrow', 'token_id': 5})
+     *               \
+     *                `- callback escrow::on_transfer({'owner_id':'jerry', 'token_contract':'sausage', 'token_id': 5})
+     */
 
-      it('works with many messages', () => {
-        let expectedMessages = [];
+    describe('Phase 2', () => {
+      it('escrow should be able to take control of tokens in trade', () => {
+        // alice owns corgi tokens
+        const { data: tokenId } = assign(accounts.corgis, accounts.alice)
 
-        Object.keys(accounts).map((user, idx) => {
-          let signer = accounts[user];
-          let message = messages[idx];
+        // and grants access to the escrow account (to transfer her corgi tokens on her behalf)
+        grant(accounts.corgis, accounts.alice, accounts.escrow)
 
-          sendMessage(signer, { message });
-          expectedMessages.push(`${signer.account_id} says ${message}`);
-        });
+        const beforeTransfer = {
+          state: accounts.corgis.state,
+          owner: getOwner(accounts.corgis, tokenId),
+        }
 
+        // escrow account takes control of tokens from owner account
         const transaction = {
-          contract: nep4,
+          signer: accounts.escrow,
+          contract: accounts.corgis,
           method: {
-            type: 'call',
-            name: 'getAllMessages',
+            type: 'change',
+            name: 'transfer_from',
+            params: {
+              owner_id: accounts.alice.account_id,
+              new_owner_id: accounts.escrow.account_id,
+              token_id: tokenId,
+            },
           },
-        };
+        }
 
-        // useful for visualizing contract state
-        // console.log(greeting.state);
+        simulate(transaction)
 
-        const { result, data } = simulate(transaction);
+        const afterTransfer = {
+          state: accounts.corgis.state,
+          owner: getOwner(accounts.corgis, tokenId),
+        }
 
-        expectedMessages.map((message) => {
-          expectToFind(message, {
-            inArray: data,
-          });
-        });
+        /*
+        console.log(beforeTransfer, afterTransfer)
+        
+        {
+          state: { 'a::1': 'alice', 'b::alice': 'escrow', c: 2 },
+          owner: 'alice'
+        } 
+        {
+          state: { 'a::1': 'escrow', 'b::alice': 'escrow', c: 2 },
+          owner: 'escrow'
+        }
+        
+        */
 
-        expectToFind('getAllMessages() was called', {
-          inArray: result.outcome.logs,
-        });
-      });
-    });
-  });
+        // expect that alice owned a corgi token
+        expect(beforeTransfer.owner).toBe(accounts.alice.account_id)
+        // which is now owned by the escrow account
+        expect(afterTransfer.owner).toBe(accounts.escrow.account_id)
+      })
 
-  describe('Call methods', () => {
-    it('responds to sayMyName()', () => {
-      const transaction = {
-        signer: accounts.alice,
-        contract: nep4,
-        method: {
-          type: 'call',
-          name: 'sayMyName',
-        },
-      };
+      it('escrow should receive callback after taking control of tokens in trade', () => {
+        // alice owns corgi tokens
+        const { data: tokenId } = assign(accounts.corgis, accounts.alice)
 
-      const { data, result } = simulate(transaction);
+        // and grants access to the escrow account (to transfer her corgi tokens on her behalf)
+        grant(accounts.corgis, accounts.alice, accounts.escrow)
 
-      expect(data).toEqual(`Hello, ${accounts.alice.account_id}!`);
-      expectToFind('sayMyName() was called', {
-        inArray: result.outcome.logs,
-      });
-    });
+        // escrow account then reaches out to token contract to fetch tokens for trade
+        const transaction = {
+          signer: accounts.escrow,
+          contract: accounts.escrow,
+          method: {
+            type: 'change',
+            name: 'fetch_tokens_for_trade',
+            params: {
+              current_owner_id: accounts.alice.account_id,
+              new_owner_id: accounts.jerry.account_id,
+              token_contract: accounts.corgis.account_id,
+              token_id: tokenId,
+            },
+          },
+        }
 
-    it('responds to saveMyName()', () => {
-      const transaction = {
-        signer: accounts.alice,
-        contract: nep4,
-        method: {
-          type: 'call',
-          name: 'saveMyName',
-        },
-      };
+        const { calls } = simulate(transaction)
 
-      const { result } = simulate(transaction);
+        // we can check for call length
+        expect(calls).toHaveLength(3)
 
-      // 'c2VuZGVy' is ' in base64
-      // 'YWxpY2U=' is 'alice' in base64
-      expect(result.state).toHaveProperty('sender', 'alice');
+        // we can check for a series of ordered cross-contract calls
+        ;[
+          '0.escrow.fetch_tokens_for_trade',
+          '1.corgis.transfer_from',
+          '2.escrow.on_transfer',
+        ].map((crossContractCall, index) => {
+          const call = calls[index]
+          const [order, contract, method] = crossContractCall.split('.')
+          expect(call).toHaveProperty('index', parseInt(order))
+          expect(call).toHaveProperty('account_id', contract)
+          expect(call).toHaveProperty('method_name', method)
+        })
 
-      expectToFind('saveMyName() was called', {
-        inArray: result.outcome.logs,
-      });
-    });
+        // we can check for each of the calls independently, with or without index (order)
+        expect(calls).toContainEqual( expect.objectContaining({ index: 0, account_id: 'escrow', method_name: 'fetch_tokens_for_trade', }) ) // prettier-ignore
+        expect(calls).toContainEqual( expect.objectContaining({ index: 1, account_id: 'corgis', method_name: 'transfer_from', }) ) // prettier-ignore
+        expect(calls).toContainEqual( expect.objectContaining({ index: 2, account_id: 'escrow', method_name: 'on_transfer', }) ) // prettier-ignore
+      })
 
-    it('responds to saveMyMessage()', () => {
-      const transaction = {
-        signer: accounts.alice,
-        contract: nep4,
-        method: {
-          type: 'call',
-          name: 'saveMyMessage',
-          params: { message: 'awesomesauce' },
-        },
-      };
+      it('escrow should store data received by callback for use in next phase', () => {
+        // alice owns corgi tokens
+        const { data: tokenId } = assign(accounts.corgis, accounts.alice)
 
-      const { data, result } = simulate(transaction);
+        // and grants access to the escrow account (to transfer her corgi tokens on her behalf)
+        grant(accounts.corgis, accounts.alice, accounts.escrow)
 
-      expect(data).toBeTruthy();
+        // then escrow account fetches alice's tokens to prepare for trade
+        fetch(accounts.alice, accounts.jerry, accounts.corgis, tokenId, accounts.escrow) // prettier-ignore
 
-      // 'bWVzc2FnZXM6Oi0x' is  in base64
-      // 'YWxpY2Ugc2F5cyBhd2Vzb21lc2F1Y2Uh' is 'alice says awesomesauce' in base64
-      expect(result.state).toHaveProperty(
-        'messages::-1',
-        'alice says awesomesauce'
-      );
+        expect(Object.values(accounts.escrow.state)[0]).toMatchObject({
+          new_owner_id: accounts.jerry.account_id,
+          owner_id: accounts.alice.account_id,
+          status: 0,
+          token_contract: accounts.corgis.account_id,
+          token_id: tokenId,
+        })
+      })
+    })
+  })
 
-      expectToFind('saveMyMessage() was called', {
-        inArray: result.outcome.logs,
-      });
-    });
-    */
+  /**
+   * ----------------------------------------------------------------------------
+   * (Phase 3) escrow executes transfer to traders
+   * ----------------------------------------------------------------------------
+   *
+   * In this phase, the escrow account executes the transfer of tokens between
+   * accounts using a single batch transaction which will either succeed completely
+   * or rollback.
+   *
+   * This protects against timing issues with account availability and network issues
+   *
+   * Tx rollback conditions include (??? TODO ??? idk if this list is correct, useful, etc)
+   * - trader account was deleted between phase 2 and phase 3
+   * - network is unresponsive or other runtime error
+   *
+   *
+   * sample:
+   * -------
+   *
+   * escrow calls (in one Promise)
+   *
+   *    - corgi::transfer_from({'owner_id':'escrow', 'new_owner_id:'jerry', 'token_id': 3})
+   *               \
+   *                `- callback escrow::on_transfer({'owner_id':'jerry', 'token_contract:'corgi', 'token_id': 3})
+   *
+   *    - sausage::transfer_from({'owner_id':'escrow', 'new_owner_id:'alice', 'token_id': 5})
+   *               \
+   *                `- callback escrow::on_transfer({'owner_id':'alice', 'token_contract':'sausage', 'token_id': 5})
+   */
 })
 
 // ---------------------------------------------------------------
@@ -333,7 +365,7 @@ describe('NEP4 Escrow Simulation', () => {
 // ---------------------------------------------------------------
 
 function assign(aToken, toAccount) {
-  let transaction = {
+  const transaction = {
     signer: toAccount,
     contract: aToken,
     method: {
@@ -346,9 +378,75 @@ function assign(aToken, toAccount) {
   return simulate(transaction)
 }
 
+function grant(tokenAccess, forOwner, toEscrow) {
+  const transaction = {
+    signer: forOwner,
+    contract: tokenAccess,
+    method: {
+      type: 'change',
+      name: 'grant_access',
+      params: { escrow_account_id: toEscrow.account_id },
+    },
+  }
+
+  return simulate(transaction)
+}
+
+function fetch(owner, new_owner, token, id, toEscrow) {
+  const transaction = {
+    signer: toEscrow,
+    contract: toEscrow,
+    method: {
+      type: 'change',
+      name: 'fetch_tokens_for_trade',
+      params: {
+        current_owner_id: owner.account_id,
+        new_owner_id: new_owner.account_id,
+        token_contract: token.account_id,
+        token_id: id,
+      },
+    },
+  }
+
+  return simulate(transaction)
+}
+
+function getOwner(ofToken, id) {
+  const transaction = {
+    contract: ofToken,
+    method: {
+      type: 'view',
+      name: 'get_token_owner',
+      params: { token_id: id },
+    },
+  }
+
+  const { data } = simulate(transaction)
+  return data
+}
+
 // ---------------------------------------------------------------
 // Simulation Testing Helpers
 // ---------------------------------------------------------------
+
+function setup(accounts) {
+  return accounts
+    .map((account) => {
+      switch (typeof account) {
+        case 'string':
+          return runtime.newAccount(account)
+          break
+        case 'object':
+          let [name, contract] = Object.entries(account)[0]
+          return runtime.newAccount(name, contract)
+      }
+    })
+    .reduce((acc, user) => {
+      acc[user.account_id] = user
+      return acc
+    }, {})
+}
+
 function expectToFind(target, { inArray, inObject }, partial = true) {
   if (partial) {
     const string = JSON.stringify(inArray || inObject)
@@ -365,7 +463,12 @@ function expectToFind(target, { inArray, inObject }, partial = true) {
   }
 }
 
-function simulate({ signer, contract, method }, printResponse = false) {
+// prettier-ignore
+function simulate({ signer, contract, method, config = {}}, printResponse = false) {
+  for (let [key, value] of Object.entries(config)) {
+    runtime[key] = value
+  }
+
   let response
 
   if (signer) {
@@ -384,7 +487,7 @@ function simulate({ signer, contract, method }, printResponse = false) {
   }
 
   return {
-    calls: response.calls,
+    calls: response.calls && Object.values(response.calls),
     data: response.return_data,
     error: response.err,
     logs: response.result.outcome.logs,
@@ -413,4 +516,75 @@ function getContext() {
     signer_account_pk: 'KuTCtARNzxZQ3YvXDeLjx83FDqxv2SdQTSbiq876zR7',
     account_locked_balance: '10',
   }
+}
+
+// prettier-ignore
+function resolveError(message) {
+  return {
+    GasLimitExceeded: 'Exceeded the maximum amount of gas allowed to burn per contract',
+    MethodEmptyName: 'Method name is empty',
+    WasmerCompileError: 'Wasmer compilation error: {{msg}}',
+    GuestPanic: 'Smart contract panicked: {{panic_msg}}',
+    Memory: 'Error creating Wasm memory',
+    GasExceeded: 'Exceeded the prepaid gas',
+    MethodUTF8Error: 'Method name is not valid UTF8 string',
+    BadUTF16: 'String encoding is bad UTF-16 sequence',
+    WasmTrap: 'WebAssembly trap: {{msg}}',
+    GasInstrumentation: 'Gas instrumentation failed or contract has denied instructions.',
+    InvalidPromiseIndex: '{{promise_idx}} does not correspond to existing promises',
+    InvalidPromiseResultIndex: 'Accessed invalid promise result index: {{result_idx}}',
+    Deserialization: 'Error happened while deserializing the module',
+    MethodNotFound: 'Contract method is not found',
+    InvalidRegisterId: 'Accessed invalid register id: {{register_id}}',
+    InvalidReceiptIndex: 'VM Logic returned an invalid receipt index: {{receipt_index}}',
+    EmptyMethodName: 'Method name is empty in contract call',
+    CannotReturnJointPromise: 'Returning joint promise is currently prohibited',
+    StackHeightInstrumentation: 'Stack instrumentation failed',
+    CodeDoesNotExist: 'Cannot find contract code for account {{account_id}}',
+    MethodInvalidSignature: 'Invalid method signature',
+    IntegerOverflow: 'Integer overflow happened during contract execution',
+    MemoryAccessViolation: 'MemoryAccessViolation',
+    InvalidIteratorIndex: 'Iterator index {{iterator_index}} does not exist',
+    IteratorWasInvalidated: 'Iterator {{iterator_index}} was invalidated after its creation by performing a mutable operation on trie',
+    InvalidAccountId: 'VM Logic returned an invalid account id',
+    Serialization: 'Error happened while serializing the module',
+    CannotAppendActionToJointPromise: 'Actions can only be appended to non-joint promise.',
+    InternalMemoryDeclared: 'Internal memory declaration has been found in the module',
+    Instantiate: 'Error happened during instantiation',
+    ProhibitedInView: '{{method_name}} is not allowed in view calls',
+    InvalidMethodName: 'VM Logic returned an invalid method name',
+    BadUTF8: 'String encoding is bad UTF-8 sequence',
+    BalanceExceeded: 'Exceeded the account balance',
+    LinkError: 'Wasm contract link error: {{msg}}',
+    InvalidPublicKey: 'VM Logic provided an invalid public key',
+    ActorNoPermission: "Actor {{actor_id}} doesn't have permission to account {{account_id}} to complete the action",
+    RentUnpaid: "The account {{account_id}} wouldn't have enough balance to pay required rent {{amount}}",
+    LackBalanceForState: "The account {{account_id}} wouldn't have enough balance to cover storage, required to have {{amount}}",
+    ReceiverMismatch: 'Wrong AccessKey used for transaction: transaction is sent to receiver_id={{tx_receiver}}, but is signed with function call access key that restricted to only use with receiver_id={{ak_receiver}}. Either change receiver_id in your transaction or switch to use a FullAccessKey.',
+    CostOverflow: 'Transaction gas or balance cost is too high',
+    InvalidSignature: 'Transaction is not signed with the given public key',
+    AccessKeyNotFound: 'Signer "{{account_id}}" doesn\'t have access key with the given public_key {{public_key}}',
+    NotEnoughBalance: 'Sender {{signer_id}} does not have enough balance {} for operation costing {}',
+    NotEnoughAllowance: 'Access Key {account_id}:{public_key} does not have enough balance {{allowance}} for transaction costing {{cost}}',
+    Expired: 'Transaction has expired',
+    DeleteAccountStaking: 'Account {{account_id}} is staking and can not be deleted',
+    SignerDoesNotExist: 'Signer {{signer_id}} does not exist',
+    TriesToStake: 'Account {{account_id}} tries to stake {{stake}}, but has staked {{locked}} and only has {{balance}}',
+    AddKeyAlreadyExists: 'The public key {{public_key}} is already used for an existing access key',
+    InvalidSigner: 'Invalid signer account ID {{signer_id}} according to requirements',
+    CreateAccountNotAllowed: "The new account_id {{account_id}} can't be created by {{predecessor_id}}",
+    RequiresFullAccess: 'The transaction contains more then one action, but it was signed with an access key which allows transaction to apply only one specific action. To apply more then one actions TX must be signed with a full access key',
+    TriesToUnstake: 'Account {{account_id}} is not yet staked, but tries to unstake',
+    InvalidNonce: 'Transaction nonce {{tx_nonce}} must be larger than nonce of the used access key {{ak_nonce}}',
+    AccountAlreadyExists: "Can't create a new account {{account_id}}, because it already exists",
+    InvalidChain: "Transaction parent block hash doesn't belong to the current chain",
+    AccountDoesNotExist: "Can't complete the action because account {{account_id}} doesn't exist",
+    MethodNameMismatch: "Transaction method name {{method_name}} isn't allowed by the access key",
+    DeleteAccountHasRent: "Account {{account_id}} can't be deleted. It has {balance{}}, which is enough to cover the rent",
+    DeleteAccountHasEnoughBalance: "Account {{account_id}} can't be deleted. It has {balance{}}, which is enough to cover it's storage",
+    InvalidReceiver: 'Invalid receiver account ID {{receiver_id}} according to requirements',
+    DeleteKeyDoesNotExist: "Account {{account_id}} tries to remove an access key that doesn't exist",
+    Timeout: 'Timeout exceeded',
+    Closed: 'Connection closed',
+  }[message]
 }

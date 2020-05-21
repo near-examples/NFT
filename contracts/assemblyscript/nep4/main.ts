@@ -7,7 +7,7 @@ import { logging, PersistentMap, storage, context } from 'near-sdk-as'
 type AccountId = string
 type TokenId = u64
 
-export const MAX_SUPPLY = u64(1)
+export const MAX_SUPPLY = u64(1_000)
 
 const tokenToOwner = new PersistentMap<TokenId, AccountId>('a')
 const escrowAccess = new PersistentMap<AccountId, AccountId>('b')
