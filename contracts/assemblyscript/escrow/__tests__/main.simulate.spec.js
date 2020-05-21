@@ -327,37 +327,40 @@ describe('NEP4 Escrow Simulation', () => {
         })
       })
     })
-  })
 
-  /**
-   * ----------------------------------------------------------------------------
-   * (Phase 3) escrow executes transfer to traders
-   * ----------------------------------------------------------------------------
-   *
-   * In this phase, the escrow account executes the transfer of tokens between
-   * accounts using a single batch transaction which will either succeed completely
-   * or rollback.
-   *
-   * This protects against timing issues with account availability and network issues
-   *
-   * Tx rollback conditions include (??? TODO ??? idk if this list is correct, useful, etc)
-   * - trader account was deleted between phase 2 and phase 3
-   * - network is unresponsive or other runtime error
-   *
-   *
-   * sample:
-   * -------
-   *
-   * escrow calls (in one Promise)
-   *
-   *    - corgi::transfer_from({'owner_id':'escrow', 'new_owner_id:'jerry', 'token_id': 3})
-   *               \
-   *                `- callback escrow::on_transfer({'owner_id':'jerry', 'token_contract:'corgi', 'token_id': 3})
-   *
-   *    - sausage::transfer_from({'owner_id':'escrow', 'new_owner_id:'alice', 'token_id': 5})
-   *               \
-   *                `- callback escrow::on_transfer({'owner_id':'alice', 'token_contract':'sausage', 'token_id': 5})
-   */
+    /**
+     * ----------------------------------------------------------------------------
+     * (Phase 3) escrow executes transfer to traders
+     * ----------------------------------------------------------------------------
+     *
+     * In this phase, the escrow account executes the transfer of tokens between
+     * accounts using a single batch transaction which will either succeed completely
+     * or rollback.
+     *
+     * This protects against timing issues with account availability and network issues
+     *
+     * Tx rollback conditions include (??? TODO ??? idk if this list is correct, useful, etc)
+     * - trader account was deleted between phase 2 and phase 3
+     * - network is unresponsive or other runtime error
+     *
+     *
+     * sample:
+     * -------
+     *
+     * escrow calls (in one Promise)
+     *
+     *    - corgi::transfer_from({'owner_id':'escrow', 'new_owner_id:'jerry', 'token_id': 3})
+     *               \
+     *                `- callback escrow::on_transfer({'owner_id':'jerry', 'token_contract:'corgi', 'token_id': 3})
+     *
+     *    - sausage::transfer_from({'owner_id':'escrow', 'new_owner_id:'alice', 'token_id': 5})
+     *               \
+     *                `- callback escrow::on_transfer({'owner_id':'alice', 'token_contract':'sausage', 'token_id': 5})
+     */
+    describe('Phase 3', () => {
+      xit('escrow should be able to coordinate a full exchange of tokens', () => {})
+    })
+  })
 })
 
 // ---------------------------------------------------------------
