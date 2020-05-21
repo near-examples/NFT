@@ -91,8 +91,6 @@ impl NEP4 for NonFungibleTokenBasic {
         };
         let escrow_hash = env::sha256(escrow_account_id.as_bytes());
         if existing_set.contains(&escrow_hash) {
-            // TODO: remove this. This is a temporary workaround until the underlying root cause is addressed.
-            workaround();
             existing_set.remove(&escrow_hash);
             self.account_gives_access.insert(&signer_hash, &existing_set);
             env::log(b"Successfully removed access.")
@@ -106,8 +104,6 @@ impl NEP4 for NonFungibleTokenBasic {
         if !self.check_access(token_owner_account_id) {
             env::panic(b"Attempt to transfer a token with no access.")
         }
-        // TODO: remove this. This is a temporary workaround until the underlying root cause is addressed.
-        workaround();
         self.token_to_account.insert(&token_id, &new_owner_id);
     }
 
@@ -157,23 +153,6 @@ impl NonFungibleTokenBasic {
     }
 }
 
-// This is a workaround for https://github.com/near/near-sdk-rs/issues/159
-// This is a very temporary solution until this issue is fixed. We apologize for the
-// temporary need to have this.
-fn workaround() {
-    // copy pasted basic usage from tests
-    // https://github.com/near/near-sdk-rs/blob/master/near-sdk/src/collections/map.rs
-    // https://github.com/near/near-sdk-rs/blob/master/near-sdk/src/collections/set.rs
-    let mut map: Map<u64, u64> = Map::default();
-    let key1 = 1u64;
-    let value1 = 2u64;
-    map.insert(&key1, &value1);
-
-    let mut set: Set<u64> = Set::default();
-    let key1 = 1u64;
-    set.insert(&key1);
-}
-
 // use the attribute below for unit tests
 #[cfg(test)]
 mod tests {
@@ -181,12 +160,22 @@ mod tests {
     use near_sdk::MockedBlockchain;
     use near_sdk::{testing_env, VMContext};
 
+    fn joe() -> AccountId {
+        "joe.testnet".to_string()
+    }
+    fn robert() -> AccountId {
+        "robert.testnet".to_string()
+    }
+    fn mike() -> AccountId {
+        "mike.testnet".to_string()
+    }
+
     // part of writing unit tests is setting up a mock context
     // this is a useful list to peek at when wondering what's available in env::*
-    fn get_context(signer_account_id: String) -> VMContext {
+    fn get_context(signer_account_id: String, storage_usage: u64) -> VMContext {
         VMContext {
             current_account_id: "alice.testnet".to_string(),
-            signer_account_id: signer_account_id,
+            signer_account_id,
             signer_account_pk: vec![0, 1, 2],
             predecessor_account_id: "jane.testnet".to_string(),
             input: vec![],
@@ -194,7 +183,7 @@ mod tests {
             block_timestamp: 0,
             account_balance: 0,
             account_locked_balance: 0,
-            storage_usage: 0,
+            storage_usage,
             attached_deposit: 0,
             prepaid_gas: 10u64.pow(18),
             random_seed: vec![0, 1, 2],
@@ -206,16 +195,16 @@ mod tests {
 
     #[test]
     fn grant_access() {
-        let context = get_context("robert.testnet".to_string());
+        let context = get_context(robert(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
+        let mut contract = NonFungibleTokenBasic::new(robert());
         let length_before = contract.account_gives_access.len();
         assert_eq!(0, length_before, "Expected empty account access Map.");
-        contract.grant_access("mike.testnet".to_string());
-        contract.grant_access("kevin.testnet".to_string());
+        contract.grant_access(mike());
+        contract.grant_access(joe());
         let length_after = contract.account_gives_access.len();
         assert_eq!(1, length_after, "Expected an entry in the account's access Map.");
-        let signer_hash = env::sha256("robert.testnet".as_bytes());
+        let signer_hash = env::sha256(robert().as_bytes());
         let num_grantees = contract.account_gives_access.get(&signer_hash).unwrap();
         assert_eq!(2, num_grantees.len(), "Expected two accounts to have access to signer.");
     }
@@ -225,42 +214,46 @@ mod tests {
         expected = r#"Access does not exist."#
     )]
     fn revoke_access_and_panic() {
-        let context = get_context("robert.testnet".to_string());
+        let context = get_context(robert(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
-        contract.revoke_access("kevin.testnet".to_string());
+        let mut contract = NonFungibleTokenBasic::new(robert());
+        contract.revoke_access(joe());
     }
 
     #[test]
     fn add_revoke_access_and_check() {
         // Joe grants access to Robert
-        testing_env!(get_context("joe.testnet".to_string()));
-        let mut contract = NonFungibleTokenBasic::new("joe.testnet".to_string());
-        contract.grant_access("robert.testnet".to_string());
+        let mut context = get_context(joe(), 0);
+        testing_env!(context);
+        let mut contract = NonFungibleTokenBasic::new(joe());
+        contract.grant_access(robert());
 
         // does Robert have access to Joe's account? Yes.
-        testing_env!(get_context("robert.testnet".to_string()));
-        let mut robert_has_access = contract.check_access("joe.testnet".to_string());
+        context = get_context(robert(), env::storage_usage());
+        testing_env!(context);
+        let mut robert_has_access = contract.check_access(joe());
         assert_eq!(true, robert_has_access, "After granting access, check_access call failed.");
 
         // Joe revokes access from Robert
-        testing_env!(get_context("joe.testnet".to_string()));
-        contract.revoke_access("robert.testnet".to_string());
+        context = get_context(joe(), env::storage_usage());
+        testing_env!(context);
+        contract.revoke_access(robert());
 
         // does Robert have access to Joe's account? No
-        testing_env!(get_context("robert.testnet".to_string()));
-        robert_has_access = contract.check_access("joe.testnet".to_string());
+        context = get_context(robert(), env::storage_usage());
+        testing_env!(context);
+        robert_has_access = contract.check_access(joe());
         assert_eq!(false, robert_has_access, "After revoking access, check_access call failed.");
     }
 
     #[test]
     fn mint_token_get_token_owner() {
-        let context = get_context("robert.testnet".to_string());
+        let context = get_context(robert(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
-        contract.mint_token("mike.testnet".to_string(), 19u64);
+        let mut contract = NonFungibleTokenBasic::new(robert());
+        contract.mint_token(mike(), 19u64);
         let owner = contract.get_token_owner(19u64);
-        assert_eq!("mike.testnet".to_string(), owner, "Unexpected token owner.");
+        assert_eq!(mike(), owner, "Unexpected token owner.");
     }
 
     #[test]
@@ -270,13 +263,12 @@ mod tests {
     fn transfer_with_no_access_should_fail() {
         // Mike owns the token.
         // Robert is trying to transfer it to Robert's account without having access.
-        let context = get_context("robert.testnet".to_string());
+        let context = get_context(robert(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
+        let mut contract = NonFungibleTokenBasic::new(robert());
         let token_id = 19u64;
-        contract.mint_token("mike.testnet".to_string(), token_id);
-
-        contract.transfer("robert.testnet".to_string(), token_id);
+        contract.mint_token(mike(), token_id);
+        contract.transfer(robert(), token_id.clone());
     }
 
     #[test]
@@ -284,21 +276,22 @@ mod tests {
         // Escrow account: robert.testnet
         // Owner account: mike.testnet
         // New owner account: joe.testnet
-
-        testing_env!(get_context("mike.testnet".to_string()));
-        let mut contract = NonFungibleTokenBasic::new("mike.testnet".to_string());
+        let mut context = get_context(mike(), 0);
+        testing_env!(context);
+        let mut contract = NonFungibleTokenBasic::new(mike());
         let token_id = 19u64;
-        contract.mint_token("mike.testnet".to_string(), token_id);
+        contract.mint_token(mike(), token_id);
         // Mike grants access to Robert
-        contract.grant_access("robert.testnet".to_string());
+        contract.grant_access(robert());
 
         // Robert transfers the token to Joe
-        testing_env!(get_context("robert.testnet".to_string()));
-        contract.transfer("joe.testnet".to_string(), token_id);
+        context = get_context(robert(), env::storage_usage());
+        testing_env!(context);
+        contract.transfer(joe(), token_id.clone());
 
         // Check new owner
-        let owner = contract.get_token_owner(token_id);
-        assert_eq!("joe.testnet".to_string(), owner, "Token was not transferred after transfer call with escrow.");
+        let owner = contract.get_token_owner(token_id.clone());
+        assert_eq!(joe(), owner, "Token was not transferred after transfer call with escrow.");
     }
 
     #[test]
@@ -306,23 +299,16 @@ mod tests {
         // Owner account: robert.testnet
         // New owner account: joe.testnet
 
-        testing_env!(get_context("robert.testnet".to_string()));
-        let mut contract = NonFungibleTokenBasic::new("robert.testnet".to_string());
+        testing_env!(get_context(robert(), 0));
+        let mut contract = NonFungibleTokenBasic::new(robert());
         let token_id = 19u64;
-        contract.mint_token("robert.testnet".to_string(), token_id);
+        contract.mint_token(robert(), token_id);
 
         // Robert transfers the token to Joe
-        contract.transfer("joe.testnet".to_string(), token_id);
+        contract.transfer(joe(), token_id.clone());
 
         // Check new owner
-        let owner = contract.get_token_owner(token_id);
-        assert_eq!("joe.testnet".to_string(), owner, "Token was not transferred after transfer call with escrow.");
+        let owner = contract.get_token_owner(token_id.clone());
+        assert_eq!(joe(), owner, "Token was not transferred after transfer call with escrow.");
     }
-
-
-    // #[test]
-    // #[should_panic(
-    //     expected = r#"No access entries for this account."#
-    // )]
-    // good next test
 }
