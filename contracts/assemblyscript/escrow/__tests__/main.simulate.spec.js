@@ -14,6 +14,7 @@ describe('NEP4 Escrow Simulation', () => {
       // user accounts are strings of the format 'name'
       'alice',
       'jerry',
+      'escrowilla',
       // contract accounts are objects of the format { name: contract }
       { nep4: NEP4_WASM_FILE },
       { corgis: NEP4_WASM_FILE },
@@ -127,7 +128,37 @@ describe('NEP4 Escrow Simulation', () => {
     })
   })
 
-  describe('Token Transfer', () => {
+  describe('Escrow as Trusted Human conducting Token Transfer', () => {
+    describe('Phase 1-2-3', () => {
+      it('owners should grant access to escrow account', () => {
+        // alice owns corgi tokens
+        const { data: aliceToken } = assign(accounts.corgis, accounts.alice)
+        // and grants access to the escrow account (to transfer her corgi tokens on her behalf)
+        grant(accounts.corgis, accounts.alice, accounts.escrowilla)
+
+        // jerry owns sausage tokens
+        const { data: jerryToken } = assign(accounts.sausages, accounts.jerry)
+        // and grants access to the escrow account (to transfer her corgi tokens on her behalf)
+        grant(accounts.sausages, accounts.jerry, accounts.escrowilla)
+
+        // escrow then conducts exchange
+        transfer(accounts.escrowilla, accounts.alice, accounts.jerry, accounts.corgis, aliceToken) // prettier-ignore
+        transfer(accounts.escrowilla, accounts.jerry, accounts.alice, accounts.sausages, jerryToken) // prettier-ignore
+
+        const ownership = {
+          corgiTokenOwner: getOwner(accounts.corgis, aliceToken),
+          sausageTokenOwner: getOwner(accounts.sausages, jerryToken),
+        }
+
+        // expect that jerry now owns the corgi token
+        expect(ownership.corgiTokenOwner).toBe(accounts.jerry.account_id)
+        // expect that alice now owns the sausage token
+        expect(ownership.sausageTokenOwner).toBe(accounts.alice.account_id)
+      })
+    })
+  })
+
+  describe('Escrow as Trustless Contract conducting Token Transfer', () => {
     /**
      * ----------------------------------------------------------------------------
      * (Phase 1) traders grant access to escrow account
@@ -389,6 +420,24 @@ function grant(tokenAccess, forOwner, toEscrow) {
       type: 'change',
       name: 'grant_access',
       params: { escrow_account_id: toEscrow.account_id },
+    },
+  }
+
+  return simulate(transaction)
+}
+
+function transfer(byEscrow, fromOwner, toNewOwner, aToken, id) {
+  const transaction = {
+    signer: byEscrow,
+    contract: aToken,
+    method: {
+      type: 'change',
+      name: 'transfer_from',
+      params: {
+        owner_id: fromOwner.account_id,
+        new_owner_id: toNewOwner.account_id,
+        token_id: id,
+      },
     },
   }
 
