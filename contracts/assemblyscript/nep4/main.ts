@@ -93,7 +93,7 @@ export function get_token_owner(token_id: TokenId): string {
 /********************/
 
 // removing last item from PersistentMap throws error when testing; this works around it
-function workaround() {
+function workaround(): void {
   escrowAccess.set('garbage', 'nonsense')
 }
 
