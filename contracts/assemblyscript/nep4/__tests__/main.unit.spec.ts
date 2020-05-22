@@ -2,7 +2,6 @@ import * as nonSpec from '../main'
 import {
   grant_access,
   revoke_access,
-  transfer_from,
   transfer,
   check_access,
   get_token_owner,
@@ -49,43 +48,8 @@ describe('revoke_access', () => {
   })
 })
 
-describe('transfer_from', () => {
-  it('transfers the given `token_id` from the given `owner_id` to  `new_owner_id`', () => {
-    const aliceToken = nonSpec.mint_to(alice)
-
-    Context.setPredecessor_account_id(alice)
-    grant_access(bob)
-
-    Context.setPredecessor_account_id(bob)
-    transfer_from(alice, carol, aliceToken)
-
-    expect(get_token_owner(aliceToken)).toBe(carol)
-    expect(get_token_owner(aliceToken)).not.toBe(alice)
-    expect(get_token_owner(aliceToken)).not.toBe(bob)
-  })
-
-  it('requires the caller of the function to have access to the token.', () => {
-    expect(() => {
-      const aliceToken = nonSpec.mint_to(alice)
-      Context.setPredecessor_account_id(bob)
-
-      transfer_from(alice, bob, aliceToken);
-    }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
-  })
-
-  it('requires the caller of the function to not have ownership of the token', () => {
-    expect(() => {
-      const aliceToken = nonSpec.mint_to(alice)
-      Context.setPredecessor_account_id(alice)
-
-      transfer_from(alice, bob, aliceToken);
-    }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
-  })
-})
-
 describe('transfer', () => {
-  it('transfers the given `token_id` to the given `owner_id`', () => {
-
+  it('allows owner to transfer given `token_id` to given `owner_id`', () => {
     const aliceToken = nonSpec.mint_to(alice)
     Context.setPredecessor_account_id(alice)
 
@@ -98,13 +62,33 @@ describe('transfer', () => {
     expect(get_token_owner(aliceToken)).not.toBe(alice)
   })
 
-  it('requires the caller of the function to have access to the token', () => {
+  it('allows escrow to transfer given `token_id` to given `owner_id`', () => {
+    // alice grants access to bob
+    Context.setPredecessor_account_id(alice)
+    grant_access(bob)
+
+    // alice has a token
+    const aliceToken = nonSpec.mint_to(alice)
+
+    expect(get_token_owner(aliceToken)).toBe(alice)
+    expect(get_token_owner(aliceToken)).not.toBe(bob)
+
+    // bob transfers to himself
+    Context.setPredecessor_account_id(bob)
+    transfer(bob, aliceToken)
+
+    expect(get_token_owner(aliceToken)).toBe(bob)
+    expect(get_token_owner(aliceToken)).not.toBe(alice)
+  })
+
+  it('prevents anyone else from transferring the token', () => {
     expect(() => {
       const aliceToken = nonSpec.mint_to(alice)
+
       Context.setPredecessor_account_id(bob)
 
       transfer(bob, aliceToken);
-    }).toThrow(nonSpec.ERROR_CLAIMED_OWNER_DOES_NOT_OWN_TOKEN)
+    }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
   })
 })
 
