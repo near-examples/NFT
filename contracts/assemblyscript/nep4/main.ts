@@ -7,7 +7,7 @@ import { logging, PersistentMap, storage, context } from 'near-sdk-as'
 type AccountId = string
 type TokenId = u64
 
-export const MAX_SUPPLY = u64(1_000)
+export const MAX_SUPPLY = u64(10)
 
 const tokenToOwner = new PersistentMap<TokenId, AccountId>('a')
 const escrowAccess = new PersistentMap<AccountId, AccountId>('b')
@@ -17,27 +17,27 @@ const TOTAL_SUPPLY = 'c'
 /* ERROR MESSAGES */
 /******************/
 
-export const ERROR_NO_ESCROW_REGISTERED = "Caller has no escrow registered."
-export const ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION = "Caller ID does not match expectation."
-export const ERROR_MAXIMUM_TOKEN_LIMIT_REACHED = "Maximum token limit reached."
+export const ERROR_NO_ESCROW_REGISTERED = 'Caller has no escrow registered'
+export const ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION = 'Caller ID does not match expectation'
+export const ERROR_MAXIMUM_TOKEN_LIMIT_REACHED = 'Maximum token limit reached'
 
 /******************/
 /* CHANGE METHODS */
 /******************/
 
-// Grant the access to the given `accountId` for all tokens that account has.
+// Grant the access to the given `accountId` for all tokens that account has
 export function grant_access(escrow_account_id: string): void {
   escrowAccess.set(context.predecessor, escrow_account_id)
 }
 
-// Revoke the access to the given `accountId` for all tokens that account has.
+// Revoke the access to the given `accountId` for all tokens that account has
 export function revoke_access(escrow_account_id: string): void {
   escrowAccess.delete(context.predecessor)
 }
 
-// Transfer the given `token_id` to the given `new_owner_id`.  Account `new_owner_id` becomes the new owner.
+// Transfer the given `token_id` to the given `new_owner_id`.  Account `new_owner_id` becomes the new owner
 // Requirements:
-// * The caller of the function (`predecessor`) should own or have access to the token.
+// * The caller of the function (`predecessor`) should own or have access to the token
 export function transfer(new_owner_id: string, token_id: TokenId): void {
   const predecessor = context.predecessor
 
@@ -68,7 +68,7 @@ export function check_access(account_id: string): boolean {
   return escrow == caller
 }
 
-// Get an individual owner by given `tokenId`.
+// Get an individual owner by given `tokenId`
 export function get_token_owner(token_id: TokenId): string {
   return tokenToOwner.getSome(token_id)
 }

@@ -23,25 +23,23 @@ describe('grant_access', () => {
     Context.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(true)
   })
-});
+})
 
 describe('revoke_access', () => {
   it('revokes access to the given `accountId` for the given `tokenId`', () => {
+    // Prevent error `InconsistentStateError(IntegerOverflow)` thrown by near-sdk-rs
+    Context.setStorage_usage(100)
+
     const aliceToken = nonSpec.mint_to(alice)
 
     Context.setPredecessor_account_id(alice)
-    grant_access(bob);
+    grant_access(bob)
 
     Context.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(true)
 
     Context.setPredecessor_account_id(alice)
-
-    // Work around error `InconsistentStateError(IntegerOverflow)` thrown by near-sdk-rs
-    // This is being tracked in https://github.com/near/near-sdk-rs/issues/159
-    Context.setStorage_usage(100)
-
-    revoke_access(bob);
+    revoke_access(bob)
 
     Context.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(false)
@@ -87,7 +85,7 @@ describe('transfer', () => {
 
       Context.setPredecessor_account_id(bob)
 
-      transfer(bob, aliceToken);
+      transfer(bob, aliceToken)
     }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
   })
 })
@@ -124,7 +122,6 @@ describe('get_token_owner', () => {
   })
 })
 
-// not sure if these are needed?
 describe('nonSpec interface', () => {
   it('should throw if we attempt to mint more than the MAX_SUPPLY', () => {
     expect(() => {
