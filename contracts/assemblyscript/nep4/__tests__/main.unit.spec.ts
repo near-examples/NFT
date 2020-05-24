@@ -1,3 +1,4 @@
+import { VM, Context } from 'near-sdk-as'
 import * as nonSpec from '../main'
 import {
   grant_access,
@@ -6,8 +7,6 @@ import {
   check_access,
   get_token_owner,
 } from '../main'
-
-import { VM, Context } from 'near-sdk-as'
 
 const alice = 'alice'
 const bob = 'bob'
