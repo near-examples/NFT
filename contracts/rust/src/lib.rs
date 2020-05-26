@@ -68,7 +68,7 @@ impl NonFungibleTokenBasic {
 impl NEP4 for NonFungibleTokenBasic {
     fn grant_access(&mut self, escrow_account_id: AccountId) {
         let escrow_hash = env::sha256(escrow_account_id.as_bytes());
-        let signer = env::signer_account_id();
+        let signer = env::predecessor_account_id();
         let signer_hash = env::sha256(signer.as_bytes());
 
         let mut access_set = match self.account_gives_access.get(&signer_hash) {
@@ -84,7 +84,7 @@ impl NEP4 for NonFungibleTokenBasic {
     }
 
     fn revoke_access(&mut self, escrow_account_id: AccountId) {
-        let signer = env::signer_account_id();
+        let signer = env::predecessor_account_id();
         let signer_hash = env::sha256(signer.as_bytes());
         let mut existing_set = match self.account_gives_access.get(&signer_hash) {
             Some(existing_set) => existing_set,
@@ -110,13 +110,13 @@ impl NEP4 for NonFungibleTokenBasic {
 
     fn check_access(&self, account_id: AccountId) -> bool {
         let account_hash = env::sha256(account_id.as_bytes());
-        let signer = env::signer_account_id();
+        let signer = env::predecessor_account_id();
         if signer == account_id {
             return true;
         }
         match self.account_gives_access.get(&account_hash) {
             Some(access) => {
-                let signer = env::signer_account_id();
+                let signer = env::predecessor_account_id();
                 let signer_hash = env::sha256(signer.as_bytes());
                 access.contains(&signer_hash)
             },
@@ -150,7 +150,7 @@ impl NonFungibleTokenBasic {
 
     /// helper function determining contract ownership
     fn only_owner(&mut self) {
-        assert_eq!(env::signer_account_id(), self.owner_id, "Only contract owner can call this method.");
+        assert_eq!(env::predecessor_account_id(), self.owner_id, "Only contract owner can call this method.");
     }
 }
 
@@ -173,12 +173,12 @@ mod tests {
 
     // part of writing unit tests is setting up a mock context
     // this is a useful list to peek at when wondering what's available in env::*
-    fn get_context(signer_account_id: String, storage_usage: u64) -> VMContext {
+    fn get_context(predecessor_account_id: String, storage_usage: u64) -> VMContext {
         VMContext {
             current_account_id: "alice.testnet".to_string(),
-            signer_account_id,
+            signer_account_id: "jane.testnet".to_string(),
             signer_account_pk: vec![0, 1, 2],
-            predecessor_account_id: "jane.testnet".to_string(),
+            predecessor_account_id,
             input: vec![],
             block_index: 0,
             block_timestamp: 0,
