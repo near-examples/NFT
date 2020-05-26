@@ -1,3 +1,5 @@
+#![deny(warnings)]
+
 use borsh::{BorshDeserialize, BorshSerialize};
 use near_sdk::collections::Map;
 use near_sdk::collections::Set;
