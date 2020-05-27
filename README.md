@@ -16,9 +16,9 @@ Rust
 
 If you are using Gitpod, you can skip this section! Your environment is already set up 🎉
 
-  1. Make sure Rust is installed per the prerequisites in [`near-sdk-rs`](https://github.com/nearprotocol/near-sdk-rs)
-  2. Make sure you have node.js installed (we like [asdf](https://github.com/asdf-vm/asdf) for this),  then use it to install [yarn]: `npm install --global yarn` (or just `npm i -g yarn`)
-  3. Install dependencies: `yarn install` (or just `yarn`) 
+  * Make sure Rust is installed per the prerequisites in [`near-sdk-rs`](https://github.com/nearprotocol/near-sdk-rs)
+  * Make sure you have node.js installed (we like [asdf](https://github.com/asdf-vm/asdf) for this),  then use it to install [yarn]: `npm install --global yarn` (or just `npm i -g yarn`)
+  * Install dependencies: `yarn install` (or just `yarn`) 
 
 2. Explore this contract
 
