@@ -7,12 +7,12 @@ This contract implements bare-minimum functionality to satisfy the [NEP#4](https
 Notable limitations of this implementation
 ==========================================
 
-* Anyone can mint tokens (!!) until the supply is maxed out
+* Only the token owner can mint tokens.
 * You cannot give another account escrow access to a limited set of your tokens; an escrow must be trusted with all of your tokens or none at all
 * No functions to return the maximum or current supply of tokens
 * No functions to return metadata such as the name or symbol of this NFT
 * No functions (or storage primitives) to find all tokens belonging to a given account
-* Usability issues: some functions (`revoke_access`, `transfer`, `get_token_owner`) do not verify that they were given sensible inputs; if given non-existent keys, the errors they throw will not be very useful
+* Usability issues: some functions (e.g. `revoke_access`, `transfer`, `get_token_owner`) do not verify that they were given sensible inputs; if given non-existent keys, the errors they throw will not be very useful
 
 Still, if you track some of this information in an off-chain database, these limitations may be acceptable for your needs. In that case, this implementation may help reduce gas and storage costs.
 
