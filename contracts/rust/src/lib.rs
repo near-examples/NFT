@@ -382,4 +382,22 @@ mod tests {
         testing_env!(context);
         contract.transfer(joe(), token_id.clone());
     }
+
+    #[test]
+    fn transfer_with_your_own_token() {
+        // Owner account: robert.testnet
+        // New owner account: joe.testnet
+
+        testing_env!(get_context(robert(), 0));
+        let mut contract = NonFungibleTokenBasic::new(robert());
+        let token_id = 19u64;
+        contract.mint_token(robert(), token_id);
+
+        // Robert transfers the token to Joe
+        contract.transfer(joe(), token_id.clone());
+
+        // Check new owner
+        let owner = contract.get_token_owner(token_id.clone());
+        assert_eq!(joe(), owner, "Token was not transferred after transfer call with escrow.");
+    }
 }
