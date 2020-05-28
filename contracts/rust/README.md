@@ -20,4 +20,4 @@ Still, if you track some of this information in an off-chain database, these lim
 Notable additions that go beyond the specification of NEP#4
 ===========================================================
 
-`mint_token`: the spec gives no guidance or requirements on how tokens are minted/created/assigned. If this implementation of `mint_token` is close to matching your needs, feel free to ship your NFT with only minor modifications (such as caller verification). If you'd rather go with a strategy such as minting the whole supply of tokens upon deploy of the contract, or something else entirely, you may want to drastically change this behavior.
+`mint_token`: the spec gives no guidance or requirements on how tokens are minted/created/assigned. This specific implementation only allows the contract owner to mint new tokens. If this implementation of `mint_token` is close to matching your needs, feel free to ship your NFT with only minor modifications. If you'd rather go with a strategy such as minting the whole supply of tokens upon deploy of the contract, or something else entirely, you may want to drastically change this behavior.
