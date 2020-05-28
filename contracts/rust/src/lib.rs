@@ -24,7 +24,14 @@ pub trait NEP4 {
     // Transfer the given `tokenId` to the given `accountId`.  Account `accountId` becomes the new owner.
     // Requirements:
     // * The caller of the function (`predecessor_id`) should have access to the token.
-    fn transfer(&mut self, new_owner_id: AccountId, token_id: TokenId);
+    // * owner_id must actually own the token.
+    fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, token_id: TokenId); 
+
+    // Transfer the given `tokenId` to the given `accountId`.  Account `accountId` becomes the new owner.
+    // Requirements:
+    // * The caller of the function (`predecessor_id`) should be the owner of the token. Callers who have
+    // escrow access should use transfer_from.
+    fn transfer(&mut self, new_owner_id: AccountId, token_id: TokenId); 
 
     // Returns `true` or `false` based on caller of the function (`predecessor_id) having access to the token
     fn check_access(&self, account_id: AccountId) -> bool;
@@ -104,6 +111,23 @@ impl NEP4 for NonFungibleTokenBasic {
 
     fn transfer(&mut self, new_owner_id: AccountId, token_id: TokenId) {
         let token_owner_account_id = self.get_token_owner(token_id);
+        let signer = env::predecessor_account_id();
+        if signer != token_owner_account_id {
+            env::panic(b"Attempt to call transfer on tokens beloning to another account.")
+        }
+
+        if !self.check_access(token_owner_account_id) {
+            env::panic(b"Attempt to transfer a token with no access.")
+        }
+        self.token_to_account.insert(&token_id, &new_owner_id);
+    }
+
+    fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, token_id: TokenId) {
+        let token_owner_account_id = self.get_token_owner(token_id);
+        if owner_id != token_owner_account_id {
+            env::panic(b"Attempt to transfer a token from a different owner.")
+        }
+
         if !self.check_access(token_owner_account_id) {
             env::panic(b"Attempt to transfer a token with no access.")
         }
@@ -263,7 +287,7 @@ mod tests {
     #[should_panic(
         expected = r#"Attempt to transfer a token with no access."#
     )]
-    fn transfer_with_no_access_should_fail() {
+    fn transfer_from_with_no_access_should_fail() {
         // Mike owns the token.
         // Robert is trying to transfer it to Robert's account without having access.
         let context = get_context(robert(), 0);
@@ -271,11 +295,11 @@ mod tests {
         let mut contract = NonFungibleTokenBasic::new(robert());
         let token_id = 19u64;
         contract.mint_token(mike(), token_id);
-        contract.transfer(robert(), token_id.clone());
+        contract.transfer_from(mike(), robert(), token_id.clone());
     }
 
     #[test]
-    fn transfer_with_escrow_access() {
+    fn transfer_from_with_escrow_access() {
         // Escrow account: robert.testnet
         // Owner account: mike.testnet
         // New owner account: joe.testnet
@@ -290,7 +314,7 @@ mod tests {
         // Robert transfers the token to Joe
         context = get_context(robert(), env::storage_usage());
         testing_env!(context);
-        contract.transfer(joe(), token_id.clone());
+        contract.transfer_from(mike(), joe(), token_id.clone());
 
         // Check new owner
         let owner = contract.get_token_owner(token_id.clone());
@@ -298,7 +322,29 @@ mod tests {
     }
 
     #[test]
-    fn transfer_with_your_own_token() {
+    #[should_panic(
+        expected = r#"Attempt to transfer a token from a different owner."#
+    )]
+    fn transfer_from_with_escrow_access_wrong_owner_id() {
+        // Escrow account: robert.testnet
+        // Owner account: mike.testnet
+        // New owner account: joe.testnet
+        let mut context = get_context(mike(), 0);
+        testing_env!(context);
+        let mut contract = NonFungibleTokenBasic::new(mike());
+        let token_id = 19u64;
+        contract.mint_token(mike(), token_id);
+        // Mike grants access to Robert
+        contract.grant_access(robert());
+
+        // Robert transfers the token to Joe
+        context = get_context(robert(), env::storage_usage());
+        testing_env!(context);
+        contract.transfer_from(robert(), joe(), token_id.clone());
+    }
+
+    #[test]
+    fn transfer_from_with_your_own_token() {
         // Owner account: robert.testnet
         // New owner account: joe.testnet
 
@@ -308,10 +354,32 @@ mod tests {
         contract.mint_token(robert(), token_id);
 
         // Robert transfers the token to Joe
-        contract.transfer(joe(), token_id.clone());
+        contract.transfer_from(robert(), joe(), token_id.clone());
 
         // Check new owner
         let owner = contract.get_token_owner(token_id.clone());
         assert_eq!(joe(), owner, "Token was not transferred after transfer call with escrow.");
+    }
+
+    #[test]
+    #[should_panic(
+        expected = r#"Attempt to call transfer on tokens beloning to another account."#
+    )]
+    fn transfer_with_escrow_access_fails() {
+       // Escrow account: robert.testnet
+        // Owner account: mike.testnet
+        // New owner account: joe.testnet
+        let mut context = get_context(mike(), 0);
+        testing_env!(context);
+        let mut contract = NonFungibleTokenBasic::new(mike());
+        let token_id = 19u64;
+        contract.mint_token(mike(), token_id);
+        // Mike grants access to Robert
+        contract.grant_access(robert());
+
+        // Robert transfers the token to Joe
+        context = get_context(robert(), env::storage_usage());
+        testing_env!(context);
+        contract.transfer(joe(), token_id.clone());
     }
 }
