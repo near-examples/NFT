@@ -17,7 +17,7 @@ Rust
 If you are using Gitpod, you can skip this section! Your environment is already set up 🎉
 
   * Make sure Rust is installed per the prerequisites in [`near-sdk-rs`](https://github.com/nearprotocol/near-sdk-rs)
-  * Make sure you have Node.js ≥ 12 installed,  then use it to install [yarn]: `npm install --global yarn` (or just `npm i -g yarn`)
+  * Make sure you have Node.js ≥ 12 installed (https://nodejs.org),  then use it to install [yarn]: `npm install --global yarn` (or just `npm i -g yarn`)
   * Install dependencies: `yarn install` (or just `yarn`) 
 
 2. Explore this contract
@@ -45,8 +45,7 @@ _Using Gitpod? You can skip these setup steps!_
 
 To run this project locally:
 
-1. Prerequisites: Make sure you have Node.js ≥ 12 installed, then use it to install [yarn]: `npm install --global yarn` (or just
-   `npm i -g yarn`)
+1. Prerequisites: Make sure you have Node.js ≥ 12 installed (https://nodejs.org), then use it to install [yarn]: `npm install --global yarn` (or just `npm i -g yarn`)
 2. Install dependencies: `yarn install` (or just `yarn`)
 
 Now you can run all the [AssemblyScript]-related scripts listed in `package.json`! Scripts you might want to start with:
