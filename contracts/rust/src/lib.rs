@@ -21,13 +21,12 @@ pub trait NEP4 {
     // * The caller of the function (`predecessor_id`) should have access to the token.
     fn revoke_access(&mut self, escrow_account_id: AccountId);
 
-    // Transfer the given `tokenId` to the given `accountId`.  Account `accountId` becomes the new owner.
+    // Transfer the given `tokenId` to the given `accountId`. Account `accountId` becomes the new owner.
     // Requirements:
     // * The caller of the function (`predecessor_id`) should have access to the token.
-    // * owner_id must actually own the token.
     fn transfer_from(&mut self, owner_id: AccountId, new_owner_id: AccountId, token_id: TokenId); 
 
-    // Transfer the given `tokenId` to the given `accountId`.  Account `accountId` becomes the new owner.
+    // Transfer the given `tokenId` to the given `accountId`. Account `accountId` becomes the new owner.
     // Requirements:
     // * The caller of the function (`predecessor_id`) should be the owner of the token. Callers who have
     // escrow access should use transfer_from.
@@ -77,10 +76,10 @@ impl NonFungibleTokenBasic {
 impl NEP4 for NonFungibleTokenBasic {
     fn grant_access(&mut self, escrow_account_id: AccountId) {
         let escrow_hash = env::sha256(escrow_account_id.as_bytes());
-        let signer = env::predecessor_account_id();
-        let signer_hash = env::sha256(signer.as_bytes());
+        let predecessor = env::predecessor_account_id();
+        let predecessor_hash = env::sha256(predecessor.as_bytes());
 
-        let mut access_set = match self.account_gives_access.get(&signer_hash) {
+        let mut access_set = match self.account_gives_access.get(&predecessor_hash) {
             Some(existing_set) => {
                 existing_set
             },
@@ -89,20 +88,20 @@ impl NEP4 for NonFungibleTokenBasic {
             }
         };
         access_set.insert(&escrow_hash);
-        self.account_gives_access.insert(&signer_hash, &access_set);
+        self.account_gives_access.insert(&predecessor_hash, &access_set);
     }
 
     fn revoke_access(&mut self, escrow_account_id: AccountId) {
-        let signer = env::predecessor_account_id();
-        let signer_hash = env::sha256(signer.as_bytes());
-        let mut existing_set = match self.account_gives_access.get(&signer_hash) {
+        let predecessor = env::predecessor_account_id();
+        let predecessor_hash = env::sha256(predecessor.as_bytes());
+        let mut existing_set = match self.account_gives_access.get(&predecessor_hash) {
             Some(existing_set) => existing_set,
             None => env::panic(b"Access does not exist.")
         };
         let escrow_hash = env::sha256(escrow_account_id.as_bytes());
         if existing_set.contains(&escrow_hash) {
             existing_set.remove(&escrow_hash);
-            self.account_gives_access.insert(&signer_hash, &existing_set);
+            self.account_gives_access.insert(&predecessor_hash, &existing_set);
             env::log(b"Successfully removed access.")
         } else {
             env::panic(b"Did not find access for escrow ID.")
@@ -111,13 +110,9 @@ impl NEP4 for NonFungibleTokenBasic {
 
     fn transfer(&mut self, new_owner_id: AccountId, token_id: TokenId) {
         let token_owner_account_id = self.get_token_owner(token_id);
-        let signer = env::predecessor_account_id();
-        if signer != token_owner_account_id {
-            env::panic(b"Attempt to call transfer on tokens beloning to another account.")
-        }
-
-        if !self.check_access(token_owner_account_id) {
-            env::panic(b"Attempt to transfer a token with no access.")
+        let predecessor = env::predecessor_account_id();
+        if predecessor != token_owner_account_id {
+            env::panic(b"Attempt to call transfer on tokens belonging to another account.")
         }
         self.token_to_account.insert(&token_id, &new_owner_id);
     }
@@ -136,15 +131,15 @@ impl NEP4 for NonFungibleTokenBasic {
 
     fn check_access(&self, account_id: AccountId) -> bool {
         let account_hash = env::sha256(account_id.as_bytes());
-        let signer = env::predecessor_account_id();
-        if signer == account_id {
+        let predecessor = env::predecessor_account_id();
+        if predecessor == account_id {
             return true;
         }
         match self.account_gives_access.get(&account_hash) {
             Some(access) => {
-                let signer = env::predecessor_account_id();
-                let signer_hash = env::sha256(signer.as_bytes());
-                access.contains(&signer_hash)
+                let predecessor = env::predecessor_account_id();
+                let predecessor_hash = env::sha256(predecessor.as_bytes());
+                access.contains(&predecessor_hash)
             },
             None => false
         }
@@ -231,9 +226,9 @@ mod tests {
         contract.grant_access(joe());
         let length_after = contract.account_gives_access.len();
         assert_eq!(1, length_after, "Expected an entry in the account's access Map.");
-        let signer_hash = env::sha256(robert().as_bytes());
-        let num_grantees = contract.account_gives_access.get(&signer_hash).unwrap();
-        assert_eq!(2, num_grantees.len(), "Expected two accounts to have access to signer.");
+        let predecessor_hash = env::sha256(robert().as_bytes());
+        let num_grantees = contract.account_gives_access.get(&predecessor_hash).unwrap();
+        assert_eq!(2, num_grantees.len(), "Expected two accounts to have access to predecessor.");
     }
 
     #[test]
@@ -363,10 +358,10 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = r#"Attempt to call transfer on tokens beloning to another account."#
+        expected = r#"Attempt to call transfer on tokens belonging to another account."#
     )]
     fn transfer_with_escrow_access_fails() {
-       // Escrow account: robert.testnet
+        // Escrow account: robert.testnet
         // Owner account: mike.testnet
         // New owner account: joe.testnet
         let mut context = get_context(mike(), 0);
