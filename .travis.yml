@@ -11,4 +11,4 @@ before_install:
   - export PATH="$HOME/.cargo/bin:$PATH"
   - rustup target add wasm32-unknown-unknown
 script:
-  - npm run test:unit:rs
+  - npm run test
