@@ -5,6 +5,7 @@ import {
   grant_access,
   revoke_access,
   transfer,
+  transfer_from,
   check_access,
   get_token_owner,
 } from '../main'
@@ -58,6 +59,70 @@ describe('revoke_access', () => {
   })
 })
 
+describe('transfer_from', () => {
+  it('allows owner to transfer_from given `token_id` to given `owner_id`', () => {
+    // Alice has a token
+    const aliceToken = nonSpec.mint_to(alice)
+    expect(get_token_owner(aliceToken)).toBe(alice)
+    expect(get_token_owner(aliceToken)).not.toBe(bob)
+
+    // Alice transfers her token to Bob
+    Context.setPredecessor_account_id(alice)
+    transfer_from(alice, bob, aliceToken)
+
+    // it works!
+    expect(get_token_owner(aliceToken)).toBe(bob)
+    expect(get_token_owner(aliceToken)).not.toBe(alice)
+  })
+
+  it('allows escrow to transfer_from given `token_id` to given `new_owner_id` if `owner_id` matches', () => {
+    // Alice grants access to Bob
+    Context.setPredecessor_account_id(alice)
+    grant_access(bob)
+
+    // Alice has a token
+    const aliceToken = nonSpec.mint_to(alice)
+    expect(get_token_owner(aliceToken)).toBe(alice)
+    expect(get_token_owner(aliceToken)).not.toBe(bob)
+
+    // Bob transfers to himself
+    Context.setPredecessor_account_id(bob)
+    transfer_from(alice, bob, aliceToken)
+
+    // it works!
+    expect(get_token_owner(aliceToken)).toBe(bob)
+    expect(get_token_owner(aliceToken)).not.toBe(alice)
+  })
+
+  it('prevents escrow from using transfer_from given `token_id` to given `new_owner_id if `owner_id` does not match`', () => {
+    expect(() => {
+      // Alice grants access to Bob
+      Context.setPredecessor_account_id(alice)
+      grant_access(bob)
+
+      // Alice has a token
+      const aliceToken = nonSpec.mint_to(alice)
+      expect(get_token_owner(aliceToken)).toBe(alice)
+      expect(get_token_owner(aliceToken)).not.toBe(bob)
+
+      // Bob attempts to transfer and has access, but owner_id is wrong
+      Context.setPredecessor_account_id(bob)
+      transfer_from(bob, carol, aliceToken)
+    }).toThrow(nonSpec.ERROR_OWNER_ID_DOES_NOT_MATCH_EXPECTATION)
+  })
+
+  it('prevents anyone else from using transfer_from on the token', () => {
+    expect(() => {
+      // Alice has a token
+      const aliceToken = nonSpec.mint_to(alice)
+
+      // Bob tries to transfer it to himself
+      Context.setPredecessor_account_id(bob)
+      transfer_from(alice, bob, aliceToken)
+    }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
+  })
+})
+
 describe('transfer', () => {
   it('allows owner to transfer given `token_id` to given `owner_id`', () => {
     // Alice has a token
@@ -73,37 +138,25 @@ describe('transfer', () => {
     expect(get_token_owner(aliceToken)).toBe(bob)
     expect(get_token_owner(aliceToken)).not.toBe(alice)
   })
-
-  it('allows escrow to transfer given `token_id` to given `owner_id`', () => {
-    // Alice grants access to Bob
-    Context.setPredecessor_account_id(alice)
-    grant_access(bob)
-
-    // Alice has a token
-    const aliceToken = nonSpec.mint_to(alice)
-    expect(get_token_owner(aliceToken)).toBe(alice)
-    expect(get_token_owner(aliceToken)).not.toBe(bob)
-
-    // Bob transfers to himself
-    Context.setPredecessor_account_id(bob)
-    transfer(bob, aliceToken)
-
-    // it works!
-    expect(get_token_owner(aliceToken)).toBe(bob)
-    expect(get_token_owner(aliceToken)).not.toBe(alice)
-  })
-
-  it('prevents anyone else from transferring the token', () => {
+  
+  it('prevents escrow from using transfer. Escrow can only use transfer_from', () => {
     expect(() => {
+      // Alice grants access to Bob
+      Context.setPredecessor_account_id(alice)
+      grant_access(bob)
+
       // Alice has a token
       const aliceToken = nonSpec.mint_to(alice)
+      expect(get_token_owner(aliceToken)).toBe(alice)
+      expect(get_token_owner(aliceToken)).not.toBe(bob)
 
-      // Bob tries to transfer it to himself
+      // Bob attempts to transfer and has access, but owner_id is wrong
       Context.setPredecessor_account_id(bob)
-      transfer(bob, aliceToken)
-    }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
+      transfer(carol, aliceToken)
+    }).toThrow(nonSpec.ERROR_TOKEN_NOT_OWNED_BY_CALLER)
   })
 })
+
 
 describe('check_access', () => {
   it('returns true if caller of the function has access to the token', () => {
