@@ -17,7 +17,7 @@
     "assemblyscript": "^0.9.4",
     "jest": "^26.0.1",
     "near-sdk-as": "^0.3.3",
-    "near-shell": "^0.24.1"
+    "near-shell": "^0.24.2"
   },
   "engines": {
     "node": ">=12.0.0"
