@@ -1,8 +1,8 @@
 #![deny(warnings)]
 
 use borsh::{BorshDeserialize, BorshSerialize};
-use near_sdk::collections::Map;
-use near_sdk::collections::Set;
+use near_sdk::collections::UnorderedMap;
+use near_sdk::collections::UnorderedSet;
 use near_sdk::{env, near_bindgen, AccountId};
 
 #[global_allocator]
@@ -47,8 +47,8 @@ pub type AccountIdHash = Vec<u8>;
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct NonFungibleTokenBasic {
-    pub token_to_account: Map<TokenId, AccountId>,
-    pub account_gives_access: Map<AccountIdHash, Set<AccountIdHash>>, // Vec<u8> is sha256 of account, makes it safer and is how fungible token also works
+    pub token_to_account: UnorderedMap<TokenId, AccountId>,
+    pub account_gives_access: UnorderedMap<AccountIdHash, UnorderedSet<AccountIdHash>>, // Vec<u8> is sha256 of account, makes it safer and is how fungible token also works
     pub owner_id: AccountId,
 }
 
@@ -65,8 +65,8 @@ impl NonFungibleTokenBasic {
         assert!(env::is_valid_account_id(owner_id.as_bytes()), "Owner's account ID is invalid.");
         assert!(!env::state_exists(), "Already initialized");
         Self {
-            token_to_account: Map::new(b"token-belongs-to".to_vec()),
-            account_gives_access: Map::new(b"gives-access".to_vec()),
+            token_to_account: UnorderedMap::new(b"token-belongs-to".to_vec()),
+            account_gives_access: UnorderedMap::new(b"gives-access".to_vec()),
             owner_id,
         }
     }
@@ -84,7 +84,7 @@ impl NEP4 for NonFungibleTokenBasic {
                 existing_set
             },
             None => {
-                Set::new(b"new-access-set".to_vec())
+                UnorderedSet::new(b"new-access-set".to_vec())
             }
         };
         access_set.insert(&escrow_hash);
