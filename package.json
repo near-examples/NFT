@@ -16,7 +16,7 @@
   "devDependencies": {
     "assemblyscript": "^0.9.4",
     "jest": "^26.0.1",
-    "near-sdk-as": "^0.3.3",
+    "near-sdk-as": "^0.4.0",
     "near-shell": "^0.24.2"
   },
   "engines": {
