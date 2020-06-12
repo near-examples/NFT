@@ -3234,7 +3234,7 @@ near-ledger-js@^0.1.1:
   dependencies:
     bs58 "^4.0.1"
 
-near-mock-vm@^0.1.0:
+near-mock-vm@^0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/near-mock-vm/-/near-mock-vm-0.1.1.tgz#be08d75bf19842cb5b63dc61d6cb201afc6d2876"
   integrity sha512-tI2Bg35PKA0RBh64XBkqld7ktE+0WE0Ykb4RoKRgkHNPMRDeQhlBPn5CDveBRHchD68VbEkKftJ6/OpYEjXXNg==
@@ -3244,10 +3244,10 @@ near-mock-vm@^0.1.0:
     js-base64 "^2.5.2"
     yargs "^15.3.1"
 
-near-sdk-as@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/near-sdk-as/-/near-sdk-as-0.4.0.tgz#a28e71a5b2818db8a5577e9f761823334f481c62"
-  integrity sha512-MTZRrsReZQsv9LA2bvzmZYfqTWyYr1yE0LpM6hk47bVzNtOT85VKdB7XcU0dty3E7AbUUVWoS7DUFAIg89AP+g==
+near-sdk-as@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/near-sdk-as/-/near-sdk-as-0.4.1.tgz#7b3367cb18f681de7438fe366e23aefce4303f78"
+  integrity sha512-UCowjXoHvBpb6XCDUwzI5anTqIewFfFvDAJ51e9MbBJ6lHk8xoXaUb7y7hKx3glMoUbaSRKsiqI4ticQZWbNHg==
   dependencies:
     "@as-pect/cli" "^3.2.6"
     as-bignum "^0.1.5"
@@ -3256,7 +3256,7 @@ near-sdk-as@^0.4.0:
     bn.js "^5.1.1"
     bs58 "^4.0.1"
     js-base64 "^2.5.2"
-    near-mock-vm "^0.1.0"
+    near-mock-vm "^0.1.1"
     near-vm "^0.0.8"
     semver "^7.1.3"
     visitor-as "^0.1.0"
