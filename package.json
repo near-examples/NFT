@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Implementation of NEP4 using Rust and AssemblyScript",
   "author": "Near, Inc. <hello@near.org>",
-  "license": "MIT",
+  "license": "(MIT AND Apache-2.0)",
   "scripts": {
     "build": "yarn build:as && yarn build:rs",
     "build:as": "node ./contracts/assemblyscript/compile.js",
