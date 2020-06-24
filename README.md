@@ -18,7 +18,7 @@ If you are using Gitpod, you can skip this section! Your environment is already 
 
   * Make sure Rust is installed per the prerequisites in [`near-sdk-rs`](https://github.com/nearprotocol/near-sdk-rs)
   * Make sure you have Node.js ≥ 12 installed (https://nodejs.org),  then use it to install [yarn]: `npm install --global yarn` (or just `npm i -g yarn`)
-  * Install dependencies: `yarn install` (or just `yarn`) 
+  * Install dependencies: `yarn install` (or just `yarn`)
 
 2. Explore this contract
 
@@ -53,6 +53,11 @@ Now you can run all the [AssemblyScript]-related scripts listed in `package.json
 * `yarn test:unit:as`: Runs all AssemblyScript tests with filenames ending in
   `unit.spec`
 * `yarn build:as`: Compiles the AssemblyScript contracts to [Wasm] binaries
+
+Data collection
+===============
+
+By using Gitpod in this project, you agree to opt-in to basic, anonymous analytics. No personal information is transmitted. Instead, these usage statistics aid in discovering potential bugs and user flow information.
 
   [yarn]: https://yarnpkg.com/
   [AssemblyScript]: https://assemblyscript.org/
