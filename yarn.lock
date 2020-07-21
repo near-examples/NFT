@@ -3279,10 +3279,10 @@ near-sdk-as@^0.4.2:
     semver "^7.1.3"
     visitor-as "^0.1.0"
 
-near-shell@^0.24.7:
-  version "0.24.7"
-  resolved "https://registry.yarnpkg.com/near-shell/-/near-shell-0.24.7.tgz#ced992cbc8c15d9ae0a96c3ab4c480009c9f2f90"
-  integrity sha512-5B5NJF1ivRR3Z9c/FBQ0nv+WZyhISKPts8FSSf7pKfhbtuumcdoQjt++kKrzYBELRAI0VIjZCNnQUhopk+TQsg==
+near-shell@^0.24.8:
+  version "0.24.8"
+  resolved "https://registry.yarnpkg.com/near-shell/-/near-shell-0.24.8.tgz#19311f7200f89fdd85f2e2b6b26a040a202e7960"
+  integrity sha512-NblsOmWWaQOqAKimm2Rh/4m99nlJr1Y4ZuRMJNLqm3kbPsnveoTd0oLfkKEONrL90HaP5NgqH37Ya9oxHrl3Tw==
   dependencies:
     ascii-table "0.0.9"
     bn.js "^5.1.1"
