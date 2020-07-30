@@ -14,7 +14,7 @@
     "test:unit:rs": "(cd contracts/rust && cargo test -- --nocapture --color always)"
   },
   "devDependencies": {
-    "jest": "^26.1.0",
+    "jest": "^26.2.0",
     "near-sdk-as": "^0.4.2",
     "near-shell": "^0.24.9"
   },
