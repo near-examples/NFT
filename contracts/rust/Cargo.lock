@@ -41,31 +41,11 @@ dependencies = [
 
 [[package]]
 name = "borsh"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7769f8f6fdc6ac7617bbc8bc7ef9dc263cd459d99d21cf2ab4afc3bc8d7d70d"
-dependencies = [
- "borsh-derive 0.6.2",
-]
-
-[[package]]
-name = "borsh"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "30f3fd65922359a7c6e791bc9b2bba1b977ea0c0b96a528ac48007f535fb4184"
 dependencies = [
- "borsh-derive 0.7.1",
-]
-
-[[package]]
-name = "borsh-derive"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2689a82a5fe57f9e71997b16bea340da338c7fb8db400b8d9d55b59010540d8"
-dependencies = [
- "borsh-derive-internal 0.6.2",
- "borsh-schema-derive-internal 0.6.2",
- "syn",
+ "borsh-derive",
 ]
 
 [[package]]
@@ -74,19 +54,8 @@ version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b2d74755d937d261d5e9bdef87e0addfbc1ace0214f7776f21532d6e97325356"
 dependencies = [
- "borsh-derive-internal 0.7.1",
- "borsh-schema-derive-internal 0.7.1",
- "syn",
-]
-
-[[package]]
-name = "borsh-derive-internal"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39b621f19e9891a34f679034fa2238260e27c0eddfe2804e9fb282061cf9b294"
-dependencies = [
- "proc-macro2",
- "quote",
+ "borsh-derive-internal",
+ "borsh-schema-derive-internal",
  "syn",
 ]
 
@@ -95,17 +64,6 @@ name = "borsh-derive-internal"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c9f966cb7a42c8ed83546ef481bc1d1dec888fe5f84a4737d5c2094a483e41e"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "borsh-schema-derive-internal"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "befebdb9e223ae4528b3d597dbbfb5c68566822d2a3de3e260f235360773ba29"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -240,34 +198,42 @@ dependencies = [
 
 [[package]]
 name = "near-runtime-fees"
-version = "0.9.1"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f4992274c8acb33fa1246715d3aafbce5688ae82243c779b561f8eaff1bb6f1"
+checksum = "e8732466a66a346685e00eed22355d10e54741dd66253ca7b89b7ffdcb17202e"
 dependencies = [
  "num-rational",
  "serde",
 ]
 
 [[package]]
-name = "near-sdk"
-version = "0.11.0"
+name = "near-runtime-utils"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81319d4d44283f63467e4f02b6209297b10643c7aeb62e2ee41e0c31b43e2375"
+checksum = "1bd4d93a20f7ac0472731fdf00726d1292c25ae96ea784edfa05d61ac77b7448"
+
+[[package]]
+name = "near-sdk"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "963610ae7ce6729de19c8fe0da230f878bf3a04de022aa2045ff7c5fa2b13095"
 dependencies = [
  "base64",
- "borsh 0.6.2",
+ "borsh",
  "bs58",
  "near-runtime-fees",
  "near-sdk-macros",
  "near-vm-logic",
  "serde",
+ "serde_json",
+ "wee_alloc",
 ]
 
 [[package]]
 name = "near-sdk-core"
-version = "0.11.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f3767fc2a61e6577f1336e06d6962a6c61fc39299573b8a25696fd09ce96ffb"
+checksum = "1552953310b5d7a6caaba67b0d65799c773c90fe5a06443fc55b0ace77e96eb5"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -277,9 +243,9 @@ dependencies = [
 
 [[package]]
 name = "near-sdk-macros"
-version = "0.11.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27c06b45c56028b0e1241b2196397d449091665f3f08d543415373505df5e05f"
+checksum = "c36b52b39323ee871f222243e20c7bbeb3dfe677d397baa32853e91229cd88bd"
 dependencies = [
  "near-sdk-core",
  "proc-macro2",
@@ -289,25 +255,26 @@ dependencies = [
 
 [[package]]
 name = "near-vm-errors"
-version = "0.9.1"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "386c2c07ef37ae52ad43860ef69c6322bbc1e610ae0c08c1d7f5ff56f4c28e6a"
+checksum = "f19df432b87ae827e1b9dbe557c51cfee24fbc992e72dc5b23d61bbe44c43133"
 dependencies = [
- "borsh 0.6.2",
+ "borsh",
  "near-rpc-error-macro",
  "serde",
 ]
 
 [[package]]
 name = "near-vm-logic"
-version = "0.9.1"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6da6c80d3428f45248577820bfc943b8261a6f11d6721037e5c3f43484047cd"
+checksum = "3700022c10e0a6cceb6c380952a4e94a582b83da91392eb37ed15c8a20e06304"
 dependencies = [
  "base64",
  "bs58",
  "byteorder",
  "near-runtime-fees",
+ "near-runtime-utils",
  "near-vm-errors",
  "serde",
  "sha2",
@@ -318,7 +285,7 @@ dependencies = [
 name = "nep4-rs"
 version = "0.1.0"
 dependencies = [
- "borsh 0.7.1",
+ "borsh",
  "near-sdk",
  "serde",
  "serde_json",
