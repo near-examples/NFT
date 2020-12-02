@@ -8,11 +8,11 @@ import {
   transfer_from,
   check_access,
   get_token_owner,
-} from '../main'
+} from '../assembly'
 
 // wrap all other functions in `nonSpec` variable, to make it clear when
 // tests are using functionality that isn't defined by the spec
-import * as nonSpec from '../main'
+import * as nonSpec from '../assembly'
 
 const alice = 'alice'
 const bob = 'bob'

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+OUT="$DIR/../../out"
+
+mkdir -p $OUT
+
+for project in $DIR/*/; do
+  cd $project || {
+    printf "\n\n\e[1;31mFAILED:\e[0m no project built beyond \e[1;34m%s\e[0m\n" "$project"
+    exit 1
+  }
+
+  npx asb --verbose --target debug -- --outFile $OUT/$(basename $project)-as.wasm
+
+  cd ..
+done

@@ -1,0 +1,17 @@
+{
+  "name": "nep4-basic",
+  "version": "0.0.1",
+  "description": "This contract implements bare-minimum functionality to satisfy the NEP4 specification",
+  "author": "Near, Inc. <hello@near.org>",
+  "license": "(MIT AND Apache-2.0)",
+  "scripts": {
+    "build": "asb --verbose --target debug",
+    "test": "npx asp --nologo"
+  },
+  "devDependencies": {
+    "near-sdk-as": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=12.0.0 <15.0.0"
+  }
+}

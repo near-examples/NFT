@@ -1,0 +1,15 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+for project in $DIR/*/; do
+  cd $project || {
+    printf "\n\n\e[1;31mFAILED:\e[0m no project tested beyond \e[1;34m%s\e[0m\n" "$project"
+    exit 1
+  }
+
+  yarn build
+  yarn test
+
+  cd ..
+done
