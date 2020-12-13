@@ -1113,10 +1113,10 @@ as-bignum@^0.2.4:
   resolved "https://registry.yarnpkg.com/as-bignum/-/as-bignum-0.2.6.tgz#2462357874395e940eebe9a05f8eaef9d5cb88f3"
   integrity sha512-3FNvNp23mmfkhxDJekO8hcjC49jKkvCD1MKYjr/wk7tTiCgdpM+oSfzeFk+Ce8iZtIKXGWARbDjcs4XGmtnyAA==
 
-asbuild@^0.0.8:
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/asbuild/-/asbuild-0.0.8.tgz#9f2b30297fdb0f03679903e1996f46a39e4308a4"
-  integrity sha512-JlxO/cdotqCLCJrRlzPYsgzdy5qa0NPAXxH6IZNgLLJwLerIOtCx10tFUBGaO7VS7YwuLony83hH60J2iskxHA==
+asbuild@^0.0.9:
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/asbuild/-/asbuild-0.0.9.tgz#202f225a7f1ff2175ae7eed6e5ed454a4245d714"
+  integrity sha512-UkBTuPAVTybbRMTOJ9eU/tLS/MRsu7CUIBAwVo4GM+UevILWylNtpxp2dNmEqWuZACsKxy3k6hk7HekSoEH5qg==
   dependencies:
     yargs "^15.4.1"
 
@@ -4997,37 +4997,37 @@ near-ledger-js@^0.1.1:
   dependencies:
     bs58 "^4.0.1"
 
-near-mock-vm@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/near-mock-vm/-/near-mock-vm-2.1.1.tgz#6d518d5589987be3fa86c6bbe6f1400e36197b00"
-  integrity sha512-4fzzGy+fIWVoO1ldPFe8Fshp/iS2axdVo2RUYKllHPWpMqi5FYBZZXWxnhJOuySTZatnYTMd1XqUhEusO6a1cA==
+near-mock-vm@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/near-mock-vm/-/near-mock-vm-2.1.2.tgz#777d7aea5447c8f8c204402d30e4c58511a691f7"
+  integrity sha512-fK6Hkv0deneySa92csoXbPVqdf3MLUfxxejaJIMlAcwqTvYrcPd+PMeay9cZNCRPTO7PQZa2WHLg3hNRS/l58g==
   dependencies:
     "@assemblyscript/loader" "^0.9.4"
     yargs "^15.3.1"
 
-near-sdk-as@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/near-sdk-as/-/near-sdk-as-2.1.1.tgz#7ea9ac9bf13d85ada2ce7992507b4b003d2acac0"
-  integrity sha512-LZ1YVXU1XLDvpgPuZhhRL+Yu6l3Q3n/EYEGLjvfVJ46lJ/t5Zd1pGyaE+bAm3kB7kjZMfs12mUqCbk5/i7dpdg==
+near-sdk-as@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/near-sdk-as/-/near-sdk-as-2.1.2.tgz#68121ec606d703c89b99a3f93f7051df9f32d196"
+  integrity sha512-G3qjOHWATcPW+Rk6R1IxBslWb+gLxk9++O6nHRRgBDBjZ8izMAV7ToXaNKAk2y7umJAq8mEhpVRs63QWN4ud/A==
   dependencies:
-    near-mock-vm "^2.1.1"
-    near-sdk-bindgen "^2.1.1"
-    near-sdk-core "^2.1.1"
-    near-sdk-simulator "^2.1.1"
+    near-mock-vm "^2.1.2"
+    near-sdk-bindgen "^2.1.2"
+    near-sdk-core "^2.1.2"
+    near-sdk-simulator "^2.1.2"
 
-near-sdk-bindgen@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/near-sdk-bindgen/-/near-sdk-bindgen-2.1.1.tgz#aef0d4b16f540d111e2b952038ab5127493b925d"
-  integrity sha512-OQbvkDFbfKmp4VKV9wuCwT0yq/GCSpuZqFOO+sXkvovw6SQlNhnuoKnElvfIcY5gY5/r2B+YzBVLHt3MULM5Yw==
+near-sdk-bindgen@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/near-sdk-bindgen/-/near-sdk-bindgen-2.1.2.tgz#92e543d5f5982fcf863864fbe257f3254be42728"
+  integrity sha512-+hu5ZvD7wCrQDRt+omT98g8zzmGxGDXTDBwQ5lUha/3snnpRxziO0CRQqnt7kRNT7W4o0rsRyQRbYldo9oJWfQ==
 
-near-sdk-core@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/near-sdk-core/-/near-sdk-core-2.1.1.tgz#069d5ebe7681ef61a026613256a8d56e782f25d0"
-  integrity sha512-qeyOMZArf1R4EfAGgdpOK02dStcJtUL8EzVzZW5eoSoTpA/VnK+SVkrZMfomYv8YeGUwO6B3nylIGcV8DNVhqA==
+near-sdk-core@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/near-sdk-core/-/near-sdk-core-2.1.2.tgz#909eea8b306ec59cd46d7b9dcaeec714461e5d25"
+  integrity sha512-ry/5bqeSPs7Rid9eAhC814JGaokGKPRsaVszNbHO2zEesBHbwl2Dv6CG8askPj8DEvqKoLOuNwUM/hnG4g2N0Q==
   dependencies:
     "@as-pect/cli" "^4.0.0"
     as-bignum "^0.2.4"
-    asbuild "^0.0.8"
+    asbuild "^0.0.9"
     assemblyscript "^0.14.9"
     assemblyscript-json "^0.3.3"
     bn.js "^5.1.1"
@@ -5036,10 +5036,10 @@ near-sdk-core@^2.1.1:
     near-vm "^1.1.0"
     visitor-as "^0.3.2"
 
-near-sdk-simulator@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/near-sdk-simulator/-/near-sdk-simulator-2.1.1.tgz#bc469da57cfd6f38a5a6fa4df894ff52fee73b51"
-  integrity sha512-52u5CVh4sIS4NeTQQK1S1u3j6RKlxECjYmbfppOh4TWYuoWwxtFURDpbdXUTqKShEFDZ1mosu9DChDlPifEDgA==
+near-sdk-simulator@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/near-sdk-simulator/-/near-sdk-simulator-2.1.2.tgz#79f1974b063fdd3ec9e612b1be56dfea9fb4e826"
+  integrity sha512-w+X+B62btmAJ+hwxH1mDxrJvPrn9jhXw07R8GAxAlHrtAfjurrXLzDqo4YKcNzU+LIZiSdOD0JmYSFNg2fagrA==
 
 near-seed-phrase@^0.1.0:
   version "0.1.0"
