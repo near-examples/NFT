@@ -4951,10 +4951,10 @@ near-api-js@^0.34.0:
     text-encoding-utf-8 "^1.0.2"
     tweetnacl "^1.0.1"
 
-near-cli@^1.5.1:
-  version "1.5.1"
-  resolved "https://registry.yarnpkg.com/near-cli/-/near-cli-1.5.1.tgz#06eaf5041ae3bec463eb1628cb72c62c59fb4000"
-  integrity sha512-eEAanzFizNJlosW8Z+JN5idZoX+eNqShqoYvaH5huxkUAtNdVqnYGiJwXnbPOX4fh04NhsX4to3gKb7GDxqWvQ==
+near-cli@^1.5.2:
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/near-cli/-/near-cli-1.5.2.tgz#e3991ef8fd04eeec833434cea8b72d5d8436e1e8"
+  integrity sha512-JRTJfwkpUbHnHiaUoZfUm89IoiAUX/vYAmIy72YeGUCklYk2odFaq12brcOnSFnkdqItQw8gN9aBXtea66Dusg==
   dependencies:
     ascii-table "0.0.9"
     bn.js "^5.1.1"
@@ -4967,7 +4967,7 @@ near-cli@^1.5.1:
     ncp "^2.0.0"
     near-api-js "^0.34.0"
     near-seed-phrase "^0.1.0"
-    near-web3-provider "^1.0.5"
+    near-web3-provider "^1.0.6"
     open "^7.0.1"
     rimraf "^3.0.0"
     stoppable "^1.1.0"
@@ -5058,10 +5058,10 @@ near-vm@^1.1.0:
   dependencies:
     binary-install "^0.0.1"
 
-near-web3-provider@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/near-web3-provider/-/near-web3-provider-1.0.5.tgz#18e5233fb36a97ca21a3e7961caab6191bc8603c"
-  integrity sha512-i2Kj+DNmo3CBkRt8BASHdzhsxx05iXM8Fu69Apj8zLCSRUUF2liiHM0FH9Lvj1YZpf+JvXqlujg4sW6n1oBrSg==
+near-web3-provider@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/near-web3-provider/-/near-web3-provider-1.0.6.tgz#d7c7e5c613af87c6782fbf405402446db2192b00"
+  integrity sha512-nrpyOGYLsoOZbuXEDXB8j5NjKDjE4PDGnCSHpH3aC8lOE5K2v5JaJxglSBssWky+qi+pUgVrc6GFvMb9UrUZlw==
   dependencies:
     bn.js "^5.1.2"
     bs58 "^4.0.1"
