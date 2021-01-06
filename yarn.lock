@@ -5004,20 +5004,20 @@ near-ledger-js@^0.1.1:
   dependencies:
     bs58 "^4.0.1"
 
-near-mock-vm@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/near-mock-vm/-/near-mock-vm-2.2.0.tgz#0a173a3e85a9e3bc70729ecbf1651d482feb8e69"
-  integrity sha512-SAe9I9VaSHdFtZ0dD1yRJJDcJTGjdkCmZ2C/WH47kGRcZR0hCbp85F1DkY0EbHTCDP05gwpurn1QM6NMNSYYXQ==
+near-mock-vm@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/near-mock-vm/-/near-mock-vm-2.2.1.tgz#f329086abe4dd1d12c57349a429726e44deada66"
+  integrity sha512-jXCQrdPleL9UpkobTRf0ZlyD+Xfb+Y3GYYAVUFdF34Wcdy27aYg5cvVqLuTJC0fwYHGt1KfAWTcS8BptZDU51w==
   dependencies:
     "@assemblyscript/loader" "^0.9.4"
     yargs "^15.3.1"
 
-near-sdk-as@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/near-sdk-as/-/near-sdk-as-2.2.0.tgz#d91dfb9924b48f3dd76fc7f8d9e50eceaad326ae"
-  integrity sha512-HzIdo6JYKdYNkQkB9+TQ4phkFLkr+GvhG16VXYOpmB1y0FkRV2qdKEVuXd9Cr26vD4DEG5AjHSsAULAUcq4tnA==
+near-sdk-as@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/near-sdk-as/-/near-sdk-as-2.2.1.tgz#54e7999468449d5c2372e8697159bb1d83a6f0e9"
+  integrity sha512-LuVSzKT/uz6Nn9mnVGCxsnd880gtYj0guDOataWzQLK5jveXemgWoFck4RJ4vobX6cOyLuErRXnMIsAApOwWug==
   dependencies:
-    near-mock-vm "^2.2.0"
+    near-mock-vm "^2.2.1"
     near-sdk-bindgen "^2.2.0"
     near-sdk-core "^2.2.0"
     near-sdk-simulator "^2.2.0"
