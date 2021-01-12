@@ -6,7 +6,7 @@
   "license": "(MIT AND Apache-2.0)",
   "scripts": {
     "build": "yarn build:as && yarn build:rs",
-    "build:as": "node ./contracts/assemblyscript/compile.js",
+    "build:as": "yarn asb contracts/assemblyscript/nep4-basic/main.ts",
     "build:rs": "(cd contracts/rust && ./build.sh)",
     "clean": "rm -rf ./out && (cd contracts/rust && cargo clean)",
     "test": "yarn test:unit:as && yarn test:unit:rs",
