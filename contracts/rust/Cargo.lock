@@ -56,9 +56,9 @@ dependencies = [
 
 [[package]]
 name = "borsh"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8d2e03ffdeb51200e6d4229afaffadf559a1846dd352adff9fbbd5f02ea0d59"
+checksum = "a5a26c53ddf60281f18e7a29b20db7ba3db82a9d81b9650bfaa02d646f50d364"
 dependencies = [
  "borsh-derive 0.8.0",
  "hashbrown",
@@ -339,7 +339,7 @@ dependencies = [
 name = "nep4-rs"
 version = "0.1.0"
 dependencies = [
- "borsh 0.8.0",
+ "borsh 0.8.1",
  "near-sdk",
  "serde",
  "serde_json",
