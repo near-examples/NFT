@@ -268,9 +268,9 @@ checksum = "1bd4d93a20f7ac0472731fdf00726d1292c25ae96ea784edfa05d61ac77b7448"
 
 [[package]]
 name = "near-sdk"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "963610ae7ce6729de19c8fe0da230f878bf3a04de022aa2045ff7c5fa2b13095"
+checksum = "e7247d658c51447ea3cd6e86ea55131cf85d17a40f844fc22a0699346ba2fd93"
 dependencies = [
  "base64",
  "borsh 0.7.1",
@@ -285,9 +285,9 @@ dependencies = [
 
 [[package]]
 name = "near-sdk-core"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1552953310b5d7a6caaba67b0d65799c773c90fe5a06443fc55b0ace77e96eb5"
+checksum = "1d058a4b835f5b8bb9783cc5acb27ba13f1810e546c020f4bac28a9093f64012"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -297,9 +297,9 @@ dependencies = [
 
 [[package]]
 name = "near-sdk-macros"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c36b52b39323ee871f222243e20c7bbeb3dfe677d397baa32853e91229cd88bd"
+checksum = "320be357d10a590c270c7f77658e9fb0503a4a1d1d1a49ec3ed9570be864230b"
 dependencies = [
  "near-sdk-core",
  "proc-macro2",
@@ -430,18 +430,18 @@ checksum = "ed3d612bc64430efeb3f7ee6ef26d590dce0c43249217bddc62112540c7941e1"
 
 [[package]]
 name = "serde"
-version = "1.0.119"
+version = "1.0.118"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bdd36f49e35b61d49efd8aa7fc068fd295961fd2286d0b2ee9a4c7a14e99cc3"
+checksum = "06c64263859d87aa2eb554587e2d23183398d617427327cf2b3d0ed8c69e4800"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.119"
+version = "1.0.118"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "552954ce79a059ddd5fd68c271592374bd15cab2274970380c000118aeffe1cd"
+checksum = "c84d3526699cd55261af4b941e4e725444df67aa4f9e6a3564f18030d12672df"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -487,9 +487,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.58"
+version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc60a3d73ea6594cd712d830cc1f0390fd71542d8c8cd24e70cc54cdfd5e05d5"
+checksum = "4211ce9909eb971f111059df92c45640aad50a619cf55cd76476be803c4c68e6"
 dependencies = [
  "proc-macro2",
  "quote",
