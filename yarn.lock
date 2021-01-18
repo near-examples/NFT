@@ -1108,10 +1108,10 @@ array-unique@^0.3.2:
   resolved "https://registry.yarnpkg.com/array-unique/-/array-unique-0.3.2.tgz#a894b75d4bc4f6cd679ef3244a9fd8f46ae2d428"
   integrity sha1-qJS3XUvE9s1nnvMkSp/Y9Gri1Cg=
 
-as-bignum@^0.2.8:
-  version "0.2.8"
-  resolved "https://registry.yarnpkg.com/as-bignum/-/as-bignum-0.2.8.tgz#46ac7a14cf9df951aa3fb850f1db44c0083d4e69"
-  integrity sha512-tac9YOYKDLlkiVFiucTsHRIEzd+LawAHfmxqucnfZmZ6TH4DGMzMBw5A6Zex0YWGNLaLHtPz/5z8nA5yyXryNg==
+as-bignum@^0.2.10:
+  version "0.2.10"
+  resolved "https://registry.yarnpkg.com/as-bignum/-/as-bignum-0.2.10.tgz#cba10a318d2eb731709220db47455fb430c4621d"
+  integrity sha512-uTB/06+xoAQSzVlF/8CQHhbIrdEet6oqjIrZ7RemWGeIDdjwHOyra9cyjedmf0UpcyHp0kY82zKab0fLNTxcvQ==
 
 asbuild@^0.0.10:
   version "0.0.10"
@@ -5004,36 +5004,36 @@ near-ledger-js@^0.1.1:
   dependencies:
     bs58 "^4.0.1"
 
-near-mock-vm@^2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/near-mock-vm/-/near-mock-vm-2.2.2.tgz#0954762a07ced0813fab55148c2f1cef8ea4f0e5"
-  integrity sha512-nmNQ8PzlXWZRJZ1qceN8C3v/bSyEbCe6kh4oqfkpy7ChJA90pp4KI4+4xMx5o7ylDaYgoVDhciQDBN4GIL2SXA==
+near-mock-vm@^2.2.3:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/near-mock-vm/-/near-mock-vm-2.2.3.tgz#16a212b77d1bac78357711019ea28f5600d6281e"
+  integrity sha512-kx/Aa+GumvZoK+3i6IXzS8NGqbR7p+m2Sn5AF9hTrMRhFZ9O11V9HPMER6hO9WumjwicTFXY0pFkXwxZsWRcsQ==
   dependencies:
     "@assemblyscript/loader" "^0.9.4"
     yargs "^15.3.1"
 
-near-sdk-as@^2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/near-sdk-as/-/near-sdk-as-2.2.2.tgz#69854800814bc5992ad1b9bc5c2bc6d32715f642"
-  integrity sha512-8w+DG3v8XGzS8ndB4G2oo8ouLxV4qIqDPB2OIyrQZutCUX5cqclZlJX6dagW+K0F6CCKeDicjgQ4VGykNWeowQ==
+near-sdk-as@^2.2.3:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/near-sdk-as/-/near-sdk-as-2.2.3.tgz#6191be45a36e7aff56e1c8ef67459eac09e3f5b0"
+  integrity sha512-BJjeR+5ZrWYmwbac+2rH1bEn4wbKkP3QVtDG85V3t4mlFR0nv4S5TBgIxUv+FA/KCdrQIZ3qm0PerPK1x18J3Q==
   dependencies:
-    near-mock-vm "^2.2.2"
-    near-sdk-bindgen "^2.2.2"
-    near-sdk-core "^2.2.2"
-    near-sdk-simulator "^2.2.2"
+    near-mock-vm "^2.2.3"
+    near-sdk-bindgen "^2.2.3"
+    near-sdk-core "^2.2.3"
+    near-sdk-simulator "^2.2.3"
 
-near-sdk-bindgen@^2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/near-sdk-bindgen/-/near-sdk-bindgen-2.2.2.tgz#3af2ac178cc0ae30df9db2b0577ba8436d3961ac"
-  integrity sha512-KnKknRmmgobpBuoCOAr0Zuw5k7RyFMBzVL0qWKsF1LOYbosRQ0JQPe/66z40gHDylgI1FCHFJ8BmxBMPeTUs8w==
+near-sdk-bindgen@^2.2.3:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/near-sdk-bindgen/-/near-sdk-bindgen-2.2.3.tgz#57a0b54e081f939fa656cf47b05e6a9e3dbf0765"
+  integrity sha512-qvbgnW3FulGa+/8t+vu1fJzPZ9cikAHhvb/GGwgDwyTvCRdlQyjXtizfDDpLEKCZENeRbkzVBgllyAcM3Xs17w==
 
-near-sdk-core@^2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/near-sdk-core/-/near-sdk-core-2.2.2.tgz#4c6e728eab3cb8b8309713058d1689f3fe14259c"
-  integrity sha512-88fFlWl2pt/pA6k5th/N+kxgBftD6CYTnetRsS6RVItJitkCGzE/1eK3yOqFZqQLrwVds857ltngG7QmkdEnMA==
+near-sdk-core@^2.2.3:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/near-sdk-core/-/near-sdk-core-2.2.3.tgz#f4e4f3e6071f77cf3863127a2a8f2a0cc0154b05"
+  integrity sha512-96YOXseSDpB9uq1HfG9xjWIyMC2VXlLivEQX8/UJdm36JCssXoTn3h12QypYAVVYDpwe8vyU5qC7vX4ULTQkSQ==
   dependencies:
     "@as-pect/cli" "^5.0.0"
-    as-bignum "^0.2.8"
+    as-bignum "^0.2.10"
     asbuild "^0.0.10"
     assemblyscript "^0.17.3"
     assemblyscript-json "^0.3.3"
@@ -5043,10 +5043,10 @@ near-sdk-core@^2.2.2:
     near-vm "^1.1.0"
     visitor-as "^0.3.2"
 
-near-sdk-simulator@^2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/near-sdk-simulator/-/near-sdk-simulator-2.2.2.tgz#6970b01808ef8c066483973134367397e1d9db5d"
-  integrity sha512-06IdwJllUu+7D6YJlMdwCDerZjoDPN3Ya0kHuD7PkYDMB6IRwhHkx18hdJQAYtE28pvssoIjdaXvdTKwbmQQ5A==
+near-sdk-simulator@^2.2.3:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/near-sdk-simulator/-/near-sdk-simulator-2.2.3.tgz#800752d47bd20e449ff58749a03174bc943cd1b6"
+  integrity sha512-71PhcGel+c/URvvazktjYzq/HONEfXDrqowgi7kDudCZHO1E4SRc1wfvGTvOgV1bswVVqzbrIIxKLd0REBsEkg==
 
 near-seed-phrase@^0.1.0:
   version "0.1.0"
