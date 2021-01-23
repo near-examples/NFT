@@ -1,4 +1,4 @@
-import { VM, Context } from 'near-sdk-as'
+import { VMContext } from 'near-sdk-as'
 
 // explicitly import functions required by spec
 import {
@@ -24,11 +24,11 @@ describe('grant_access', () => {
     const aliceToken = nonSpec.mint_to(alice)
 
     // Alice calls `grant_access` to make Bob her escrow
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     grant_access(bob)
 
     // Bob checks if Alice has done so
-    Context.setPredecessor_account_id(bob)
+    VMContext.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(true)
   })
 })
@@ -36,25 +36,25 @@ describe('grant_access', () => {
 describe('revoke_access', () => {
   it('revokes access to the given `accountId` for the given `tokenId`', () => {
     // Prevent error `InconsistentStateError(IntegerOverflow)` thrown by near-sdk-rs
-    Context.setStorage_usage(100)
+    VMContext.setStorage_usage(100)
 
     // Alice has a token
     const aliceToken = nonSpec.mint_to(alice)
 
     // Alice makes Bob her escrow
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     grant_access(bob)
 
     // Bob checks if he has access to Alice's account
-    Context.setPredecessor_account_id(bob)
+    VMContext.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(true)
 
     // Alice revokes Bob's access
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     revoke_access(bob)
 
     // Bob checks again
-    Context.setPredecessor_account_id(bob)
+    VMContext.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(false)
   })
 })
@@ -67,7 +67,7 @@ describe('transfer_from', () => {
     expect(get_token_owner(aliceToken)).not.toBe(bob)
 
     // Alice transfers her token to Bob
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     transfer_from(alice, bob, aliceToken)
 
     // it works!
@@ -77,7 +77,7 @@ describe('transfer_from', () => {
 
   it('allows escrow to transfer given `token_id` to given `new_owner_id` if `owner_id` matches', () => {
     // Alice grants access to Bob
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     grant_access(bob)
 
     // Alice has a token
@@ -86,7 +86,7 @@ describe('transfer_from', () => {
     expect(get_token_owner(aliceToken)).not.toBe(bob)
 
     // Bob transfers to himself
-    Context.setPredecessor_account_id(bob)
+    VMContext.setPredecessor_account_id(bob)
     transfer_from(alice, bob, aliceToken)
 
     // it works!
@@ -97,7 +97,7 @@ describe('transfer_from', () => {
   it('prevents escrow from transferring given `token_id` to given `new_owner_id if `owner_id` does not match`', () => {
     expect(() => {
       // Alice grants access to Bob
-      Context.setPredecessor_account_id(alice)
+      VMContext.setPredecessor_account_id(alice)
       grant_access(bob)
 
       // Alice has a token
@@ -106,7 +106,7 @@ describe('transfer_from', () => {
       expect(get_token_owner(aliceToken)).not.toBe(bob)
 
       // Bob attempts to transfer and has access, but owner_id is wrong
-      Context.setPredecessor_account_id(bob)
+      VMContext.setPredecessor_account_id(bob)
       transfer_from(bob, carol, aliceToken)
     }).toThrow(nonSpec.ERROR_OWNER_ID_DOES_NOT_MATCH_EXPECTATION)
   })
@@ -117,7 +117,7 @@ describe('transfer_from', () => {
       const aliceToken = nonSpec.mint_to(alice)
 
       // Bob tries to transfer it to himself
-      Context.setPredecessor_account_id(bob)
+      VMContext.setPredecessor_account_id(bob)
       transfer_from(alice, bob, aliceToken)
     }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
   })
@@ -131,18 +131,18 @@ describe('transfer', () => {
     expect(get_token_owner(aliceToken)).not.toBe(bob)
 
     // Alice transfers her token to Bob
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     transfer(bob, aliceToken)
 
     // it works!
     expect(get_token_owner(aliceToken)).toBe(bob)
     expect(get_token_owner(aliceToken)).not.toBe(alice)
   })
-  
+
   it('prevents escrow from using transfer. Escrow can only use transfer_from', () => {
     expect(() => {
       // Alice grants access to Bob
-      Context.setPredecessor_account_id(alice)
+      VMContext.setPredecessor_account_id(alice)
       grant_access(bob)
 
       // Alice has a token
@@ -151,7 +151,7 @@ describe('transfer', () => {
       expect(get_token_owner(aliceToken)).not.toBe(bob)
 
       // Bob attempts to transfer and has access, but owner_id is wrong
-      Context.setPredecessor_account_id(bob)
+      VMContext.setPredecessor_account_id(bob)
       transfer(carol, aliceToken)
     }).toThrow(nonSpec.ERROR_TOKEN_NOT_OWNED_BY_CALLER)
   })
@@ -159,7 +159,7 @@ describe('transfer', () => {
   it('prevents anyone else from transferring the token', () => {
     expect(() => {
       // Alice grants access to Bob
-      Context.setPredecessor_account_id(alice)
+      VMContext.setPredecessor_account_id(alice)
 
       // Alice has a token
       const aliceToken = nonSpec.mint_to(alice)
@@ -167,7 +167,7 @@ describe('transfer', () => {
       expect(get_token_owner(aliceToken)).not.toBe(bob)
 
       // Bob attempts to transfer and has access, but owner_id is wrong
-      Context.setPredecessor_account_id(bob)
+      VMContext.setPredecessor_account_id(bob)
       transfer(carol, aliceToken)
     }).toThrow(nonSpec.ERROR_TOKEN_NOT_OWNED_BY_CALLER)
   })
@@ -180,11 +180,11 @@ describe('check_access', () => {
     const aliceToken = nonSpec.mint_to(alice)
 
     // Alice grants access to Bob
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     grant_access(bob)
 
     // Bob checks if he has access
-    Context.setPredecessor_account_id(bob)
+    VMContext.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(true)
   })
 
@@ -193,7 +193,7 @@ describe('check_access', () => {
     const aliceToken = nonSpec.mint_to(alice)
 
     // Bob checks if he has access
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     expect(check_access(bob)).toBe(false)
   })
 })
@@ -219,7 +219,7 @@ describe('nonSpec interface', () => {
     // we can mint up to MAX_SUPPLY tokens
     expect(() => {
       let limit = nonSpec.MAX_SUPPLY
-      while(limit-- > 0) {
+      while (limit-- > 0) {
         nonSpec.mint_to(alice)
       }
     }).not.toThrow()
