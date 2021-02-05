@@ -1429,6 +1429,16 @@ body-parser@1.19.0, body-parser@^1.16.0:
     raw-body "2.4.0"
     type-is "~1.6.17"
 
+borsh@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/borsh/-/borsh-0.3.1.tgz#c31c3a149610e37913deada80e89073fb15cf55b"
+  integrity sha512-gJoSTnhwLxN/i2+15Y7uprU8h3CKI+Co4YKZKvrGYUy0FwHWM20x5Sx7eU8Xv4HQqV+7rb4r3P7K1cBIQe3q8A==
+  dependencies:
+    "@types/bn.js" "^4.11.5"
+    bn.js "^5.0.0"
+    bs58 "^4.0.0"
+    text-encoding-utf-8 "^1.0.2"
+
 boxen@^4.2.0:
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/boxen/-/boxen-4.2.0.tgz#e411b62357d6d6d36587c8ac3d5d974daa070e64"
@@ -4958,10 +4968,28 @@ near-api-js@^0.34.0:
     text-encoding-utf-8 "^1.0.2"
     tweetnacl "^1.0.1"
 
-near-cli@^1.5.2:
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/near-cli/-/near-cli-1.5.2.tgz#e3991ef8fd04eeec833434cea8b72d5d8436e1e8"
-  integrity sha512-JRTJfwkpUbHnHiaUoZfUm89IoiAUX/vYAmIy72YeGUCklYk2odFaq12brcOnSFnkdqItQw8gN9aBXtea66Dusg==
+near-api-js@^0.36.3:
+  version "0.36.3"
+  resolved "https://registry.yarnpkg.com/near-api-js/-/near-api-js-0.36.3.tgz#f374ec33ecb774ec5ad19a8e464d679d8b4438d6"
+  integrity sha512-/pWMoUkoP3/8XJRL+uHUReW40XCa31+33tZX2QgACvrMHXJ41HzEK9+RxjaSDsJZ70BtOB4ybfuk4Pj5MEhqCQ==
+  dependencies:
+    "@types/bn.js" "^4.11.5"
+    bn.js "^5.0.0"
+    borsh "^0.3.1"
+    bs58 "^4.0.0"
+    depd "^2.0.0"
+    error-polyfill "^0.1.2"
+    http-errors "^1.7.2"
+    js-sha256 "^0.9.0"
+    mustache "^4.0.0"
+    node-fetch "^2.6.1"
+    text-encoding-utf-8 "^1.0.2"
+    tweetnacl "^1.0.1"
+
+near-cli@^1.5.3:
+  version "1.5.3"
+  resolved "https://registry.yarnpkg.com/near-cli/-/near-cli-1.5.3.tgz#0d56d03fd3c3f1045c9272d8641185bd6d6eead9"
+  integrity sha512-0OBu50NFY+UmGVhkD6FSvS4hzXG5v3r93SZFqOpSbX7IQPNTnn0cnGogpZXSqRpK5oKz9mDzQq1CrH7nwiRT8g==
   dependencies:
     ascii-table "0.0.9"
     bn.js "^5.1.1"
@@ -4972,7 +5000,7 @@ near-cli@^1.5.2:
     jest-environment-node "^26.0.0"
     mixpanel "^0.13.0"
     ncp "^2.0.0"
-    near-api-js "^0.34.0"
+    near-api-js "^0.36.3"
     near-seed-phrase "^0.1.0"
     near-web3-provider "^1.0.6"
     open "^7.0.1"
