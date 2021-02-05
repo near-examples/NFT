@@ -183,22 +183,22 @@ mod tests {
     use near_sdk::MockedBlockchain;
     use near_sdk::{testing_env, VMContext};
 
-    fn joe() -> AccountId {
-        "joe.testnet".to_string()
+    fn alice() -> AccountId {
+        "alice.testnet".to_string()
     }
-    fn robert() -> AccountId {
-        "robert.testnet".to_string()
+    fn bob() -> AccountId {
+        "bob.testnet".to_string()
     }
-    fn mike() -> AccountId {
-        "mike.testnet".to_string()
+    fn carol() -> AccountId {
+        "carol.testnet".to_string()
     }
 
     // part of writing unit tests is setting up a mock context
     // this is a useful list to peek at when wondering what's available in env::*
     fn get_context(predecessor_account_id: String, storage_usage: u64) -> VMContext {
         VMContext {
-            current_account_id: "alice.testnet".to_string(),
-            signer_account_id: "jane.testnet".to_string(),
+            current_account_id: alice(),
+            signer_account_id: bob(),
             signer_account_pk: vec![0, 1, 2],
             predecessor_account_id,
             input: vec![],
@@ -218,16 +218,16 @@ mod tests {
 
     #[test]
     fn grant_access() {
-        let context = get_context(robert(), 0);
+        let context = get_context(bob(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new(robert());
+        let mut contract = NonFungibleTokenBasic::new(bob());
         let length_before = contract.account_gives_access.len();
         assert_eq!(0, length_before, "Expected empty account access Map.");
-        contract.grant_access(mike());
-        contract.grant_access(joe());
+        contract.grant_access(carol());
+        contract.grant_access(alice());
         let length_after = contract.account_gives_access.len();
         assert_eq!(1, length_after, "Expected an entry in the account's access Map.");
-        let predecessor_hash = env::sha256(robert().as_bytes());
+        let predecessor_hash = env::sha256(bob().as_bytes());
         let num_grantees = contract.account_gives_access.get(&predecessor_hash).unwrap();
         assert_eq!(2, num_grantees.len(), "Expected two accounts to have access to predecessor.");
     }
@@ -237,46 +237,46 @@ mod tests {
         expected = r#"Access does not exist."#
     )]
     fn revoke_access_and_panic() {
-        let context = get_context(robert(), 0);
+        let context = get_context(bob(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new(robert());
-        contract.revoke_access(joe());
+        let mut contract = NonFungibleTokenBasic::new(bob());
+        contract.revoke_access(alice());
     }
 
     #[test]
     fn add_revoke_access_and_check() {
-        // Joe grants access to Robert
-        let mut context = get_context(joe(), 0);
+        // alice grants access to bob
+        let mut context = get_context(alice(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new(joe());
-        contract.grant_access(robert());
+        let mut contract = NonFungibleTokenBasic::new(alice());
+        contract.grant_access(bob());
 
-        // does Robert have access to Joe's account? Yes.
-        context = get_context(robert(), env::storage_usage());
+        // does bob have access to alice's account? Yes.
+        context = get_context(bob(), env::storage_usage());
         testing_env!(context);
-        let mut robert_has_access = contract.check_access(joe());
-        assert_eq!(true, robert_has_access, "After granting access, check_access call failed.");
+        let mut bob_has_access = contract.check_access(alice());
+        assert_eq!(true, bob_has_access, "After granting access, check_access call failed.");
 
-        // Joe revokes access from Robert
-        context = get_context(joe(), env::storage_usage());
+        // alice revokes access from bob
+        context = get_context(alice(), env::storage_usage());
         testing_env!(context);
-        contract.revoke_access(robert());
+        contract.revoke_access(bob());
 
-        // does Robert have access to Joe's account? No
-        context = get_context(robert(), env::storage_usage());
+        // does bob have access to alice's account? No
+        context = get_context(bob(), env::storage_usage());
         testing_env!(context);
-        robert_has_access = contract.check_access(joe());
-        assert_eq!(false, robert_has_access, "After revoking access, check_access call failed.");
+        bob_has_access = contract.check_access(alice());
+        assert_eq!(false, bob_has_access, "After revoking access, check_access call failed.");
     }
 
     #[test]
     fn mint_token_get_token_owner() {
-        let context = get_context(robert(), 0);
+        let context = get_context(bob(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new(robert());
-        contract.mint_token(mike(), 19u64);
+        let mut contract = NonFungibleTokenBasic::new(bob());
+        contract.mint_token(carol(), 19u64);
         let owner = contract.get_token_owner(19u64);
-        assert_eq!(mike(), owner, "Unexpected token owner.");
+        assert_eq!(carol(), owner, "Unexpected token owner.");
     }
 
     #[test]
@@ -284,37 +284,37 @@ mod tests {
         expected = r#"Attempt to transfer a token with no access."#
     )]
     fn transfer_from_with_no_access_should_fail() {
-        // Mike owns the token.
-        // Robert is trying to transfer it to Robert's account without having access.
-        let context = get_context(robert(), 0);
+        // carol owns the token.
+        // bob is trying to transfer it to bob's account without having access.
+        let context = get_context(bob(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new(robert());
+        let mut contract = NonFungibleTokenBasic::new(bob());
         let token_id = 19u64;
-        contract.mint_token(mike(), token_id);
-        contract.transfer_from(mike(), robert(), token_id.clone());
+        contract.mint_token(carol(), token_id);
+        contract.transfer_from(carol(), bob(), token_id.clone());
     }
 
     #[test]
     fn transfer_from_with_escrow_access() {
-        // Escrow account: robert.testnet
-        // Owner account: mike.testnet
-        // New owner account: joe.testnet
-        let mut context = get_context(mike(), 0);
+        // Escrow account: bob.testnet
+        // Owner account: carol.testnet
+        // New owner account: alice.testnet
+        let mut context = get_context(carol(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new(mike());
+        let mut contract = NonFungibleTokenBasic::new(carol());
         let token_id = 19u64;
-        contract.mint_token(mike(), token_id);
-        // Mike grants access to Robert
-        contract.grant_access(robert());
+        contract.mint_token(carol(), token_id);
+        // carol grants access to bob
+        contract.grant_access(bob());
 
-        // Robert transfers the token to Joe
-        context = get_context(robert(), env::storage_usage());
+        // bob transfers the token to alice
+        context = get_context(bob(), env::storage_usage());
         testing_env!(context);
-        contract.transfer_from(mike(), joe(), token_id.clone());
+        contract.transfer_from(carol(), alice(), token_id.clone());
 
         // Check new owner
         let owner = contract.get_token_owner(token_id.clone());
-        assert_eq!(joe(), owner, "Token was not transferred after transfer call with escrow.");
+        assert_eq!(alice(), owner, "Token was not transferred after transfer call with escrow.");
     }
 
     #[test]
@@ -322,39 +322,39 @@ mod tests {
         expected = r#"Attempt to transfer a token from a different owner."#
     )]
     fn transfer_from_with_escrow_access_wrong_owner_id() {
-        // Escrow account: robert.testnet
-        // Owner account: mike.testnet
-        // New owner account: joe.testnet
-        let mut context = get_context(mike(), 0);
+        // Escrow account: bob.testnet
+        // Owner account: carol.testnet
+        // New owner account: alice.testnet
+        let mut context = get_context(carol(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new(mike());
+        let mut contract = NonFungibleTokenBasic::new(carol());
         let token_id = 19u64;
-        contract.mint_token(mike(), token_id);
-        // Mike grants access to Robert
-        contract.grant_access(robert());
+        contract.mint_token(carol(), token_id);
+        // carol grants access to bob
+        contract.grant_access(bob());
 
-        // Robert transfers the token to Joe
-        context = get_context(robert(), env::storage_usage());
+        // bob transfers the token to alice
+        context = get_context(bob(), env::storage_usage());
         testing_env!(context);
-        contract.transfer_from(robert(), joe(), token_id.clone());
+        contract.transfer_from(bob(), alice(), token_id.clone());
     }
 
     #[test]
     fn transfer_from_with_your_own_token() {
-        // Owner account: robert.testnet
-        // New owner account: joe.testnet
+        // Owner account: bob.testnet
+        // New owner account: alice.testnet
 
-        testing_env!(get_context(robert(), 0));
-        let mut contract = NonFungibleTokenBasic::new(robert());
+        testing_env!(get_context(bob(), 0));
+        let mut contract = NonFungibleTokenBasic::new(bob());
         let token_id = 19u64;
-        contract.mint_token(robert(), token_id);
+        contract.mint_token(bob(), token_id);
 
-        // Robert transfers the token to Joe
-        contract.transfer_from(robert(), joe(), token_id.clone());
+        // bob transfers the token to alice
+        contract.transfer_from(bob(), alice(), token_id.clone());
 
         // Check new owner
         let owner = contract.get_token_owner(token_id.clone());
-        assert_eq!(joe(), owner, "Token was not transferred after transfer call with escrow.");
+        assert_eq!(alice(), owner, "Token was not transferred after transfer call with escrow.");
     }
 
     #[test]
@@ -362,38 +362,38 @@ mod tests {
         expected = r#"Attempt to call transfer on tokens belonging to another account."#
     )]
     fn transfer_with_escrow_access_fails() {
-        // Escrow account: robert.testnet
-        // Owner account: mike.testnet
-        // New owner account: joe.testnet
-        let mut context = get_context(mike(), 0);
+        // Escrow account: bob.testnet
+        // Owner account: carol.testnet
+        // New owner account: alice.testnet
+        let mut context = get_context(carol(), 0);
         testing_env!(context);
-        let mut contract = NonFungibleTokenBasic::new(mike());
+        let mut contract = NonFungibleTokenBasic::new(carol());
         let token_id = 19u64;
-        contract.mint_token(mike(), token_id);
-        // Mike grants access to Robert
-        contract.grant_access(robert());
+        contract.mint_token(carol(), token_id);
+        // carol grants access to bob
+        contract.grant_access(bob());
 
-        // Robert transfers the token to Joe
-        context = get_context(robert(), env::storage_usage());
+        // bob transfers the token to alice
+        context = get_context(bob(), env::storage_usage());
         testing_env!(context);
-        contract.transfer(joe(), token_id.clone());
+        contract.transfer(alice(), token_id.clone());
     }
 
     #[test]
     fn transfer_with_your_own_token() {
-        // Owner account: robert.testnet
-        // New owner account: joe.testnet
+        // Owner account: bob.testnet
+        // New owner account: alice.testnet
 
-        testing_env!(get_context(robert(), 0));
-        let mut contract = NonFungibleTokenBasic::new(robert());
+        testing_env!(get_context(bob(), 0));
+        let mut contract = NonFungibleTokenBasic::new(bob());
         let token_id = 19u64;
-        contract.mint_token(robert(), token_id);
+        contract.mint_token(bob(), token_id);
 
-        // Robert transfers the token to Joe
-        contract.transfer(joe(), token_id.clone());
+        // bob transfers the token to alice
+        contract.transfer(alice(), token_id.clone());
 
         // Check new owner
         let owner = contract.get_token_owner(token_id.clone());
-        assert_eq!(joe(), owner, "Token was not transferred after transfer call with escrow.");
+        assert_eq!(alice(), owner, "Token was not transferred after transfer call with escrow.");
     }
 }
