@@ -18,6 +18,9 @@ function compileContract(fqPath) {
   const output = `out/${name}-as.wasm`;
 
   console.log(`\ncompiling contract [ ${folder} ] to [ ${output} ]`);
+  
+  sh.cd(__dirname);
+  sh.mkdir('-p', output);
 
   compile(
     fqPath, // input file
