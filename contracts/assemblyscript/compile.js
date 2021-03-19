@@ -15,7 +15,7 @@ function compileContract(fqPath) {
     .split(/[\.\/]/)
     .pop();
 
-  const output = `out/${name}-as.wasm`;
+  const output = `build/release/main.wasm`;
 
   console.log(`\ncompiling contract [ ${folder} ] to [ ${output} ]`);
 

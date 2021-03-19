@@ -1,4 +1,5 @@
-import { PersistentMap, storage, context } from 'near-sdk-as'
+import { PersistentMap, storage, context, ContractPromiseBatch, base64 } from 'near-sdk-as'
+import { Storage, u128 } from 'near-sdk-core';
 
 /**************************/
 /* DATA TYPES AND STORAGE */
@@ -15,6 +16,7 @@ export const MAX_SUPPLY = u64(10)
 // Let's set them to single characters to save storage space
 const tokenToOwner = new PersistentMap<TokenId, AccountId>('a')
 
+
 // Note that with this implementation, an account can only set one escrow at a
 // time. You could make values an array of AccountIds if you need to, but this
 // complicates the code and costs more in storage rent.
@@ -22,6 +24,12 @@ const escrowAccess = new PersistentMap<AccountId, AccountId>('b')
 
 // This is a key in storage used to track the current minted supply
 const TOTAL_SUPPLY = 'c'
+
+@deprecated("content is stored as Uint8Array")
+const tokenToContent = new PersistentMap<TokenId, string>('d')
+
+const tokenForSale = new PersistentMap<TokenId, string>('e');
+const tokenListenPrice = new PersistentMap<TokenId, string>('f');
 
 /******************/
 /* ERROR MESSAGES */
@@ -33,6 +41,10 @@ export const ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION = 'Caller ID does not ma
 export const ERROR_MAXIMUM_TOKEN_LIMIT_REACHED = 'Maximum token limit reached'
 export const ERROR_OWNER_ID_DOES_NOT_MATCH_EXPECTATION = 'Owner id does not match real token owner id'
 export const ERROR_TOKEN_NOT_OWNED_BY_CALLER = 'Token is not owned by the caller. Please use transfer_from for this scenario'
+export const ERROR_TOKEN_NOT_FOR_SALE = 'Token is not for sale'
+export const ERROR_LISTENING_NOT_AVAILABLE = 'Listening is not available'
+export const ERROR_LISTENING_REQUIRES_PAYMENT = 'Listening requires payment, call request_listening first'
+export const ERROR_OWNERS_NOT_REQUIRED_TO_REQUEST_LISTENING = 'Owners are not required to request listening'
 
 /******************/
 /* CHANGE METHODS */
@@ -113,7 +125,12 @@ export function get_token_owner(token_id: TokenId): string {
 
 // Note that ANYONE can call this function! You probably would not want to
 // implement a real NFT like this!
-export function mint_to(owner_id: AccountId): u64 {
+
+@deprecated
+@payable
+export function mint_to(owner_id: AccountId, content: string): u64 {
+  const mintprice: u128 = u128.pow(u128.from(10), 24) * u128.from(content.length); // 1 N per character
+  assert(context.attachedDeposit == mintprice, "Method requires deposit of " + mintprice.toString());
   // Fetch the next tokenId, using a simple indexing strategy that matches IDs
   // to current supply, defaulting the first token to ID=1
   //
@@ -127,6 +144,7 @@ export function mint_to(owner_id: AccountId): u64 {
 
   // assign ownership
   tokenToOwner.set(tokenId, owner_id)
+  tokenToContent.set(tokenId, content)
 
   // increment and store the next tokenId
   storage.set<u64>(TOTAL_SUPPLY, tokenId + 1)
@@ -134,4 +152,133 @@ export function mint_to(owner_id: AccountId): u64 {
   // return the tokenId – while typical change methods cannot return data, this
   // is handy for unit tests
   return tokenId
+}
+
+@payable
+export function mint_to_base64(owner_id: AccountId, contentbase64: string): u64 {
+  const content = base64.decode(contentbase64);
+  const mintprice: u128 = u128.pow(u128.from(10), 20) * u128.from(contentbase64.length); // 0.0001 N per character
+  assert(context.attachedDeposit == mintprice, "Method requires deposit of " + mintprice.toString());
+  // Fetch the next tokenId, using a simple indexing strategy that matches IDs
+  // to current supply, defaulting the first token to ID=1
+  //
+  // * If your implementation allows deleting tokens, this strategy will not work!
+  // * To verify uniqueness, you could make IDs hashes of the data that makes tokens
+  //   special; see https://twitter.com/DennisonBertram/status/1264198473936764935
+  const tokenId = storage.getPrimitive<u64>(TOTAL_SUPPLY, 1)
+
+  // enforce token limits – not part of the spec but important!
+  assert(tokenId <= MAX_SUPPLY, ERROR_MAXIMUM_TOKEN_LIMIT_REACHED)
+
+  // assign ownership
+  tokenToOwner.set(tokenId, owner_id)
+  Storage.setBytes('t' + tokenId.toString(), content)
+
+  // increment and store the next tokenId
+  storage.set<u64>(TOTAL_SUPPLY, tokenId + 1)
+
+  // return the tokenId – while typical change methods cannot return data, this
+  // is handy for unit tests
+  return tokenId
+}
+
+export function replace_content_base64(tokenId: TokenId, contentbase64: string): void {
+  const predecessor = context.predecessor
+  const owner = tokenToOwner.getSome(tokenId)
+  assert(owner == predecessor, ERROR_TOKEN_NOT_OWNED_BY_CALLER)
+
+  const mintprice: u128 = u128.pow(u128.from(10), 20) * u128.from(contentbase64.length); // 0.0001 N per character
+  assert(context.attachedDeposit == mintprice, "Method requires deposit of " + mintprice.toString());
+
+  const content = base64.decode(contentbase64);
+  
+  Storage.setBytes('t' + tokenId.toString(), content)
+}
+
+/*export function wipe_tokens(): void {
+  const maxId: i32 = (storage.getPrimitive<u64>(TOTAL_SUPPLY, 1) + 1) as i32;
+  for (var n = 0; n < maxId; n++) {
+    tokenToOwner.delete(n);
+    tokenToContent.delete(n);
+    Storage.delete('t' + n.toString())
+  }
+  storage.set<u64>(TOTAL_SUPPLY, 1);
+}*/
+
+// Get content behind token
+@deprecated
+export function get_token_content(token_id: TokenId): string {
+  const predecessor = context.predecessor
+  const owner = tokenToOwner.getSome(token_id)
+  assert(owner == predecessor, ERROR_TOKEN_NOT_OWNED_BY_CALLER)
+  return tokenToContent.getSome(token_id)
+}
+
+@payable
+export function request_listening(token_id: TokenId): ContractPromiseBatch {
+  const predecessor = context.predecessor
+  const owner = tokenToOwner.getSome(token_id)
+  assert(owner != predecessor, ERROR_OWNERS_NOT_REQUIRED_TO_REQUEST_LISTENING)
+  assert(tokenListenPrice.contains(token_id), ERROR_LISTENING_NOT_AVAILABLE)
+  const listenPrice = u128.from(tokenListenPrice.get(token_id)!);
+  assert(context.attachedDeposit == listenPrice, "Method requires deposit " + listenPrice.toString())
+  
+  const listeningKey = 'l:' + predecessor
+  Storage.set<u64>(listeningKey, token_id)
+  // 99 % to owner
+  const amountToOwner = changetype<u128>(context.attachedDeposit * u128.fromI32(99) / u128.fromI32(100))
+  return ContractPromiseBatch.create(owner).transfer(amountToOwner)  
+}
+
+export function view_token_content_base64(token_id: TokenId): String {
+  return base64.encode(Storage.getBytes('t' + token_id.toString())!)
+}
+
+export function get_token_content_base64(token_id: TokenId): Uint8Array {
+  const predecessor = context.predecessor
+  const owner = tokenToOwner.getSome(token_id)
+  
+  if (owner != predecessor) {
+    const listeningKey = 'l:' + predecessor;
+    assert(Storage.getPrimitive<u64>(listeningKey, 0) === token_id, ERROR_LISTENING_REQUIRES_PAYMENT)
+    Storage.delete(listeningKey)
+  }  
+  const contentbytes = Storage.getBytes('t' + token_id.toString())!
+  return contentbytes
+}
+
+export function get_listening_price(token_id: TokenId): String {
+  return tokenListenPrice.get(token_id)!;
+}
+
+export function set_listening_price(token_id: TokenId, price: u128): void {
+  const predecessor = context.predecessor
+  assert(predecessor == tokenToOwner.get(token_id), ERROR_TOKEN_NOT_OWNED_BY_CALLER)
+  tokenListenPrice.set(token_id, price.toString())
+}
+
+export function sell_token(token_id: TokenId, price: u128): void {
+  const predecessor = context.predecessor
+  assert(predecessor == tokenToOwner.get(token_id), ERROR_TOKEN_NOT_OWNED_BY_CALLER)
+  tokenForSale.set(token_id, price.toString())
+}
+
+export function view_price(token_id: TokenId): u128 {
+  assert(tokenForSale.contains(token_id), ERROR_TOKEN_NOT_FOR_SALE)
+  return u128.from(tokenForSale.getSome(token_id))
+}
+
+@payable
+export function buy_token(token_id: TokenId): ContractPromiseBatch {
+  const predecessor = context.predecessor
+  assert(tokenForSale.contains(token_id), ERROR_TOKEN_NOT_FOR_SALE)
+
+  const askingPrice = u128.from(tokenForSale.get(token_id)!);
+  assert(context.attachedDeposit == askingPrice, "Method requires deposit " + askingPrice.toString())
+  const owner = tokenToOwner.get(token_id)!
+
+  tokenToOwner.set(token_id, predecessor)
+  tokenForSale.delete(token_id)
+
+  return ContractPromiseBatch.create(owner).transfer(context.attachedDeposit)
 }

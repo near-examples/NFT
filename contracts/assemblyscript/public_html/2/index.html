@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NFT-music</title>
+    <style>
+        body {
+            background-color: #333;
+            color: white;
+            font-weight: 100;
+            font-family: monospace;
+            padding: 10px;
+            font-size: 15px;
+            text-emphasis: center;
+        }
+        #content {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        #loadercontainer {
+            position: fixed;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        input[type=range] {
+            background-color: rgba(0,0,0,0.0);
+        }
+        input[type=range]::-moz-range-track {
+            background-color: rgba(0,0,0,0.8);
+        }
+        .playerarea {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #125;
+            color: #cdf;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 3px 3px 3px 3px #222;
+        }
+        .loader {
+            border: 16px solid #f3f3f3;
+            /* Light grey */
+            border-top: 16px solid #3498db;
+            /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        button, input[type="number"] {
+            box-shadow: 0 8px 8px 0 rgba(0,0,0,0.3), 0 6px 8px 0 rgba(0,0,0,0.3);
+            border: #aaa solid 1px;
+            font-size: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        midi-mixer {
+            max-width: 100%;
+            overflow-x: scroll;
+        }
+        #ownerspan {
+            background-color: black;
+            padding-left: 7px;
+            padding-right: 7px;
+            border-radius: 5px;
+        }
+        #timespan {
+            padding-bottom: 4px;
+        }
+        #playpriceinfospan {
+            font-size: 13px;
+            padding: 10px;
+        }
+
+        #logginbutton {
+            background-color: #4a6;
+        }        
+    </style>
+</head>
+
+<body>
+    <div id="content">
+        <h1>2nd NFT - music by Peter Salomonsen</h1>
+        <p>
+            My second experiment with music stored on the NEAR protocol blockchain.
+        </p>
+        <div class="playerarea">
+            <input id="timeindicator" style="width: 100%" type="range" value="0" min="0" max="200000"
+                oninput="seek(this.value)" />
+            
+            <span id="timespan"></span>
+            <button class="playpausebutton" id="playbutton" style="display: block" onclick="togglePlay(true)">&#x25B6; play</button>
+            <button class="playpausebutton" id="pausebutton" style="display: none" onclick="togglePlay(false)">&#9616;&nbsp;&#9612; pause</button>
+            <div id="playpriceinfospan"></div>
+
+            <div style="height: 20px"></div>
+            <midi-mixer oninput="mixerchange(event)" data-channels="piano,strings,drums,,guitar,bass,tubelead,padsynth"></midi-mixer>
+            <p>move vertical sliders for changing instruments volume, and horizontal sliders for panning left / right</p>
+        </div>
+
+        <br />
+        <p>NFT token owner: <span id="ownerspan"></span></p>
+
+        <button id="logginbutton" style="display: none;" onclick="login()">login</button>
+        <br />
+        
+        
+        <p id="buyarea" style="display: none;">NFT is for sale. Licensed under <a href="https://www.nftlicense.org/" target="_blank">NFT
+            license</a>, Price: <span id="pricespan"></span>N <button
+                onclick="buyNFT()">Buy</button></p>
+    
+        <div id="sellarea" style="display: none;">
+            <h3>Sell NFT</h3>
+            <p>You are the owner of this NFT and you can put it up for sale if you want.</p>
+            <p>Set a price: <input type="number" placeholder="price" value="1" id="sellprice" /> NEAR
+            <button onclick="sellNFT(parseFloat(document.getElementById('sellprice').value))">Sell</button></p>
+        </div>    
+    </div>
+    <div id="loadercontainer">
+        <div class="loader"></div>
+    </div>
+
+    <script src="audioworkletpolyfill.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/nearprotocol/near-api-js/dist/near-api-js.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bn.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.3/pako.min.js"></script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>

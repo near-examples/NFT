@@ -3,7 +3,6 @@ Minimal NEP#4 Implementation
 
 This contract implements bare-minimum functionality to satisfy the [NEP#4](https://github.com/nearprotocol/NEPs/pull/4) specification
 
-
 Notable limitations of this implementation
 ==========================================
 
@@ -22,3 +21,35 @@ Notable additions that go beyond the specification of NEP#4
 ===========================================================
 
 `mint_to`: the spec gives no guidance or requirements on how tokens are minted/created/assigned. If this implementation of `mint_to` is close to matching your needs, feel free to ship your NFT with only minor modifications (such as caller verification). If you'd rather go with a strategy such as minting the whole supply of tokens upon deploy of the contract, or something else entirely, you may want to drastically change this behavior.
+
+NOTE: my change here is 0.001 NEAR per byte minted is required as attached deposit.
+
+Also there are functions for selling and buying, setting listening price.
+
+mint, sell and buy
+==================
+
+(testnet)
+
+near call sellnft.testnet mint_to --accountId psalomo.testnet --amount "1.0" '{"owner_id": "psalomo.testnet", "content": "hellotralala"}' 
+
+near call sellnft.testnet sell_token --accountId psalomo.testnet '{"token_id": "2", "price": "10000000000000000000000000"}'        
+
+near call sellnft.testnet buy_token --accountId apsolomo.testnet --amount "10"  --network_id testnet '{"token_id": "2"}'    
+
+## Deploy
+
+testnet:
+
+`near --accountId sellnft.testnet --networkId testnet deploy --wasmFile build/release/main.wasm`
+
+mainnet:
+
+`near --accountId psalomo.near --networkId mainnet --walletUrl https://wallet.near.org --nodeUrl https://rpc.mainnet.near.org deploy --wasmFile build/release/main.wasm`
+
+## The first mint of WebAssembly music on the NEAR mainnet
+
+This was the first transaction:
+
+https://explorer.near.org/transactions/BP4upKRtrJSYZa45Hp6voVny3GdUsCB4moGx7YJZ9AU7
+

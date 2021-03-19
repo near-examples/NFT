@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NFT-music</title>
+    <style>
+        #content {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        #loadercontainer {
+            position: fixed;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+
+        .loader {
+            border: 16px solid #f3f3f3;
+            /* Light grey */
+            border-top: 16px solid #3498db;
+            /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="content">
+        <h1>Music stored on-chain as Non-Fungible Token (NFT)</h1>
+        <p>
+            Welcome to the first music stored in a blockchain as a <a
+                href="https://en.wikipedia.org/wiki/Non-fungible_token" target="_blank">Non-Fungle Token (NFT)</a>.
+        </p>
+        <h3>License</h3>
+        <p>If you decide to buy this, you are accepting the <a href="https://www.nftlicense.org/" target="_blank">NFT
+                license</a>. Make sure to read it carefully.</p>
+
+        <h3>About the music</h3>
+        <p>The track, which you can listen to at <a href="https://soundcloud.com/psalomo/webchip-music">soundcloud</a>
+            (and other places), was one of the first pieces of music rendered to an "executable" <a
+                href="https://en.wikipedia.org/wiki/WebAssembly" target="_blank">WebAssembly</a> binary.
+            By using a WebAssembly runtime to execute the wasm binary file, you will get raw audio data in the output
+            that you can open in an audio editor. This was demonstrated at the <a
+                href="https://www.youtube.com/watch?t=1690&v=C8j_ieOm4vE&feature=youtu.be" target="_blank">WebAssembly
+                Summit 2020</a>.
+            Instructions can also be found in the zip file that is available for download from this web-page to the
+            token owner.
+        </p>
+
+        <h3>What do I get when buying this?</h3>
+        <p>
+            Note that since this is stored on-chain, it is not protected from others to see or get.
+            However you'll get the rights as found in the LICENSE.txt file that is part of the zip archive stored with
+            this NFT.
+            Also the smart contract will recognize your account as the owner of the NFT. The source code of the smart
+            contract
+            can be found <a target="_blank"
+                href="https://github.com/petersalomonsen/NFT/tree/nft-with-content/contracts/assemblyscript/nep4-basic">here</a>
+        </p>
+        <h1>Status and action</h1>
+        <p>The NFT is currently owned by: <span id="ownerspan"></span></p>
+        <p id="downloadcontentarea" style="display: none;"><button onclick="downloadTokenContent()">Download
+                content</button></p>
+
+        <button id="logginbutton" style="display: none;" onclick="login()">login</button>
+        <p id="buyarea" style="display: none;">Token is for sale. Price: <span id="pricespan"></span>N <button
+                onclick="buyNFT()">Buy</button></p>
+
+        <div id="sellarea" style="display: none;">
+            <h3>Sell token</h3>
+            <p>You are the owner of this token and you can put it up for sale if you want.</p>
+            <p>Set a price: <input type="number" placeholder="price" value="1" id="sellprice" /> NEAR</p>
+            <p><button onclick="sellNFT(parseFloat(document.getElementById('sellprice').value))">Sell</button></p>
+        </div>
+    </div>
+    <div id="loadercontainer">
+        <div class="loader"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/gh/nearprotocol/near-api-js/dist/near-api-js.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bn.js"></script>
+    <script type="module" src="nftmusic.js"></script>
+</body>
+
+</html>

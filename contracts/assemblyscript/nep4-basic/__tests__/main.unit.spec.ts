@@ -1,4 +1,5 @@
-import { VM, Context } from 'near-sdk-as'
+import { VMContext, base64 } from 'near-sdk-as'
+import { Context, u128 } from "near-sdk-core";
 
 // explicitly import functions required by spec
 import {
@@ -18,17 +19,24 @@ const alice = 'alice'
 const bob = 'bob'
 const carol = 'carol'
 
+const content = 'AAECAw==';
+
+const mintprice = u128.fromString('800000000000000000000');
+
+let currentTokenId: u64;
+
 describe('grant_access', () => {
   it('grants access to the given account_id for all the tokens that account has', () => {
     // Alice has a token
-    const aliceToken = nonSpec.mint_to(alice)
+    VMContext.setAttached_deposit(mintprice);
+    const aliceToken = nonSpec.mint_to_base64(alice, content)
 
     // Alice calls `grant_access` to make Bob her escrow
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     grant_access(bob)
 
     // Bob checks if Alice has done so
-    Context.setPredecessor_account_id(bob)
+    VMContext.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(true)
   })
 })
@@ -36,25 +44,25 @@ describe('grant_access', () => {
 describe('revoke_access', () => {
   it('revokes access to the given `accountId` for the given `tokenId`', () => {
     // Prevent error `InconsistentStateError(IntegerOverflow)` thrown by near-sdk-rs
-    Context.setStorage_usage(100)
-
+    VMContext.setStorage_usage(100)
+    VMContext.setAttached_deposit(mintprice);
     // Alice has a token
-    const aliceToken = nonSpec.mint_to(alice)
+    const aliceToken = nonSpec.mint_to_base64(alice, content)
 
     // Alice makes Bob her escrow
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     grant_access(bob)
 
     // Bob checks if he has access to Alice's account
-    Context.setPredecessor_account_id(bob)
+    VMContext.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(true)
 
     // Alice revokes Bob's access
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     revoke_access(bob)
 
     // Bob checks again
-    Context.setPredecessor_account_id(bob)
+    VMContext.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(false)
   })
 })
@@ -62,31 +70,35 @@ describe('revoke_access', () => {
 describe('transfer_from', () => {
   it('allows owner to transfer given `token_id` to given `owner_id`', () => {
     // Alice has a token
-    const aliceToken = nonSpec.mint_to(alice)
+    VMContext.setAttached_deposit(mintprice);
+    const aliceToken = nonSpec.mint_to_base64(alice, content)
     expect(get_token_owner(aliceToken)).toBe(alice)
     expect(get_token_owner(aliceToken)).not.toBe(bob)
 
     // Alice transfers her token to Bob
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     transfer_from(alice, bob, aliceToken)
 
     // it works!
     expect(get_token_owner(aliceToken)).toBe(bob)
     expect(get_token_owner(aliceToken)).not.toBe(alice)
+
+    VMContext.setPredecessor_account_id(bob)
   })
 
   it('allows escrow to transfer given `token_id` to given `new_owner_id` if `owner_id` matches', () => {
     // Alice grants access to Bob
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     grant_access(bob)
 
     // Alice has a token
-    const aliceToken = nonSpec.mint_to(alice)
+    VMContext.setAttached_deposit(mintprice);
+    const aliceToken = nonSpec.mint_to_base64(alice, content)
     expect(get_token_owner(aliceToken)).toBe(alice)
     expect(get_token_owner(aliceToken)).not.toBe(bob)
 
     // Bob transfers to himself
-    Context.setPredecessor_account_id(bob)
+    VMContext.setPredecessor_account_id(bob)
     transfer_from(alice, bob, aliceToken)
 
     // it works!
@@ -97,16 +109,18 @@ describe('transfer_from', () => {
   it('prevents escrow from transferring given `token_id` to given `new_owner_id if `owner_id` does not match`', () => {
     expect(() => {
       // Alice grants access to Bob
-      Context.setPredecessor_account_id(alice)
+      VMContext.setPredecessor_account_id(alice)
       grant_access(bob)
 
       // Alice has a token
-      const aliceToken = nonSpec.mint_to(alice)
+      VMContext.setAttached_deposit(mintprice);
+      const aliceToken = nonSpec.mint_to_base64(alice, content)
       expect(get_token_owner(aliceToken)).toBe(alice)
       expect(get_token_owner(aliceToken)).not.toBe(bob)
 
       // Bob attempts to transfer and has access, but owner_id is wrong
-      Context.setPredecessor_account_id(bob)
+      VMContext.setPredecessor_account_id(bob)
+      VMContext.setAttached_deposit(u128.from(100))
       transfer_from(bob, carol, aliceToken)
     }).toThrow(nonSpec.ERROR_OWNER_ID_DOES_NOT_MATCH_EXPECTATION)
   })
@@ -114,10 +128,12 @@ describe('transfer_from', () => {
   it('prevents anyone else from transferring the token', () => {
     expect(() => {
       // Alice has a token
-      const aliceToken = nonSpec.mint_to(alice)
+      VMContext.setAttached_deposit(mintprice);
+      const aliceToken = nonSpec.mint_to_base64(alice, content)
 
       // Bob tries to transfer it to himself
-      Context.setPredecessor_account_id(bob)
+      VMContext.setPredecessor_account_id(bob)
+      VMContext.setAttached_deposit(u128.from(100))
       transfer_from(alice, bob, aliceToken)
     }).toThrow(nonSpec.ERROR_CALLER_ID_DOES_NOT_MATCH_EXPECTATION)
   })
@@ -126,32 +142,34 @@ describe('transfer_from', () => {
 describe('transfer', () => {
   it('allows owner to transfer given `token_id` to given `owner_id`', () => {
     // Alice has a token
-    const aliceToken = nonSpec.mint_to(alice)
+    VMContext.setAttached_deposit(mintprice);
+    const aliceToken = nonSpec.mint_to_base64(alice, content)
     expect(get_token_owner(aliceToken)).toBe(alice)
     expect(get_token_owner(aliceToken)).not.toBe(bob)
 
     // Alice transfers her token to Bob
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     transfer(bob, aliceToken)
 
     // it works!
     expect(get_token_owner(aliceToken)).toBe(bob)
     expect(get_token_owner(aliceToken)).not.toBe(alice)
   })
-  
+
   it('prevents escrow from using transfer. Escrow can only use transfer_from', () => {
     expect(() => {
       // Alice grants access to Bob
-      Context.setPredecessor_account_id(alice)
+      VMContext.setPredecessor_account_id(alice)
       grant_access(bob)
 
       // Alice has a token
-      const aliceToken = nonSpec.mint_to(alice)
+      VMContext.setAttached_deposit(mintprice);
+      const aliceToken = nonSpec.mint_to_base64(alice, content)
       expect(get_token_owner(aliceToken)).toBe(alice)
       expect(get_token_owner(aliceToken)).not.toBe(bob)
 
       // Bob attempts to transfer and has access, but owner_id is wrong
-      Context.setPredecessor_account_id(bob)
+      VMContext.setPredecessor_account_id(bob)
       transfer(carol, aliceToken)
     }).toThrow(nonSpec.ERROR_TOKEN_NOT_OWNED_BY_CALLER)
   })
@@ -159,15 +177,16 @@ describe('transfer', () => {
   it('prevents anyone else from transferring the token', () => {
     expect(() => {
       // Alice grants access to Bob
-      Context.setPredecessor_account_id(alice)
+      VMContext.setPredecessor_account_id(alice)
 
       // Alice has a token
-      const aliceToken = nonSpec.mint_to(alice)
+      VMContext.setAttached_deposit(mintprice);
+      const aliceToken = nonSpec.mint_to_base64(alice, content)
       expect(get_token_owner(aliceToken)).toBe(alice)
       expect(get_token_owner(aliceToken)).not.toBe(bob)
 
       // Bob attempts to transfer and has access, but owner_id is wrong
-      Context.setPredecessor_account_id(bob)
+      VMContext.setPredecessor_account_id(bob)
       transfer(carol, aliceToken)
     }).toThrow(nonSpec.ERROR_TOKEN_NOT_OWNED_BY_CALLER)
   })
@@ -177,23 +196,25 @@ describe('transfer', () => {
 describe('check_access', () => {
   it('returns true if caller of the function has access to the token', () => {
     // Alice has a token
-    const aliceToken = nonSpec.mint_to(alice)
+    VMContext.setAttached_deposit(mintprice);
+    const aliceToken = nonSpec.mint_to_base64(alice, content)
 
     // Alice grants access to Bob
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     grant_access(bob)
 
     // Bob checks if he has access
-    Context.setPredecessor_account_id(bob)
+    VMContext.setPredecessor_account_id(bob)
     expect(check_access(alice)).toBe(true)
   })
 
   it('returns false if caller of function does not have access', () => {
     // Alice has a token
-    const aliceToken = nonSpec.mint_to(alice)
+    VMContext.setAttached_deposit(mintprice);
+    const aliceToken = nonSpec.mint_to_base64(alice, content)
 
     // Bob checks if he has access
-    Context.setPredecessor_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
     expect(check_access(bob)).toBe(false)
   })
 })
@@ -201,8 +222,9 @@ describe('check_access', () => {
 describe('get_token_owner', () => {
   it('returns accountId of owner of given `tokenId`', () => {
     // Alice and Bob both have tokens
-    const aliceToken = nonSpec.mint_to(alice)
-    const bobToken = nonSpec.mint_to(bob)
+    VMContext.setAttached_deposit(mintprice);
+    const aliceToken = nonSpec.mint_to_base64(alice, content)
+    const bobToken = nonSpec.mint_to_base64(bob, content)
 
     // Alice owns her own token
     expect(get_token_owner(aliceToken)).toBe(alice)
@@ -216,17 +238,198 @@ describe('get_token_owner', () => {
 
 describe('nonSpec interface', () => {
   it('should throw if we attempt to mint more than the MAX_SUPPLY', () => {
+    VMContext.setAttached_deposit(mintprice);
     // we can mint up to MAX_SUPPLY tokens
     expect(() => {
       let limit = nonSpec.MAX_SUPPLY
-      while(limit-- > 0) {
-        nonSpec.mint_to(alice)
+      while (limit-- > 0) {
+        nonSpec.mint_to_base64(alice, content)
       }
     }).not.toThrow()
 
     // minting one more than the max throws an error
     expect(() => {
-      nonSpec.mint_to(alice)
+      nonSpec.mint_to_base64(alice, content)
     }).toThrow(nonSpec.ERROR_MAXIMUM_TOKEN_LIMIT_REACHED)
+  })
+  it('should get content', () => {
+    VMContext.setAttached_deposit(mintprice);
+    const tokenId = nonSpec.mint_to_base64(alice, content)
+    VMContext.setPredecessor_account_id(alice)
+    expect(base64.encode(nonSpec.get_token_content_base64(tokenId))).toStrictEqual(content);
+  })
+  it('should get legacy content', () => {
+    const mintprice = u128.fromString('8000000000000000000000000');
+    VMContext.setAttached_deposit(mintprice);
+    const tokenId = nonSpec.mint_to(alice, content)
+    VMContext.setPredecessor_account_id(alice)
+    expect(nonSpec.get_token_content(tokenId)).toStrictEqual(content);
+  })
+  it('should not be allowed to get content', () => {
+    expect(() => {
+      VMContext.setAttached_deposit(mintprice);
+      const tokenId = nonSpec.mint_to_base64(alice, content)
+      VMContext.setPredecessor_account_id(bob)
+      nonSpec.get_token_content(tokenId)
+    }).toThrow(nonSpec.ERROR_TOKEN_NOT_OWNED_BY_CALLER)
+  })
+  it('should fail to view price for token not for sale', () => {
+    expect(() => {
+      VMContext.setAttached_deposit(mintprice);
+      const tokenId = nonSpec.mint_to_base64(alice, content)
+      nonSpec.view_price(tokenId);
+    }).toThrow(nonSpec.ERROR_TOKEN_NOT_FOR_SALE);
+  })
+  it('should sell, view price and buy token', () => {
+    VMContext.setAttached_deposit(mintprice);
+    const tokenId = nonSpec.mint_to_base64(carol, content)
+    const price = u128.from(200);
+    VMContext.setPredecessor_account_id(carol)
+
+    nonSpec.sell_token(tokenId, price)
+
+    const viewedPrice: u128 = nonSpec.view_price(tokenId);
+    expect(viewedPrice).toStrictEqual(price);
+
+    VMContext.setPredecessor_account_id(bob)
+    VMContext.setAttached_deposit(price)
+
+    expect(get_token_owner(tokenId)).toStrictEqual(carol)
+    nonSpec.buy_token(tokenId)
+
+    VMContext.setPredecessor_account_id(carol)
+    expect(get_token_owner(tokenId)).toStrictEqual(bob)
+  });
+  it('should not be allowed to get content if listening price is not set', () => {    
+    expect(() => {
+      VMContext.setAttached_deposit(mintprice);
+      VMContext.setPredecessor_account_id(alice)      
+      const tokenId = nonSpec.mint_to_base64(alice, content)
+      VMContext.setPredecessor_account_id(bob)
+      expect(base64.encode(nonSpec.get_token_content_base64(tokenId))).toStrictEqual(content)
+    }).toThrow(nonSpec.ERROR_LISTENING_NOT_AVAILABLE)
+  })
+  it('should not be allowed to get content if not paying for listening', () => {    
+    expect(() => {
+      VMContext.setAttached_deposit(mintprice);
+      VMContext.setPredecessor_account_id(alice)      
+      const tokenId = nonSpec.mint_to_base64(alice, content)
+      const listenprice = u128.fromString('1000000000000000000000')
+      nonSpec.set_listening_price(tokenId, listenprice)
+      VMContext.setPredecessor_account_id(bob)
+      expect(base64.encode(nonSpec.get_token_content_base64(tokenId))).toStrictEqual(content)
+    }).toThrow()
+  })
+  it('should be allowed to get content if listening price is set', () => {
+    VMContext.setAttached_deposit(mintprice);
+    VMContext.setPredecessor_account_id(alice)
+    const tokenId = nonSpec.mint_to_base64(alice, content)
+    const listenprice = u128.fromString('1000000000000000000000')
+    nonSpec.set_listening_price(tokenId, listenprice);
+    VMContext.setPredecessor_account_id(bob)
+    VMContext.setAttached_deposit(listenprice)
+    nonSpec.request_listening(tokenId)
+    expect(base64.encode(nonSpec.get_token_content_base64(tokenId))).toStrictEqual(content)
+  })
+  it('listeners should not be allowed to get content twice', () => {
+    VMContext.setAttached_deposit(mintprice);
+    VMContext.setPredecessor_account_id(alice)
+    currentTokenId = nonSpec.mint_to_base64(alice, content)
+    const listenprice = u128.fromString('1000000000000000000000')
+    nonSpec.set_listening_price(currentTokenId, listenprice);
+    VMContext.setPredecessor_account_id(bob)
+    VMContext.setAttached_deposit(listenprice)
+    nonSpec.request_listening(currentTokenId)
+    expect(base64.encode(nonSpec.get_token_content_base64(currentTokenId))).toStrictEqual(content)
+    expect(() => {
+      VMContext.setPredecessor_account_id(bob)
+      nonSpec.get_token_content_base64(currentTokenId)
+    }).toThrow()
+  })
+  it('token owners should receive listen fee', () => {
+    VMContext.setAttached_deposit(mintprice)
+    VMContext.setPredecessor_account_id(alice)
+    currentTokenId = nonSpec.mint_to_base64(alice, content)
+    
+    const listenprice = u128.fromString('1000000000000000000000')
+    nonSpec.set_listening_price(currentTokenId, listenprice);
+  
+    VMContext.setAccount_balance(u128.fromString('0'))
+
+    VMContext.setPredecessor_account_id(bob)
+    VMContext.setAttached_deposit(listenprice)
+    nonSpec.request_listening(currentTokenId)
+  
+    expect(Context.accountBalance).toBe(u128.fromString('10000000000000000000'))
+    VMContext.setPredecessor_account_id(alice)
+    expect(Context.accountBalance).toBe(u128.fromString('1000000000000000000000'))
+  })
+  it('should be possible to mint 20kb', () => {
+    const largecontent = new Uint8Array(20 * 1024)
+    for (let n=0;n<largecontent.length;n++) {
+      largecontent[n] = n & 0xff
+    }
+    
+    const largecontentb64 = base64.encode(largecontent)
+    VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
+
+    const aliceToken = nonSpec.mint_to_base64(alice, largecontentb64)
+    
+    VMContext.setPredecessor_account_id(alice)
+    const receieved = nonSpec.get_token_content_base64(aliceToken)
+    expect(receieved.length).toBe(largecontent.length)
+    expect(receieved).toStrictEqual(largecontent)
+  })
+  it('should be possible to replace content', () => {
+    const largecontent = new Uint8Array(20 * 1024)
+    for (let n=0;n<largecontent.length;n++) {
+      largecontent[n] = n & 0xff
+    }
+    
+    const largecontentb64 = base64.encode(largecontent)
+    VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
+
+    const aliceToken = nonSpec.mint_to_base64(alice, largecontentb64)
+    
+    VMContext.setPredecessor_account_id(alice)
+    let receieved = nonSpec.get_token_content_base64(aliceToken)
+    expect(receieved.length).toBe(largecontent.length)
+    
+    for (let n=0;n<largecontent.length;n++) {
+      largecontent[largecontent.length - 1 - n] = n & 0xff
+    }
+
+    VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
+
+    nonSpec.replace_content_base64(aliceToken, base64.encode(largecontent))
+    receieved = nonSpec.get_token_content_base64(aliceToken)
+    expect(receieved).toStrictEqual(largecontent)
+  })
+  it('should not be possible for non-owners to replace content', () => {
+    const largecontent = new Uint8Array(20 * 1024)
+    for (let n=0;n<largecontent.length;n++) {
+      largecontent[n] = n & 0xff
+    }
+    
+    const largecontentb64 = base64.encode(largecontent)
+    VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
+
+    currentTokenId = nonSpec.mint_to_base64(alice, largecontentb64)
+    
+    VMContext.setPredecessor_account_id(bob)
+    
+    expect(() => {
+      const contentb64 = base64.encode(new Uint8Array(100))
+      VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(contentb64.length))
+      nonSpec.replace_content_base64(currentTokenId, contentb64)
+    }).toThrow()
+    
+  })
+  it('should be possible to view token for free', () => {    
+    VMContext.setAttached_deposit(mintprice);
+    const tokenId = nonSpec.mint_to_base64(alice, content)
+    VMContext.setPredecessor_account_id(bob)
+    const result = nonSpec.view_token_content_base64(tokenId)
+    expect(result).toStrictEqual(content)
   })
 })
