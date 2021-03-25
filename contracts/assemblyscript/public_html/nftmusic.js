@@ -10,20 +10,9 @@ const nearconfig_main = {
     }
 };
 
-const nearconfig_test = {
-    nodeUrl: 'https://rpc.testnet.near.org',
-    walletUrl: 'https://wallet.testnet.near.org',
-    helperUrl: 'https://helper.testnet.near.org',
-    networkId: 'testnet',
-    contractName: 'sellnft.testnet',
-    deps: {
-        keyStore: null
-    }
-};
+const nearconfig = nearconfig_main;
 
-const nearconfig = nearconfig_test;
-
-const token_id = '2';
+const token_id = '1';
 
 export let currentTokenPrice = null;
 
@@ -121,12 +110,6 @@ export async function initNear() {
         console.log('no loggedin user');
     }
 }
-
-window.mint = async () => {
-    console.log(await walletConnection.account().functionCall(nearconfig.contractName,
-        'mint_to', { owner_id: 'psalomo.testnet', contentbase64: "AAECAw==" }, undefined,
-        new BN(10, 10).pow(new BN(24, 10)).toString()));
-};
 
 (async () => {
     await initNear();

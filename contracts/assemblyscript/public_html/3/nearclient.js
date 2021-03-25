@@ -1,6 +1,3 @@
-import { } from './midimixer.component.js';
-
-// configure minimal network settings and key storage
 const nearconfig = {
     nodeUrl: 'https://rpc.mainnet.near.org',
     walletUrl: 'https://wallet.mainnet.near.org',
@@ -12,11 +9,21 @@ const nearconfig = {
     }
 };
 
-const token_id = '2';
+const token_id = '3';
 
 export let currentTokenPrice = null;
 export let listeningPrice = null;
 export let tokenOwner = null;
+
+export function _base64ToArrayBuffer(base64) {
+    var binary_string = window.atob(base64);
+    var len = binary_string.length;
+    var bytes = new Uint8Array(len);
+    for (var i = 0; i < len; i++) {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
 
 // open a connection to the NEAR platform
 
@@ -33,15 +40,6 @@ window.login = login;
 async function logout() {
     await walletConnection.signOut();
 }
-
-function toggleSpinner(state) {
-    if (state) {
-        document.getElementById('loadercontainer').style.display = 'flex';
-    } else {
-        document.getElementById('loadercontainer').style.display = 'none';
-    }
-}
-window.toggleSpinner = toggleSpinner;
 
 function convertNearToYocto(near) {
     const milliNear = near * 1000;
@@ -84,30 +82,6 @@ export async function viewTokenOwner() {
     return tokenOwner;
 }
 
-window.exportWav = async () => {
-    const worker = new Worker('../common/exportwavworker.js?t='+(new Date().getTime()));
-    toggleSpinner(true);
-    const url = await new Promise(async resolve => {
-        worker.postMessage({wasm: await getWasmBytes(), samplerate: 44100,
-                    songduration: 200000});
-        worker.onmessage = msg => {
-            if (msg.data.exportWavUrl) {
-                resolve(msg.data.exportWavUrl);
-            } else {
-                document.querySelector('#loaderprogress').innerHTML = (msg.data.progress*100).toFixed(2) + '%';
-            }            
-        }
-    });
-    toggleSpinner(false);
-    const a = document.createElement("a");
-    document.body.appendChild(a);
-    a.style = "display: none";
-    a.href = url;
-    a.download = "petersalomonsen_nft2.wav";
-    a.click();
-    window.URL.revokeObjectURL(url);
-};
-
 export async function buy() {
     toggleSpinner(true);
     try {
@@ -135,6 +109,24 @@ export async function sell(price) {
 }
 window.sellNFT = sell;
 
+export async function publishMix(mix) {
+    toggleSpinner(true);
+    await walletConnection.account().functionCall(nearconfig.contractName, 'publish_token_mix', { token_id: token_id, mix: Array.from(mix) }, 300000000000000);
+    toggleSpinner(false);
+    location.reload();
+}
+
+export async function upvoteMix(mix) {
+    toggleSpinner(true);
+    await walletConnection.account().functionCall(nearconfig.contractName, 'upvote_mix', { token_id: token_id, mix: mix }, 300000000000000);
+    toggleSpinner(false);
+    location.reload();
+}
+
+export async function getMixes() {
+    return await walletConnection.account().viewFunction(nearconfig.contractName, 'get_token_mixes', { token_id: token_id });
+}
+
 export async function initNear() {
     nearconfig.deps.keyStore = new nearApi.keyStores.BrowserLocalStorageKeyStore();
     window.near = await nearApi.connect(nearconfig);
@@ -147,25 +139,12 @@ export async function initNear() {
     }
 }
 
-async function getWasmBytes() {
-    function _base64ToArrayBuffer(base64) {
-        var binary_string = window.atob(base64);
-        var len = binary_string.length;
-        var bytes = new Uint8Array(len);
-        for (var i = 0; i < len; i++) {
-            bytes[i] = binary_string.charCodeAt(i);
-        }
-        return bytes.buffer;
-    }
-    return pako.ungzip(_base64ToArrayBuffer((await getTokenContent()).replaceAll(/\"/g, '')));
-}
-
-(async () => {
+export async function connectNear() {
     await initNear();
     if (!walletConnection.getAccountId()) {
-        document.getElementById('logginbutton').style.display = 'block';
+        document.getElementById('logginbutton').style.display = 'block';        
     } else {
-
+        document.querySelectorAll('.requireslogin').forEach(elm => elm.style.display = 'block');
     }
     const tokenOwner = await viewTokenOwner();
     document.getElementById('ownerspan').innerHTML = tokenOwner;
@@ -182,78 +161,10 @@ async function getWasmBytes() {
         document.getElementById('pricespan').innerHTML = (parseFloat(new BN(await viewTokenPrice(), 10).div(new BN(10, 10).pow(new BN(21, 10))).toString()) / 1000).toFixed(3);
         document.getElementById('buyarea').style.display = 'block';
     } catch (e) {
-        console.log(e.message);
+        //console.log(e);
     }
 
     if (tokenOwner === walletConnection.getAccountId()) {
         document.getElementById('sellarea').style.display = 'block';
     }
-
-    // player
-    let audioWorkletNode;
-    function seek(val) {
-        audioWorkletNode.port.postMessage({ seek: val });
-    }
-    window.seek = seek;
-
-    async function togglePlay(val) {
-        if (!audioWorkletNode) {
-            await startAudioWorklet();
-        }
-        audioWorkletNode.port.postMessage({ toggleSongPlay: val });
-        if (val) {
-            document.querySelector('#playbutton').style.display = 'none';
-            document.querySelector('#pausebutton').style.display = 'block';
-        } else {
-            document.querySelector('#playbutton').style.display = 'block';
-            document.querySelector('#pausebutton').style.display = 'none';
-        }
-    }
-    window.togglePlay = togglePlay;
-
-    async function startAudioWorklet() {
-        const context = new AudioContext({ sampleRate: 44100 });
-        context.resume();
-
-        toggleSpinner(true);
-        const wasm_synth_bytes = await getWasmBytes();
-
-        await context.audioWorklet.addModule('./wasmmidimoduleplayeraudioworkletprocessor.js');
-        audioWorkletNode = new AudioWorkletNode(context, 'asc-midisynth-audio-worklet-processor', {
-            outputChannelCount: [2]
-        });
-        audioWorkletNode.port.start();
-        audioWorkletNode.port.postMessage({ wasm: wasm_synth_bytes });
-        audioWorkletNode.connect(context.destination);
-
-        toggleSpinner(false);
-        function padNumber(num, len) {
-            const ret = '0000' + num;
-            return ret.substr(ret.length - len);
-        }
-
-        function updateTimeIndicator() {
-            requestAnimationFrame(() => {
-                audioWorkletNode.port.postMessage({ currentTime: true });
-                audioWorkletNode.port.onmessage = (msg) => {
-                    document.querySelector("#timeindicator").value = Math.round(msg.data.currentTime);
-                    document.querySelector("#timespan").innerHTML =
-                        Math.floor(msg.data.currentTime / (60 * 1000)) + ':' +
-                        padNumber(Math.floor(msg.data.currentTime / (1000)) % 60, 2) + ':' +
-                        padNumber(Math.floor(msg.data.currentTime % (1000)), 3);
-                    updateTimeIndicator();
-                }
-            });
-        }
-        updateTimeIndicator();
-        document.querySelector('#pausebutton').style.display = 'block';
-    }
-    function mixerchange(evt) {
-        audioWorkletNode.port.postMessage({
-            midishortmsg: [
-                0xb0 + evt.detail.channel, evt.detail.controller, evt.detail.value
-            ]
-        });
-    }
-    window.mixerchange = mixerchange;
-})();
+};

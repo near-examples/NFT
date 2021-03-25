@@ -26,12 +26,9 @@ NOTE: my change here is 0.001 NEAR per byte minted is required as attached depos
 
 Also there are functions for selling and buying, setting listening price.
 
-mint, sell and buy
-==================
+sell and buy (testnet)
+======================
 
-(testnet)
-
-near call sellnft.testnet mint_to --accountId psalomo.testnet --amount "1.0" '{"owner_id": "psalomo.testnet", "content": "hellotralala"}' 
 
 near call sellnft.testnet sell_token --accountId psalomo.testnet '{"token_id": "2", "price": "10000000000000000000000000"}'        
 

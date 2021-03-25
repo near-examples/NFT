@@ -58,7 +58,12 @@
             height: 120px;
             animation: spin 2s linear infinite;
         }
-
+        #loaderprogress {
+            position: inherit;
+            background-color: #444;
+            padding: 5px;
+            border-radius: 4px;
+        }
         @keyframes spin {
             0% {
                 transform: rotate(0deg);
@@ -96,7 +101,21 @@
 
         #logginbutton {
             background-color: #4a6;
-        }        
+        }
+
+        #sellarea {
+            margin-bottom: 50px;
+            background-color: rgba(30,70,255, 0.2);
+            color: #cdf;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 3px 3px 3px 3px #222;
+            justify-items: center;
+        }
+
+        a {
+            color: white;
+        }
     </style>
 </head>
 
@@ -132,6 +151,10 @@
                 onclick="buyNFT()">Buy</button></p>
     
         <div id="sellarea" style="display: none;">
+            <h1>Owners area</h1>
+            <h3>Export WAV</h3>
+            <p>Since you are the owner, you can <button onclick="exportWav()">Export WAV</button>, and use it according to the <a href="https://www.nftlicense.org/" target="_blank">NFT
+                license</a>.</p>
             <h3>Sell NFT</h3>
             <p>You are the owner of this NFT and you can put it up for sale if you want.</p>
             <p>Set a price: <input type="number" placeholder="price" value="1" id="sellprice" /> NEAR
@@ -140,6 +163,7 @@
     </div>
     <div id="loadercontainer">
         <div class="loader"></div>
+        <div id="loaderprogress"></div>
     </div>
 
     <script src="audioworkletpolyfill.js"></script>

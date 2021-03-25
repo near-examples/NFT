@@ -10,7 +10,9 @@ type TokenId = u64
 
 // Note that MAX_SUPPLY is implemented here as a simple constant
 // It is exported only to facilitate unit testing
-export const MAX_SUPPLY = u64(10)
+export const MAX_SUPPLY = u64(100)
+export const MAX_MIXES_PER_TOKEN = 20;
+export const MAX_MIX_BYTES = 200;
 
 // The strings used to index variables in storage can be any string
 // Let's set them to single characters to save storage space
@@ -30,6 +32,7 @@ const tokenToContent = new PersistentMap<TokenId, string>('d')
 
 const tokenForSale = new PersistentMap<TokenId, string>('e');
 const tokenListenPrice = new PersistentMap<TokenId, string>('f');
+const tokenMixes = new PersistentMap<TokenId,Array<string>>('g');
 
 /******************/
 /* ERROR MESSAGES */
@@ -45,6 +48,8 @@ export const ERROR_TOKEN_NOT_FOR_SALE = 'Token is not for sale'
 export const ERROR_LISTENING_NOT_AVAILABLE = 'Listening is not available'
 export const ERROR_LISTENING_REQUIRES_PAYMENT = 'Listening requires payment, call request_listening first'
 export const ERROR_OWNERS_NOT_REQUIRED_TO_REQUEST_LISTENING = 'Owners are not required to request listening'
+export const ERROR_MIX_TOO_LARGE = 'Mix too large, max size is '+MAX_MIX_BYTES.toString()
+export const ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING = 'Token does not support mixing'
 
 /******************/
 /* CHANGE METHODS */
@@ -155,7 +160,7 @@ export function mint_to(owner_id: AccountId, content: string): u64 {
 }
 
 @payable
-export function mint_to_base64(owner_id: AccountId, contentbase64: string): u64 {
+export function mint_to_base64(owner_id: AccountId, contentbase64: string, supportmixing: boolean = false): u64 {
   const content = base64.decode(contentbase64);
   const mintprice: u128 = u128.pow(u128.from(10), 20) * u128.from(contentbase64.length); // 0.0001 N per character
   assert(context.attachedDeposit == mintprice, "Method requires deposit of " + mintprice.toString());
@@ -177,12 +182,15 @@ export function mint_to_base64(owner_id: AccountId, contentbase64: string): u64 
   // increment and store the next tokenId
   storage.set<u64>(TOTAL_SUPPLY, tokenId + 1)
 
+  if (supportmixing) {
+    tokenMixes.set(tokenId,new Array<string>());
+  }
   // return the tokenId – while typical change methods cannot return data, this
   // is handy for unit tests
   return tokenId
 }
 
-export function replace_content_base64(tokenId: TokenId, contentbase64: string): void {
+export function replace_content_base64(tokenId: TokenId, contentbase64: string, supportmixing: boolean = false): void {
   const predecessor = context.predecessor
   const owner = tokenToOwner.getSome(tokenId)
   assert(owner == predecessor, ERROR_TOKEN_NOT_OWNED_BY_CALLER)
@@ -193,17 +201,13 @@ export function replace_content_base64(tokenId: TokenId, contentbase64: string):
   const content = base64.decode(contentbase64);
   
   Storage.setBytes('t' + tokenId.toString(), content)
-}
 
-/*export function wipe_tokens(): void {
-  const maxId: i32 = (storage.getPrimitive<u64>(TOTAL_SUPPLY, 1) + 1) as i32;
-  for (var n = 0; n < maxId; n++) {
-    tokenToOwner.delete(n);
-    tokenToContent.delete(n);
-    Storage.delete('t' + n.toString())
+  if (supportmixing) {
+    tokenMixes.set(tokenId,new Array<string>())
+  } else {
+    tokenMixes.delete(tokenId)
   }
-  storage.set<u64>(TOTAL_SUPPLY, 1);
-}*/
+}
 
 // Get content behind token
 @deprecated
@@ -281,4 +285,43 @@ export function buy_token(token_id: TokenId): ContractPromiseBatch {
   tokenForSale.delete(token_id)
 
   return ContractPromiseBatch.create(owner).transfer(context.attachedDeposit)
+}
+
+export function publish_token_mix(token_id: TokenId, mix: u8[]): void {
+  assert(tokenMixes.contains(token_id), ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING)
+  assert(mix.length < MAX_MIX_BYTES, ERROR_MIX_TOO_LARGE)
+    
+  let mixes: Array<string> = tokenMixes.get(token_id)!
+
+  mixes.unshift(context.predecessor+';'+context.blockTimestamp.toString()+';'+mix.toString());
+
+  if (mixes.length > MAX_MIXES_PER_TOKEN) {
+    mixes = mixes.slice(0, MAX_MIXES_PER_TOKEN)
+  }
+  tokenMixes.set(token_id, mixes)
+}
+
+export function upvote_mix(token_id: TokenId, mix: string): void {
+  assert(tokenMixes.contains(token_id), ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING)
+
+  let mixes: Array<string> = tokenMixes.get(token_id)!
+  let matchingMixIndex = -1;
+
+  for (let n=0;n<mixes.length; n++) {
+    if (mixes[n] == mix) {
+      matchingMixIndex = n;
+      break;
+    }
+  }
+  
+  if (matchingMixIndex > 0) {
+    const matchingMix = mixes[matchingMixIndex];
+    mixes[matchingMixIndex] = mixes[matchingMixIndex - 1]
+    mixes[matchingMixIndex - 1] = matchingMix
+    tokenMixes.set(token_id, mixes)
+  }
+}
+
+export function get_token_mixes(token_id: TokenId): string[] {
+  return tokenMixes.get(token_id)!
 }

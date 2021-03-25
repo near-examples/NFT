@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NFT-music</title>
+    <style>
+        body {
+            background-color: #333;
+            color: white;
+            font-weight: 100;
+            font-family: monospace;
+            padding: 10px;
+            font-size: 15px;
+            text-emphasis: center;
+        }
+        #glCanvas {
+            position: fixed;
+            bottom: 0px;
+            top: 0px;
+            left: 0px;
+            right: 0px;
+            width: 100%;
+            height: 100%;
+            z-index: -10;
+        }
+        #content {
+            max-width: 800px;
+            margin: auto;
+        }
+        midi-mixer {
+            max-width: 100%;
+            overflow-x: scroll;
+        }
+        .playerarea {
+            display: grid;
+            background-color: rgba(30,70,255, 0.2);
+            color: #cdf;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 3px 3px 3px 3px #222;
+            justify-items: center;
+        }
+        #songpatternsgrid {
+            display: grid;
+            grid-gap: 5px 5px;
+            grid-template-columns: auto auto auto;
+            max-width: 100%;
+            overflow-x: scroll;
+        }
+        #timeindicator {
+            margin: 0px;
+        }
+        .patternelement {
+            background-color: red;
+            width: 20px;
+            height: 20px;
+            margin: 3px;
+            border-radius: 4px;
+        }
+        button, input[type="number"] {
+            box-shadow: 0 8px 8px 0 rgba(0,0,0,0.3), 0 6px 8px 0 rgba(0,0,0,0.3);
+            border: #aaa solid 1px;
+            font-size: 20px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        #playingcolumn {
+            grid-column-start: 2;
+            grid-row-start: 10;
+            grid-row-end: 10;
+            background-color:rgba(100,150,255,0.5);
+            
+            height: 10px;
+        }
+
+        #loadercontainer {
+            position: fixed;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        .loader {
+            border: 16px solid #f3f3f3;
+            /* Light grey */
+            border-top: 16px solid #3498db;
+            /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: loaderspin 2s linear infinite;
+        }
+        #loaderprogress {
+            display: none;
+            position: inherit;
+            background-color: #444;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        @keyframes loaderspin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #ownerspan, .highlightedtext {
+            background-color: black;
+            padding-left: 7px;
+            padding-right: 7px;
+            border-radius: 5px;
+        }
+        .requireslogin {
+            display: none;
+        }
+        #playerandmixeslist {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, 100px);
+            grid-gap: 10px 10px;
+            margin-bottom: 40px;
+        }
+        #latest20mixes {
+            min-width: 200px;
+            margin-top: 5px;
+            display: grid;
+            grid-gap: 3px 3px;
+            font-size: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+            width: 100%;
+            overflow-y: auto;
+        }
+        .mixlistitem {
+            cursor: pointer;        
+            padding: 1px;
+            border-radius: 2px;    
+        }
+        .currentmix {
+            font-weight: bold;
+            background-color: black;
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+        .mixlistitem:hover {
+            background-color: #666;
+        }
+        .mixlistdate {
+            font-size: 10px;
+        }
+        a {
+            color: white;
+        }
+        #cleargridbutton {
+            font-size: 14px;
+            padding: 3px;
+        }
+        .upvotebutton {
+            padding: 2px;
+            font-size: 15px;
+            font-weight: bold;
+            background-color: rgba(100,100,100,0.3);
+            color: white;
+            border-color: #444;
+            width: 30px;
+        }
+        #sellarea {
+            margin-bottom: 50px;
+            background-color: rgba(30,70,255, 0.2);
+            color: #cdf;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 3px 3px 3px 3px #222;
+            justify-items: center;
+        }
+        #buyarea {
+            margin-bottom: 50px;
+        }
+        #copyright {
+            background-color:rgba(255, 255, 255, 0.7);
+            color: black;
+            font-size: 14px;
+            position: fixed;
+            width: 100%;
+            bottom: 0px;
+            left: 0px;
+            padding: 10px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <h1>WebAssembly Music by Peter Salomonsen</h1>
+
+        <p>Made for the
+                <a target="_blank" href="https://pm.revision-party.net/releases?competition_id=13">
+                    Revision demoparty 2021 Executable music competition</a>.
+                Go there and get the submitted entry
+            (everything was packed into a 22kb HTML file), or listen to the original mix at <a target="_blank" href="https://soundcloud.com/psalomo/webassembly-music-entry-for-the-revision-2021-executable-music-competition">SoundCloud</a>.</p>
+        <p>This is physical modeling synthesized music packed in a WebAssembly binary, now also stored forever on the <a target="_blank" href="https://near.org">NEAR protocol</a> blockchain as an NFT.</p>
+        
+        <p>This version you can rearrange and remix, and post your remix back on the blockchain. The latest 20 mixes are available for playing.
+            Upvote your favourite to keep it from dropping out of the list. Anyone can do this, not just the owner of the NFT.</p>
+        
+        <p>The current owner of the NFT is: <span id="ownerspan"></span></p>
+
+        <div id="latestmixinfo">
+
+        </div>
+        
+        <div id="playerandmixeslist">
+            <div class="playerarea" style="grid-column: span 6;">
+                <button class="playpausebutton" id="playbutton" style="display: block" onclick="togglePlay(true)">&#x25B6; play</button>
+                <button class="playpausebutton" id="pausebutton" style="display: none" onclick="togglePlay(false)">&#9616;&nbsp;&#9612; pause</button>
+
+                <span id="timespan"></span>
+                
+                
+                <div id="songpatternsgrid">
+                    <div id="playingcolumn"></div>
+                    <div>
+
+                    </div>
+                    <div id="timeindicatorgridcell" style="padding: 0px">
+                        <input id="timeindicator" style="width: 100%" type="range" value="0" min="0" max="22000"
+                            oninput="seek(this.value)" />
+                    </div>
+                </div>                                
+                <p>click in the grid for playing instruments at the selected position. You may also <button onclick="clearGrid()" id="cleargridbutton">&#128465;clear</button> the grid if you want to start over.</p>
+                
+                <div style="height: 10px"></div>
+                <midi-mixer oninput="mixerchange(event)" data-channels="piano,strings,drums,,guitar,bass,flute"></midi-mixer>
+                <p>move vertical sliders for changing instruments volume, and horizontal sliders for panning left / right</p>            
+            </div>
+            <div>
+                <button id="logginbutton" style="display: none;" onclick="login()">Login to post mix</button>
+                <button onclick="publishMix()" style="padding: 5px" class="requireslogin">Post mix</button>
+                <div id="latest20mixes">
+
+                </div>
+            </div>
+        </div>
+        <p id="buyarea" style="display: none;">NFT is for sale. Licensed under <a href="https://www.nftlicense.org/" target="_blank">NFT
+            license</a>, Price: <span id="pricespan"></span>N <button
+                onclick="buyNFT()">Buy</button></p>
+    
+        <div id="sellarea" style="display: none;">
+            <h1>Owners area</h1>
+            <h3>Export WAV</h3>
+            <p>Since you are the owner, you can <button onclick="exportWav()">Export WAV</button>, and use it according to the <a href="https://www.nftlicense.org/" target="_blank">NFT
+                license</a>.</p>
+            <h3>Sell NFT</h3>
+            <p>You are the owner of this NFT and you can put it up for sale if you want.</p>
+            <p>Set a price: <input type="number" placeholder="price" value="100" id="sellprice" /> NEAR
+            <button onclick="sellNFT(parseFloat(document.getElementById('sellprice').value))">Sell</button></p>
+        </div>    
+    </div>
+    <div id="loadercontainer">
+        <div class="loader"></div>
+        <div id="loaderprogress"></div>
+    </div>
+    <div id="copyright">
+        Copyright (c) 2021 Peter Salomonsen 
+    </div>
+    <canvas id="glCanvas"></canvas>
+    <script src="audioworkletpolyfill.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/nearprotocol/near-api-js/dist/near-api-js.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bn.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.3/pako.min.js"></script>
+    
+    <script type="module" src="main.js"></script>
+</body>
+</html>
