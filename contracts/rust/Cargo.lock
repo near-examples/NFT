@@ -29,12 +29,6 @@ checksum = "f8aac770f1885fd7e387acedd76065302551364496e46b3dd00860b2f8359b9d"
 
 [[package]]
 name = "base64"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b41b7ea54a0c9d92199de89e20e58d49f02f8e699814ef3fdf266f6f748d15c7"
-
-[[package]]
-name = "base64"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
@@ -187,12 +181,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fake-simd"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
-
-[[package]]
 name = "generic-array"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -274,11 +262,11 @@ checksum = "8452105ba047068f40ff7093dd1d9da90898e63dd61736462e9cdda6a90ad3c3"
 
 [[package]]
 name = "near-primitives-core"
-version = "0.1.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92035b79bf9983502fe7b67b5a9fecea7604e979d439727827fd0d8f0d77720e"
+checksum = "c2b3fb5acf3a494aed4e848446ef2d6ebb47dbe91c681105d4d1786c2ee63e52"
 dependencies = [
- "base64 0.11.0",
+ "base64",
  "borsh",
  "bs58",
  "derive_more",
@@ -287,7 +275,7 @@ dependencies = [
  "num-rational",
  "serde",
  "serde_json",
- "sha2 0.9.3",
+ "sha2",
 ]
 
 [[package]]
@@ -319,9 +307,9 @@ dependencies = [
 
 [[package]]
 name = "near-runtime-utils"
-version = "3.0.0"
+version = "4.0.0-pre.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47f5c1891cec5a03e3dc99f985031408b19516305e2e59d64c4ce52b409e46a0"
+checksum = "a48d80c4ca1d4cf99bc16490e1e3d49826c150dfc4410ac498918e45c7d98e07"
 dependencies = [
  "lazy_static",
  "regex",
@@ -329,11 +317,11 @@ dependencies = [
 
 [[package]]
 name = "near-sdk"
-version = "3.0.1"
+version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "671094120c7c54d5378e54d5e9d3d51b0248646e9028ffc11d7c9bd8f69d3534"
+checksum = "c7383e242d3e07bf0951e8589d6eebd7f18bb1c1fc5fbec3fad796041a6aebd1"
 dependencies = [
- "base64 0.13.0",
+ "base64",
  "borsh",
  "bs58",
  "near-primitives-core",
@@ -346,9 +334,9 @@ dependencies = [
 
 [[package]]
 name = "near-sdk-core"
-version = "3.0.1"
+version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d61e12885c4917ef8bee7edcc94198ad19c12c126dc5d8c3a48e6b0bf6fe9108"
+checksum = "284a78d9eb8eda58330462fa0023a6d7014c941df1f0387095e7dfd1dc0f2bce"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -358,9 +346,9 @@ dependencies = [
 
 [[package]]
 name = "near-sdk-macros"
-version = "3.0.1"
+version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5614c69448e846bebb2223a0742ebb92df87d2e67a0fdff2cff5778e9a463585"
+checksum = "2037337438f97d1ce5f7c896cf229dc56dacd5c01142d1ef95a7d778cde6ce7d"
 dependencies = [
  "near-sdk-core",
  "proc-macro2",
@@ -370,9 +358,9 @@ dependencies = [
 
 [[package]]
 name = "near-vm-errors"
-version = "3.0.0"
+version = "4.0.0-pre.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53a100dda565c5375ac061126167afc5c33cdba1f2e325cfae3ce08f4a5a432a"
+checksum = "e281d8730ed8cb0e3e69fb689acee6b93cdb43824cd69a8ffd7e1bfcbd1177d7"
 dependencies = [
  "borsh",
  "hex",
@@ -382,11 +370,11 @@ dependencies = [
 
 [[package]]
 name = "near-vm-logic"
-version = "3.0.0"
+version = "4.0.0-pre.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a12201244dd59ae79506767afe7a8f51b5eb7bd0aa237d355dfa635f7b777c4a"
+checksum = "e11cb28a2d07f37680efdaf860f4c9802828c44fc50c08009e7884de75d982c5"
 dependencies = [
- "base64 0.13.0",
+ "base64",
  "borsh",
  "bs58",
  "byteorder",
@@ -394,7 +382,7 @@ dependencies = [
  "near-runtime-utils",
  "near-vm-errors",
  "serde",
- "sha2 0.8.1",
+ "sha2",
  "sha3",
 ]
 
@@ -542,18 +530,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "sha2"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27044adfd2e1f077f649f59deb9490d3941d674002f7d062870a60ebe9bd47a0"
-dependencies = [
- "block-buffer 0.7.3",
- "digest 0.8.1",
- "fake-simd",
- "opaque-debug 0.2.3",
 ]
 
 [[package]]
