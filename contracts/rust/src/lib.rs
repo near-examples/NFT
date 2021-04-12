@@ -1,7 +1,7 @@
 #![deny(warnings)]
 
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{env, near_bindgen, AccountId};
+use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault};
 use near_sdk::collections::UnorderedMap;
 use near_sdk::collections::UnorderedSet;
 
@@ -46,17 +46,11 @@ pub type AccountIdHash = Vec<u8>;
 
 // Begin implementation
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct NonFungibleTokenBasic {
     pub token_to_account: UnorderedMap<TokenId, AccountId>,
     pub account_gives_access: UnorderedMap<AccountIdHash, UnorderedSet<AccountIdHash>>, // Vec<u8> is sha256 of account, makes it safer and is how fungible token also works
     pub owner_id: AccountId,
-}
-
-impl Default for NonFungibleTokenBasic {
-    fn default() -> Self {
-        panic!("NFT should be initialized before usage")
-    }
 }
 
 #[near_bindgen]
