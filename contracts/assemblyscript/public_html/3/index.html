@@ -62,7 +62,7 @@
         button, input[type="number"] {
             box-shadow: 0 8px 8px 0 rgba(0,0,0,0.3), 0 6px 8px 0 rgba(0,0,0,0.3);
             border: #aaa solid 1px;
-            font-size: 20px;
+            font-size: 15px;
             padding: 5px;
             border-radius: 5px;
         }
@@ -195,6 +195,9 @@
             padding: 10px;
             z-index: 1000;
         }
+        #currentMixOwner {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -202,29 +205,23 @@
         <h1>WebAssembly Music by Peter Salomonsen</h1>
 
         <p>Made for the
-                <a target="_blank" href="https://pm.revision-party.net/releases?competition_id=13">
+                <a target="_blank" href="https://www.youtube.com/watch?v=uiO3RRoRAF8&t=367s">
                     Revision demoparty 2021 Executable music competition</a>.
-                Go there and get the submitted entry
-            (everything was packed into a 22kb HTML file), or listen to the original mix at <a target="_blank" href="https://soundcloud.com/psalomo/webassembly-music-entry-for-the-revision-2021-executable-music-competition">SoundCloud</a>.</p>
-        <p>This is physical modeling synthesized music packed in a WebAssembly binary, now also stored forever on the <a target="_blank" href="https://near.org">NEAR protocol</a> blockchain as an NFT.</p>
+                Listen to the original mix at <a target="_blank" href="https://soundcloud.com/psalomo/webassembly-music-entry-for-the-revision-2021-executable-music-competition">SoundCloud</a>.</p>
         
-        <p>This version you can rearrange and remix, and post your remix back on the blockchain. The latest 20 mixes are available for playing.
-            Upvote your favourite to keep it from dropping out of the list. Anyone can do this, not just the owner of the NFT.</p>
-        
-        <p>The current owner of the NFT is: <span id="ownerspan"></span></p>
-
-        <div id="latestmixinfo">
-
-        </div>
-        
+        <p>Here you can create your own remix and post it on the NEAR blockchain
+            where anyone can buy your remix for 10N ( you will get 4N ).
+            Only 20 remixes can be sold in total. If your remix is resold you will get 2%.            
+        </p>
+        <p>Remix owners may download it as a WAV file, and use it according to the <a href="https://www.nftlicense.org/" target="_blank">NFT license</a>.</p>
         <div id="playerandmixeslist">
             <div class="playerarea" style="grid-column: span 6;">
+                <div id="currentMixOwner"></div>
                 <button class="playpausebutton" id="playbutton" style="display: block" onclick="togglePlay(true)">&#x25B6; play</button>
                 <button class="playpausebutton" id="pausebutton" style="display: none" onclick="togglePlay(false)">&#9616;&nbsp;&#9612; pause</button>
 
                 <span id="timespan"></span>
-                
-                
+                                
                 <div id="songpatternsgrid">
                     <div id="playingcolumn"></div>
                     <div>
@@ -235,20 +232,22 @@
                             oninput="seek(this.value)" />
                     </div>
                 </div>                                
-                <p>click in the grid for playing instruments at the selected position. You may also <button onclick="clearGrid()" id="cleargridbutton">&#128465;clear</button> the grid if you want to start over.</p>
+                <p>click in the grid for changing the parts to be played.<br /><button onclick="clearGrid()" id="cleargridbutton">&#128465;clear</button> the grid if you want to start over.</p>
                 
                 <div style="height: 10px"></div>
                 <midi-mixer oninput="mixerchange(event)" data-channels="piano,strings,drums,,guitar,bass,flute"></midi-mixer>
                 <p>move vertical sliders for changing instruments volume, and horizontal sliders for panning left / right</p>            
             </div>
             <div>
-                <button id="logginbutton" style="display: none;" onclick="login()">Login to post mix</button>
-                <button onclick="publishMix()" style="padding: 5px" class="requireslogin">Post mix</button>
+                <button id="logginbutton" style="display: none;" onclick="login()">Login</button>
+                <button onclick="publishMix()" style="padding: 5px" class="requireslogin" id="postmixbutton">Post mix</button>
                 <div id="latest20mixes">
 
                 </div>
             </div>
         </div>
+        <p style="display: none;">The current owner of the NFT is: <span id="ownerspan"></span></p>
+
         <p id="buyarea" style="display: none;">NFT is for sale. Licensed under <a href="https://www.nftlicense.org/" target="_blank">NFT
             license</a>, Price: <span id="pricespan"></span>N <button
                 onclick="buyNFT()">Buy</button></p>

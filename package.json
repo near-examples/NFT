@@ -11,7 +11,8 @@
     "clean": "rm -rf ./out && (cd contracts/rust && cargo clean)",
     "test": "yarn test:unit:as && yarn test:unit:rs",
     "test:unit:as": "asp --verbose --nologo -c contracts/assemblyscript/as-pect.config.js -f unit.spec",
-    "test:unit:rs": "(cd contracts/rust && cargo test -- --nocapture --color always)"
+    "test:unit:rs": "(cd contracts/rust && cargo test -- --nocapture --color always)",
+    "simulator": "jest contracts/assemblyscript/simulator"
   },
   "devDependencies": {
     "jest": "^26.6.3",

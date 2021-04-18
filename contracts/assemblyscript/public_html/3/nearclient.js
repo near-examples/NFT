@@ -1,4 +1,4 @@
-const nearconfig = {
+/*const nearconfig = {
     nodeUrl: 'https://rpc.mainnet.near.org',
     walletUrl: 'https://wallet.mainnet.near.org',
     helperUrl: 'https://helper.mainnet.near.org',
@@ -7,9 +7,20 @@ const nearconfig = {
     deps: {
         keyStore: null
     }
+};*/
+
+const nearconfig = {
+    nodeUrl: 'https://rpc.testnet.near.org',
+    walletUrl: 'https://wallet.testnet.near.org',
+    helperUrl: 'https://helper.testnet.near.org',
+    networkId: 'testnet',
+    contractName: 'sellnft.testnet',
+    deps: {
+        keyStore: null
+    }
 };
 
-const token_id = '3';
+const token_id = '11';
 
 export let currentTokenPrice = null;
 export let listeningPrice = null;
@@ -46,16 +57,16 @@ function convertNearToYocto(near) {
     return new BN(10, 10).pow(new BN(21, 10)).mul(new BN(milliNear, 10)).toString();
 }
 
+export async function getMixTokenContent(id) {
+    const result = await walletConnection.account()
+            .viewFunction(nearconfig.contractName, 'view_remix_content', { token_id: id });
+    return result;
+}
+
 export async function getTokenContent() {
-    /*if (!walletConnection.getAccountId()) {
-        alert('you need to log in to play the music');
-        toggleSpinner(false);
-        throw('not logged in');
-    }*/
     try {
         const result = await walletConnection.account()
             .viewFunction(nearconfig.contractName, 'view_token_content_base64', { token_id: token_id });
-        //return atob(result.status.SuccessValue);
         return result;
     } catch(e) {
         if (e.message.indexOf('requires payment') > -1) {
@@ -67,8 +78,8 @@ export async function getTokenContent() {
         }
     }
 }
-export async function viewTokenPrice() {
-    currentTokenPrice = await walletConnection.account().viewFunction(nearconfig.contractName, 'view_price', { token_id: token_id });
+export async function viewTokenPrice(id = token_id) {
+    currentTokenPrice = await walletConnection.account().viewFunction(nearconfig.contractName, 'view_price', { token_id: id });
     return currentTokenPrice;
 }
 
@@ -77,19 +88,18 @@ export async function viewListeningPrice() {
     return listeningPrice;
 }
 
-export async function viewTokenOwner() {
-    tokenOwner = await walletConnection.account().viewFunction(nearconfig.contractName, 'get_token_owner', { token_id: token_id });
+export async function viewTokenOwner(id = token_id) {
+    tokenOwner = await walletConnection.account().viewFunction(nearconfig.contractName, 'get_token_owner', { token_id: id });
     return tokenOwner;
 }
 
-export async function buy() {
+export async function buy(id = token_id, deposit = currentTokenPrice) {
     toggleSpinner(true);
     try {
         if (!walletConnection.getAccountId()) {
             login();
         }
-        const deposit = currentTokenPrice;
-        const result = await walletConnection.account().functionCall(nearconfig.contractName, 'buy_token', { token_id: token_id }, undefined, deposit);
+        const result = await walletConnection.account().functionCall(nearconfig.contractName, 'buy_token', { token_id: id }, undefined, deposit);
         console.log('succeeded buying', result);
     } catch (e) {
         alert(e.message);
@@ -98,12 +108,17 @@ export async function buy() {
 }
 window.buyNFT = buy;
 
-export async function sell(price) {
+export async function sell(price, id = token_id) {
     toggleSpinner(true);
     console.log('selling for', convertNearToYocto(price));
-    const result = await walletConnection.account().functionCall(nearconfig.contractName, 'sell_token', { token_id: token_id, price: convertNearToYocto(price) });
-    console.log('token is now for sale', result);
-    alert('token is now for sale');
+    if (price) {
+        const result = await walletConnection.account().functionCall(nearconfig.contractName, 'sell_token', { token_id: id, price: convertNearToYocto(price) });
+        console.log('token is now for sale', result);
+        alert('token is now for sale');
+    } else {
+        await walletConnection.account().functionCall(nearconfig.contractName, 'remove_token_from_sale', { token_id: id });
+        alert('token is no longer for sale');
+    }
     toggleSpinner(false);
     location.reload();
 }
@@ -121,6 +136,12 @@ export async function upvoteMix(mix) {
     await walletConnection.account().functionCall(nearconfig.contractName, 'upvote_mix', { token_id: token_id, mix: mix }, 300000000000000);
     toggleSpinner(false);
     location.reload();
+}
+
+export async function buyMix(mix) {
+    toggleSpinner(true);
+    await walletConnection.account().functionCall(nearconfig.contractName, 'buy_mix', { original_token_id: token_id, mix: mix }, 300000000000000, nearApi.utils.format.parseNearAmount('10'));
+    toggleSpinner(false);
 }
 
 export async function getMixes() {
@@ -148,17 +169,9 @@ export async function connectNear() {
     }
     const tokenOwner = await viewTokenOwner();
     document.getElementById('ownerspan').innerHTML = tokenOwner;
-    /*try {
-        await viewListeningPrice();
-        if (tokenOwner !== walletConnection.getAccountId()) {
-            document.getElementById('playpriceinfospan').innerHTML = `you will be prompted to transfer ${nearApi.utils.format.formatNearAmount(listeningPrice)}N everytime you reload this page`;
-        }
-    } catch (e) {
-        console.log('not available for listening by others');
-    }*/
 
     try {
-        document.getElementById('pricespan').innerHTML = (parseFloat(new BN(await viewTokenPrice(), 10).div(new BN(10, 10).pow(new BN(21, 10))).toString()) / 1000).toFixed(3);
+        document.getElementById('pricespan').innerHTML = nearApi.utils.format.formatNearAmount(await viewTokenPrice());
         document.getElementById('buyarea').style.display = 'block';
     } catch (e) {
         //console.log(e);

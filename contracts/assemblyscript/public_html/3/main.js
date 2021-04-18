@@ -1,6 +1,6 @@
 import { } from './midimixer.component.js';
 import { initVisualizer, visualizeNoteOn, clearVisualization } from './visualizer.js';
-import { connectNear, publishMix as publishMixNear, getMixes, upvoteMix, getTokenContent, _base64ToArrayBuffer } from './nearclient.js';
+import { connectNear, publishMix as publishMixNear, getMixes, viewTokenPrice, viewTokenOwner, getMixTokenContent, getTokenContent, _base64ToArrayBuffer, buyMix } from './nearclient.js';
 
 let audioWorkletNode;
 const channels = ['piano','strings','drums','guitar','bass','flute'];
@@ -12,6 +12,8 @@ const partduration = 1000 * 60 * beatsperpart / bpm;
 const songduration = partduration * songlength;
 const channelpatternmap =  {"0":[0,1,6,13],"1":[0,2,7,17],"2":[0,5,9,12],"3":[0,4,8,15],"4":[0,3,11,14],"5":[0,10,16]};
 const patternentrycolors = ['#000','#f80','#08f','#f8f','#8f8','#ff8','#8ff','#88f','#f88'];
+const currentMixOwnerDiv = document.querySelector('#currentMixOwner');
+const existingPublishedMixes = [];
 
 document.querySelector("#timeindicator").max = songduration;
 
@@ -161,6 +163,7 @@ async function updateSong() {
 }
 
 async function clearGrid() {
+    currentMixOwnerDiv.innerHTML = '';
     const patternElements = document.querySelectorAll('.patternelement');
     for (let n=0;n<songdata.length;n++) {
         const v = 0;
@@ -209,7 +212,15 @@ window.publishMix = () => {
         publishData.push(v.pan);
     });
 
-    publishMixNear(Uint8Array.from(publishData));
+    const mixu8 = Uint8Array.from(publishData);
+    const alreadyPublished = existingPublishedMixes.find(m =>
+            m.content?.reduce((p, c, n) => p && mixu8[n] === c, true));
+    if (alreadyPublished) {
+        alert('That remix is already published');
+        return;
+    } else {
+        publishMixNear(mixu8);
+    }
 };
 
 const grid = document.getElementById('songpatternsgrid');
@@ -227,11 +238,10 @@ for (let n=0;n<numcells;n++) {
         const ch = Math.floor(sdp / songlength);
         
         elm.classList.add('patternelement');
-        let patternIndex = songdata[sdp];
-        elm.style.backgroundColor = patternentrycolors[patternIndex];
+        elm.style.backgroundColor = patternentrycolors[0];
 
         elm.addEventListener('click', () => {
-            patternIndex++;
+            let patternIndex = songdata[sdp] + 1;
 
             patternIndex %= channelpatternmap[ch].length;
             songdata[sdp] = patternIndex;
@@ -245,6 +255,8 @@ for (let n=0;n<numcells;n++) {
                     starttime: (sdp % songlength) * partduration
                 });
             }
+
+            currentMixOwnerDiv.innerHTML = '';
         });
         songdatapos++;
     }
@@ -266,61 +278,122 @@ visualizeNoteOn(64,1);
 (async () => {
     toggleSpinner(true);
     await connectNear();
-    const mixes = (await getMixes());
-    if (mixes.length > 0) {
-        const patternElements = document.querySelectorAll('.patternelement');
-        const latestmix = mixes[0].split(';');
-        document.getElementById('latestmixinfo').innerHTML = `
-            <p>
-            latest mix by <span class="highlightedtext">${latestmix[0]}</span> on ${new Date(parseInt(latestmix[1])/1000000).toLocaleString()}
-            </p>
-        `;
-        const latestmixdata = latestmix[2].split(',').map(v => parseInt(v));
+    const allmixes = (await getMixes()).map(mix => mix.split(';'));
+    toggleSpinner(false);
+
+    const publicmixes = allmixes.filter(m => m[1].indexOf('nft:') === -1)
+                .sort((a,b) => parseInt(b[1])-parseInt(a[1]))
+                .map(parts => ({
+                    content: parts[2].split(',').map(v => parseInt(v)),
+                    timestamp: parts[1],
+                    author: parts[0],
+                    identitfier: parts.join(';')
+                }));
+    const ownedmixes = allmixes.filter(m => m[1].indexOf('nft:') === 0);
+
+    let currentMixElement;
+
+    const latest20element = document.getElementById('latest20mixes');
+    const patternElements = document.querySelectorAll('.patternelement');
+
+    const addMixToList = (mix) => {
+        existingPublishedMixes.push(mix);
+        const listitemcontainer = document.createElement('div');    
+        listitemcontainer.style.display = 'grid';
+        listitemcontainer.style.gridTemplateColumns = 'auto auto';  
+        const elm = document.createElement('div');
+        elm.classList.add('mixlistitem');
+        const mixdata = mix.content;
+        elm.onclick = async () => {                                
+            for (let n=0;n<songdata.length;n++) {
+                const v = mixdata[n];
+                songdata[n] = v;        
+                patternElements[n].style.backgroundColor = patternentrycolors[v];
+            }
+            postPatternSchedule();
+            updateMixerState(mixdata.slice(songdata.length));
+            currentMixElement.classList.remove('currentmix');
+            currentMixElement = elm;
+            elm.classList.add('currentmix');
+
+            if (mix.owner) {
+                let ownerHtml = ''
+                
+                if (mix.owner===walletConnection.account().accountId) {
+                    ownerHtml += `remix owned by you <button onclick="exportWav()">Download</button> `;
+                    try {
+                        const yoctoprice = await viewTokenPrice(mix.token_id);
+                        const nftprice = nearApi.utils.format.formatNearAmount(yoctoprice);
+                        ownerHtml += `on sale for ${nftprice}N
+                            <button onclick="sellNFT(prompt('Sell for what price?','${nftprice}'), '${mix.token_id}')">Change</button>
+                        `;
+                    } catch(e) {
+                        ownerHtml += `<button onclick="sellNFT(prompt('Sell for what price?','10'), '${mix.token_id}')">Sell</button>`;
+                    }
+                } else {
+                    ownerHtml += `remix owned by ${mix.owner} `
+                    try {
+                        const yoctoprice = await viewTokenPrice(mix.token_id);
+                        const nftprice = nearApi.utils.format.formatNearAmount(yoctoprice);
+                        ownerHtml += `<button onclick="buyNFT('${mix.token_id}','${yoctoprice}')">Buy ${nftprice}N</button>`;
+                    } catch(e) {
+                        console.error(e);
+                    }
+                }
+                currentMixOwnerDiv.innerHTML = ownerHtml;
+                currentMixOwnerDiv.style.display = 'block';
+            } else {
+                currentMixOwnerDiv.innerHTML = `No owner yet for this remix. <button>Buy 10N</button>`;
+                currentMixOwnerDiv.querySelector('button').onclick = () => buyMix(mix.identitfier);
+                currentMixOwnerDiv.style.display = 'block';
+            }
+        };
+        
+        elm.innerHTML = `${mix.author}<br />
+                <span class="mixlistdate">${new Date(parseInt(mix.timestamp)/1000000).toLocaleString()}</span>`;
+        listitemcontainer.appendChild(elm);
+
+        if (mix.owner === walletConnection.getAccountId()) {
+            const ownerindicatorelement = document.createElement('div');
+            ownerindicatorelement.innerHTML = '*';
+            ownerindicatorelement.style.textAlign = 'right';
+            listitemcontainer.appendChild(ownerindicatorelement);
+        }
+        latest20element.appendChild(listitemcontainer);
+    }     
+
+    if (publicmixes.length > 0) {        
+        const latestmix = publicmixes[0];
+        const latestmixdata = latestmix.content;
         for (let n=0;n<songdata.length;n++) {
             const v = latestmixdata[n];
             songdata[n] = v;        
             patternElements[n].style.backgroundColor = patternentrycolors[v];
         };
         updateMixerState(latestmixdata.slice(songdata.length));
-        const latest20element = document.getElementById('latest20mixes');
-        let currentMixElement;
-        mixes.forEach((mix, n) => {
-            const listitemcontainer = document.createElement('div');    
-            listitemcontainer.style.display = 'grid';
-            listitemcontainer.style.gridTemplateColumns = 'auto auto';  
-            const elm = document.createElement('div');
-            elm.classList.add('mixlistitem');
-            if (n===0) {
-                currentMixElement = elm;
-                elm.classList.add('currentmix');
-            }
-            const mixdata = mix.split(';')[2].split(',').map(v => parseInt(v));
-            elm.onclick = () => {                                
-                for (let n=0;n<songdata.length;n++) {
-                    const v = mixdata[n];
-                    songdata[n] = v;        
-                    patternElements[n].style.backgroundColor = patternentrycolors[v];
-                }
-                postPatternSchedule();
-                updateMixerState(mixdata.slice(songdata.length));
-                currentMixElement.classList.remove('currentmix');
-                currentMixElement = elm;
-                elm.classList.add('currentmix');
-            };
-            const mixinfo = mix.split(';');
-            elm.innerHTML = `${mixinfo[0]}<br />
-                    <span class="mixlistdate">${new Date(parseInt(mixinfo[1])/1000000).toLocaleString()}</span>`;
-            listitemcontainer.appendChild(elm);
-            if (n>0) {
-                const upvotebutton = document.createElement('button');
-                upvotebutton.innerHTML = '&uarr;';
-                upvotebutton.title = 'upvote';
-                upvotebutton.classList.add('upvotebutton');
-                upvotebutton.onclick = () => upvoteMix(mix);
-                listitemcontainer.appendChild(upvotebutton);
-            }
-            latest20element.appendChild(listitemcontainer);
-        });
-        toggleSpinner(false);
+        publicmixes.forEach(m => addMixToList(m));
+        currentMixElement = document.querySelector('.mixlistitem');
+    }
+
+    if (ownedmixes.length > 0) {
+        const ownedMixesContent = (await Promise.all(ownedmixes.map(m => ({
+            token_id: m[1].substr('nft:'.length),
+            author: m[0]
+        })).map(async m => Object.assign(m, {
+            owner: await viewTokenOwner(m.token_id),
+            content: await getMixTokenContent(m.token_id)
+        })))).map(m => Object.assign(m, {
+            content: m.content.split(';')[3]?.split(',').map(v => parseInt(v)),
+            timestamp: m.content.split(';')[2],
+        }));
+        ownedMixesContent.forEach(m => addMixToList(m));
+    }
+    
+    if (!currentMixElement) {
+        currentMixElement = document.querySelector('.mixlistitem');
+    }
+
+    if (ownedmixes.length === 20) {
+        document.querySelector('#postmixbutton').style.display = 'none';
     }
 })();

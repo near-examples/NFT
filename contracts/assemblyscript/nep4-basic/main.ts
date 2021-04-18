@@ -30,9 +30,10 @@ const TOTAL_SUPPLY = 'c'
 @deprecated("content is stored as Uint8Array")
 const tokenToContent = new PersistentMap<TokenId, string>('d')
 
-const tokenForSale = new PersistentMap<TokenId, string>('e');
-const tokenListenPrice = new PersistentMap<TokenId, string>('f');
-const tokenMixes = new PersistentMap<TokenId,Array<string>>('g');
+const tokenForSale = new PersistentMap<TokenId, string>('e')
+const tokenListenPrice = new PersistentMap<TokenId, string>('f')
+const tokenMixes = new PersistentMap<TokenId,Array<string>>('g')
+const remixTokens = new PersistentMap<TokenId, string>('d')
 
 /******************/
 /* ERROR MESSAGES */
@@ -218,6 +219,10 @@ export function get_token_content(token_id: TokenId): string {
   return tokenToContent.getSome(token_id)
 }
 
+export function view_remix_content(token_id: TokenId): string {
+  return remixTokens.getSome(token_id)
+}
+
 @payable
 export function request_listening(token_id: TokenId): ContractPromiseBatch {
   const predecessor = context.predecessor
@@ -267,6 +272,12 @@ export function sell_token(token_id: TokenId, price: u128): void {
   tokenForSale.set(token_id, price.toString())
 }
 
+export function remove_token_from_sale(token_id: TokenId): void {
+  const predecessor = context.predecessor
+  assert(predecessor == tokenToOwner.get(token_id), ERROR_TOKEN_NOT_OWNED_BY_CALLER)
+  tokenForSale.delete(token_id)
+}
+
 export function view_price(token_id: TokenId): u128 {
   assert(tokenForSale.contains(token_id), ERROR_TOKEN_NOT_FOR_SALE)
   return u128.from(tokenForSale.getSome(token_id))
@@ -284,7 +295,69 @@ export function buy_token(token_id: TokenId): ContractPromiseBatch {
   tokenToOwner.set(token_id, predecessor)
   tokenForSale.delete(token_id)
 
-  return ContractPromiseBatch.create(owner).transfer(context.attachedDeposit)
+  if (remixTokens.contains(token_id)) {
+    const remixcontentparts = remixTokens.get(token_id)!.split(';')
+    const original_token_id = u128.fromString(remixcontentparts[0]).toU64();
+    const original_token_owner = tokenToOwner.get(original_token_id)!
+    const remix_author = remixcontentparts[1]
+    // 2% to original content owner
+    const amountToOriginalTokenOwner = changetype<u128>(context.attachedDeposit * u128.fromI32(2) / u128.fromI32(100))
+    // 2% to remix author
+    const amountToRemixAuthor = changetype<u128>(context.attachedDeposit * u128.fromI32(2) / u128.fromI32(100))
+    // 1% to contract
+    const amountToContract = changetype<u128>(context.attachedDeposit * u128.fromI32(1) / u128.fromI32(100))
+    const amountToRemixOwner = context.attachedDeposit - amountToContract - amountToRemixAuthor - amountToOriginalTokenOwner
+    return ContractPromiseBatch.create(owner).transfer(amountToRemixOwner)
+            .then(original_token_owner).transfer(amountToOriginalTokenOwner)
+            .then(remix_author).transfer(amountToRemixAuthor)
+  } else {
+    // 1% to contract
+    const amountToContract = changetype<u128>(context.attachedDeposit * u128.fromI32(1) / u128.fromI32(100))
+    return ContractPromiseBatch.create(owner).transfer(context.attachedDeposit - amountToContract)
+  }
+}
+
+
+
+@payable
+export function buy_mix(original_token_id: TokenId, mix: string): ContractPromiseBatch {
+  assert(mix.split(';')[1].indexOf('nft:') !== 0, 'mix is already an nft')
+
+  let mixes: Array<string> = tokenMixes.get(original_token_id)!
+  let matchingMixIndex = -1;
+
+  for (let n=0;n<mixes.length; n++) {
+    if (mixes[n] == mix) {
+      matchingMixIndex = n;
+      // create a new NFT
+      const tokenId = storage.getPrimitive<u64>(TOTAL_SUPPLY, 1)
+
+      const predecessor = context.predecessor
+      // assign ownership
+      tokenToOwner.set(tokenId, predecessor)
+      remixTokens.set(tokenId, original_token_id.toString() + ';' +mix)
+
+      // increment and store the next tokenId
+      storage.set<u64>(TOTAL_SUPPLY, tokenId + 1)
+
+      const originalTokenOwner = tokenToOwner.get(original_token_id)!
+      const mixauthor = mix.split(';')[0]
+      mixes[n] = mixauthor + ';nft:' + tokenId.toString()
+
+      tokenMixes.set(original_token_id, mixes)
+
+      const askingPrice = u128.fromString('10000000000000000000000000')
+      assert(context.attachedDeposit == askingPrice, "Method requires deposit " + askingPrice.toString())
+      
+      // 40 % to owner, 40 % to mix author, 20% to contract
+      const amountToOwner = changetype<u128>(context.attachedDeposit * u128.fromI32(40) / u128.fromI32(100))
+      const amountToMixAuthor = amountToOwner
+
+      return ContractPromiseBatch.create(originalTokenOwner).transfer(amountToOwner)
+              .then(mixauthor).transfer(amountToMixAuthor)
+    }
+  }
+  throw('No mix found')
 }
 
 export function publish_token_mix(token_id: TokenId, mix: u8[]): void {
@@ -293,33 +366,28 @@ export function publish_token_mix(token_id: TokenId, mix: u8[]): void {
     
   let mixes: Array<string> = tokenMixes.get(token_id)!
 
-  mixes.unshift(context.predecessor+';'+context.blockTimestamp.toString()+';'+mix.toString());
+  const mixstring = context.predecessor+';'+context.blockTimestamp.toString()+';'+mix.toString();
 
-  if (mixes.length > MAX_MIXES_PER_TOKEN) {
-    mixes = mixes.slice(0, MAX_MIXES_PER_TOKEN)
+  if (mixes.length < MAX_MIXES_PER_TOKEN) {
+    mixes.push(mixstring)
+  } else {
+    let oldestAvailableMixIndex = -1
+    let oldestMixBlockTimestamp = context.blockTimestamp
+    for (let n=0;n<mixes.length;n++) {
+      const mixparts = mixes[n].split(';')
+      if (mixparts.length > 2) {
+        // is not yet an NFT
+        const mixBlockTimestamp: u64 = u128.fromString(mixparts[1]).toU64()
+        if (mixBlockTimestamp < oldestMixBlockTimestamp) {
+          oldestMixBlockTimestamp = mixBlockTimestamp
+          oldestAvailableMixIndex = n
+        }
+      }
+    }
+    assert (oldestAvailableMixIndex > -1, 'No more remixes allowed')
+    mixes[oldestAvailableMixIndex] = mixstring
   }
   tokenMixes.set(token_id, mixes)
-}
-
-export function upvote_mix(token_id: TokenId, mix: string): void {
-  assert(tokenMixes.contains(token_id), ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING)
-
-  let mixes: Array<string> = tokenMixes.get(token_id)!
-  let matchingMixIndex = -1;
-
-  for (let n=0;n<mixes.length; n++) {
-    if (mixes[n] == mix) {
-      matchingMixIndex = n;
-      break;
-    }
-  }
-  
-  if (matchingMixIndex > 0) {
-    const matchingMix = mixes[matchingMixIndex];
-    mixes[matchingMixIndex] = mixes[matchingMixIndex - 1]
-    mixes[matchingMixIndex - 1] = matchingMix
-    tokenMixes.set(token_id, mixes)
-  }
 }
 
 export function get_token_mixes(token_id: TokenId): string[] {

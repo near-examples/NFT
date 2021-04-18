@@ -1,5 +1,5 @@
 import { VMContext, base64 } from 'near-sdk-as'
-import { Context, u128 } from "near-sdk-core";
+import { Context, env, u128 } from "near-sdk-core";
 
 // explicitly import functions required by spec
 import {
@@ -24,6 +24,7 @@ const content = 'AAECAw==';
 const mintprice = u128.fromString('800000000000000000000');
 
 let currentTokenId: u64;
+let currentMix: string;
 
 describe('grant_access', () => {
   it('grants access to the given account_id for all the tokens that account has', () => {
@@ -448,7 +449,7 @@ describe('nonSpec interface', () => {
     const mixes = nonSpec.get_token_mixes(tokenId)
     expect(mixes.length).toBe(1)
   })
-  it('the latest published token mix should be on top of the list, and the list should have no more than '+nonSpec.MAX_MIXES_PER_TOKEN.toString()+' mixes', () => {
+  it('oldest mix should be replaced if there are already '+nonSpec.MAX_MIXES_PER_TOKEN.toString()+' mixes', () => {
     VMContext.setAttached_deposit(mintprice);
     
     const tokenId = nonSpec.mint_to_base64(alice, content, true)
@@ -463,42 +464,93 @@ describe('nonSpec interface', () => {
       if (mixes.length < nonSpec.MAX_MIXES_PER_TOKEN) {
         expect(mixes.length).toBe(n + 1, 'mixes length should be ' + (n+1).toString());
       }
-      expect(mixes[0]).toBe(bob+';'+blocktimestamp.toString()+';'+n.toString()+','+(n+1).toString()+'', 'mix content [0] should be '+n.toString());
+      expect(mixes[n % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob+';'+blocktimestamp.toString()+';'+n.toString()+','+(n+1).toString()+'', 'mix content [0] should be '+n.toString());
       
-      if (n>=1) {
-        expect(mixes[1]).toBe(bob+';'+(blocktimestamp-1).toString()+';'+(n-1).toString()+','+(n).toString(), 'mix content [1] should be '+n.toString());        
+      if (n>0) {
+        expect(mixes[(n-1) % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob+';'+(blocktimestamp-1).toString()+';'+(n-1).toString()+','+(n).toString(), 'mix content [1] should be '+n.toString());        
       }
     }
+  })  
+  it('should be possible to buy a token mix', () => {
+    VMContext.setAttached_deposit(mintprice);
+    const tokenId = nonSpec.mint_to_base64(alice, content, true)
+    VMContext.setPredecessor_account_id(bob)
+    nonSpec.publish_token_mix(tokenId, [55,33,21])
+    const mixes = nonSpec.get_token_mixes(tokenId)
+    expect(mixes.length).toBe(1)
+    VMContext.setPredecessor_account_id(carol)
+    VMContext.setCurrent_account_id(carol)
+    VMContext.setAttached_deposit(u128.fromString('10000000000000000000000000'))
+    nonSpec.buy_mix(tokenId, mixes[0])
   })
-  it('should be possible to upvote a mix', () => {
+  it('should not be possible to publish over a mix that is sold', () => {
     VMContext.setAttached_deposit(mintprice);
     
     const tokenId = nonSpec.mint_to_base64(alice, content, true)
+    expect(tokenId).toBe(1)
+
     VMContext.setPredecessor_account_id(bob)
-    for (let n=0;n<nonSpec.MAX_MIXES_PER_TOKEN; n++) {
+    for (let n=0;n<nonSpec.MAX_MIXES_PER_TOKEN * 2; n++) {
       const blocktimestamp = n;
       VMContext.setBlock_timestamp(blocktimestamp);
-      nonSpec.publish_token_mix(tokenId, [n as u8, (n+1) as u8])
+      if (n < nonSpec.MAX_MIXES_PER_TOKEN) {
+        nonSpec.publish_token_mix(tokenId, [n as u8, (n+1) as u8])
+      } else {
+        expect(() => {
+          nonSpec.publish_token_mix(1, [1, 2])
+        }).toThrow()
+      }
       
       const mixes = nonSpec.get_token_mixes(tokenId)
-      expect(mixes.length).toBeLessThanOrEqual(nonSpec.MAX_MIXES_PER_TOKEN);  
-      if (mixes.length < nonSpec.MAX_MIXES_PER_TOKEN) {
-        expect(mixes.length).toBe(n + 1, 'mixes length should be ' + (n+1).toString());
-      }
-      expect(mixes[0]).toBe(bob+';'+blocktimestamp.toString()+';'+n.toString()+','+(n+1).toString()+'', 'mix content [0] should be '+n.toString());
-      
-      if (n>=1) {
-        expect(mixes[1]).toBe(bob+';'+(blocktimestamp-1).toString()+';'+(n-1).toString()+','+(n).toString(), 'mix content [1] should be '+n.toString());        
-      }
-    }
 
-    let mixes = nonSpec.get_token_mixes(tokenId)
-    const upVoteIndex = 2
-    expect(mixes[nonSpec.MAX_MIXES_PER_TOKEN - upVoteIndex - 1]).toBe(bob+';'+(upVoteIndex).toString()+';'+upVoteIndex.toString()+','+(upVoteIndex+1).toString()+'', 'before upvote')
-    expect(mixes[nonSpec.MAX_MIXES_PER_TOKEN - upVoteIndex - 2]).toBe(bob+';'+(upVoteIndex+1).toString()+';'+(upVoteIndex+1).toString()+','+(upVoteIndex+2).toString()+'', 'before upvote, mix content before upvoted pos')
-    nonSpec.upvote_mix(tokenId, mixes[nonSpec.MAX_MIXES_PER_TOKEN - upVoteIndex - 1]);
-    mixes = nonSpec.get_token_mixes(tokenId)
-    expect(mixes[nonSpec.MAX_MIXES_PER_TOKEN - upVoteIndex - 2]).toBe(bob+';'+(upVoteIndex).toString()+';'+upVoteIndex.toString()+','+(upVoteIndex+1).toString()+'', 'after upvote, mix content before upvoted pos')
-    expect(mixes[nonSpec.MAX_MIXES_PER_TOKEN - upVoteIndex - 1]).toBe(bob+';'+(upVoteIndex+1).toString()+';'+(upVoteIndex+1).toString()+','+(upVoteIndex+2).toString()+'', 'after upvote, mix content at upvoted pos')
+      if (n < nonSpec.MAX_MIXES_PER_TOKEN) {
+        expect(mixes[n % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob+';'+blocktimestamp.toString()+';'+n.toString()+','+(n+1).toString()+'', 'mix content ['+n.toString()+'] should be '+n.toString())
+        VMContext.setAttached_deposit(u128.fromString('10000000000000000000000000'))
+        nonSpec.buy_mix(tokenId, mixes[n])
+      } else {
+        expect(mixes[n % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob+';nft:'+(tokenId + ((n% nonSpec.MAX_MIXES_PER_TOKEN)+1)).toString(), 'mix content ['+n.toString()+'] should be an NFT with id '+(tokenId + n - nonSpec.MAX_MIXES_PER_TOKEN).toString())
+      }      
+    }
   })
+  it('should not be possible to mint a mix twice', () => {    
+    VMContext.setAttached_deposit(mintprice);
+    currentTokenId = nonSpec.mint_to_base64(alice, content, true)
+    VMContext.setPredecessor_account_id(bob)
+    nonSpec.publish_token_mix(currentTokenId, [55,33,21])
+    const mixes = nonSpec.get_token_mixes(currentTokenId)
+    expect(mixes.length).toBe(1)
+    currentMix = mixes[0]
+
+    VMContext.setPredecessor_account_id(carol)
+    VMContext.setAttached_deposit(u128.fromString('10000000000000000000000000'))
+    nonSpec.buy_mix(currentTokenId, mixes[0])
+
+    expect(() => {
+      nonSpec.buy_mix(currentTokenId, currentMix)
+    }).toThrow()
+  })
+  it('should be possible to buy a token that was a remix', () => {
+    VMContext.setAttached_deposit(mintprice);
+    const originalTokenId = nonSpec.mint_to_base64(alice, content, true)
+    VMContext.setPredecessor_account_id(bob)
+    nonSpec.publish_token_mix(currentTokenId, [55,33,21])
+    let mixes = nonSpec.get_token_mixes(currentTokenId)
+    expect(mixes.length).toBe(1)
+    const mix = mixes[0]
+
+    VMContext.setPredecessor_account_id(carol)
+    VMContext.setAttached_deposit(u128.fromString('10000000000000000000000000'))
+    nonSpec.buy_mix(currentTokenId, mixes[0])
+
+    mixes = nonSpec.get_token_mixes(currentTokenId)
+    const remixNFTid = parseInt(mixes[0].split(';')[1].split(':')[1]) as u64
+    nonSpec.sell_token(remixNFTid, u128.fromString('20000000000000000000000000'))
+
+    VMContext.setPredecessor_account_id(alice)
+    VMContext.setAttached_deposit(u128.fromString('20000000000000000000000000'))
+    nonSpec.buy_token(remixNFTid)
+
+    const remixNFTContent = nonSpec.view_remix_content(remixNFTid)
+    expect(remixNFTContent).toBe(originalTokenId.toString()+';'+mix);
+  }) 
 })
