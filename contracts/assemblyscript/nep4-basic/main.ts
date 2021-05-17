@@ -13,6 +13,7 @@ type TokenId = u64
 export const MAX_SUPPLY = u64(100)
 export const MAX_MIXES_PER_TOKEN = 20;
 export const MAX_MIX_BYTES = 200;
+export const MAX_MIX_BYTES_BASE64 = 1000;
 
 // The strings used to index variables in storage can be any string
 // Let's set them to single characters to save storage space
@@ -360,13 +361,12 @@ export function buy_mix(original_token_id: TokenId, mix: string): ContractPromis
   throw('No mix found')
 }
 
-export function publish_token_mix(token_id: TokenId, mix: u8[]): void {
+function publish_token_mix_internal(token_id: TokenId, mix: string): void {
   assert(tokenMixes.contains(token_id), ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING)
-  assert(mix.length < MAX_MIX_BYTES, ERROR_MIX_TOO_LARGE)
     
   let mixes: Array<string> = tokenMixes.get(token_id)!
 
-  const mixstring = context.predecessor+';'+context.blockTimestamp.toString()+';'+mix.toString();
+  const mixstring = context.predecessor+';'+context.blockTimestamp.toString()+';'+mix;
 
   if (mixes.length < MAX_MIXES_PER_TOKEN) {
     mixes.push(mixstring)
@@ -388,6 +388,16 @@ export function publish_token_mix(token_id: TokenId, mix: u8[]): void {
     mixes[oldestAvailableMixIndex] = mixstring
   }
   tokenMixes.set(token_id, mixes)
+}
+
+export function publish_token_mix_base64(token_id: TokenId, mixbase64: string): void {
+  assert(base64.decode(mixbase64).length <= MAX_MIX_BYTES_BASE64);
+  publish_token_mix_internal(token_id, mixbase64);
+}
+
+export function publish_token_mix(token_id: TokenId, mix: u8[]): void {
+  assert(mix.length <= MAX_MIX_BYTES, ERROR_MIX_TOO_LARGE)
+  publish_token_mix_internal(token_id, mix.toString());  
 }
 
 export function get_token_mixes(token_id: TokenId): string[] {

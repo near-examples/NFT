@@ -552,5 +552,23 @@ describe('nonSpec interface', () => {
 
     const remixNFTContent = nonSpec.view_remix_content(remixNFTid)
     expect(remixNFTContent).toBe(originalTokenId.toString()+';'+mix);
-  }) 
+  })
+  it('should be possible to publish a token mix with base64 encoded content', () => {
+    VMContext.setAttached_deposit(mintprice);
+    const tokenId = nonSpec.mint_to_base64(alice, content, true)
+    VMContext.setPredecessor_account_id(bob)
+    nonSpec.publish_token_mix_base64(tokenId, base64.encode(new Uint8Array(nonSpec.MAX_MIX_BYTES_BASE64)))
+    const mixes = nonSpec.get_token_mixes(tokenId)
+    expect(mixes.length).toBe(1)
+  })
+  it('should be fail if trying to publish a token mix with non base64 encoded string', () => {
+    VMContext.setAttached_deposit(mintprice);
+    
+    expect(() => {
+      const tokenId = nonSpec.mint_to_base64(alice, content, true)
+      VMContext.setPredecessor_account_id(bob)
+      nonSpec.publish_token_mix_base64(tokenId, 'abcdefg');
+    }).toThrow();
+    
+  })
 })
