@@ -523,7 +523,55 @@ describe('nonSpec interface', () => {
       const tokenId = nonSpec.mint_to_base64(alice, content, true)
       VMContext.setPredecessor_account_id(bob)
       nonSpec.publish_token_mix_base64(tokenId, 'abcdefg');
-    }).toThrow();
-    
+    }).toThrow();    
   })
+  it('should be possible to set a beneficiary', () => {
+    VMContext.setCurrent_account_id(alice);
+    VMContext.setPredecessor_account_id(alice);
+    nonSpec.set_beneficiary(bob);
+  });
+  it('should be possible to transfer beneficiary', () => {
+    VMContext.setCurrent_account_id(alice);
+    VMContext.setPredecessor_account_id(alice);
+    nonSpec.set_beneficiary(bob);
+    VMContext.setPredecessor_account_id(bob);
+    nonSpec.set_beneficiary(carol);
+  });
+  it('should not be possible for others to set a beneficiary', () => {
+    VMContext.setCurrent_account_id(alice)
+    VMContext.setPredecessor_account_id(bob)
+    expect(() => {
+      nonSpec.set_beneficiary(bob)
+    }).toThrow()
+  });
+  it('should not be possible for others to transfer beneficiary', () => {
+    VMContext.setCurrent_account_id(alice)
+    VMContext.setPredecessor_account_id(alice)
+    nonSpec.set_beneficiary(bob)
+    VMContext.setPredecessor_account_id(carol)
+    expect(() => {
+      nonSpec.set_beneficiary(carol)
+    }).toThrow()
+  });
+  it('should only be possible for beneficiary to transfer funds', () => {
+    VMContext.setCurrent_account_id(alice)
+    VMContext.setPredecessor_account_id(bob)
+    expect(() => {
+      nonSpec.transfer_funds(mintprice)
+    }).toThrow()
+
+    VMContext.setPredecessor_account_id(alice)
+    expect(() => {
+      nonSpec.transfer_funds(mintprice)
+    }).toThrow()
+    nonSpec.set_beneficiary(bob)
+
+    VMContext.setPredecessor_account_id(bob)
+    expect(nonSpec.transfer_funds(mintprice).id).toBeTruthy()
+
+    VMContext.setPredecessor_account_id(carol)
+    expect(() => {
+      nonSpec.transfer_funds(mintprice)
+    }).toThrow()
+  });
 })

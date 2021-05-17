@@ -81,3 +81,20 @@ it('should buy a remix, put it up for sale, and another buying it', () => {
 })
 
 
+it('should transfer funds to beneficiary', () => {
+        const runtime = new sim.Runtime();
+        const contract = runtime.newAccount('contract', 'contracts/assemblyscript/build/release/main.wasm');
+        contract.balance = '900000000000000000000';
+
+        const peter = runtime.newAccount('peter');
+        contract.call_other('contract', 'set_beneficiary', {
+                beneficiary_account_id: 'peter'
+        });
+        const result = peter.call_other('contract', 'transfer_funds', {
+                amount: '800000000000000000000'
+        });
+        expect(result.err).toBe(null);
+        expect(contract.balance).toBe('100000000000000000000');
+        expect(result.result.receipts[0].receiver_id).toBe('peter');
+        expect(result.result.receipts[0].actions[0].Transfer.deposit).toBe(800000000000000000000);
+});

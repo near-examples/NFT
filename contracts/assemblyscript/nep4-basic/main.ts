@@ -36,6 +36,8 @@ const tokenListenPrice = new PersistentMap<TokenId, string>('f')
 const tokenMixes = new PersistentMap<TokenId,Array<string>>('g')
 const remixTokens = new PersistentMap<TokenId, string>('d')
 
+const BENEFICIARY_ACCOUNT_ID = 'e';
+
 /******************/
 /* ERROR MESSAGES */
 /******************/
@@ -52,6 +54,7 @@ export const ERROR_LISTENING_REQUIRES_PAYMENT = 'Listening requires payment, cal
 export const ERROR_OWNERS_NOT_REQUIRED_TO_REQUEST_LISTENING = 'Owners are not required to request listening'
 export const ERROR_MIX_TOO_LARGE = 'Mix too large, max size is '+MAX_MIX_BYTES.toString()
 export const ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING = 'Token does not support mixing'
+export const MUST_BE_CALLED_BY_BENEFICIARY = 'Must be called by beneficiary'
 
 /******************/
 /* CHANGE METHODS */
@@ -129,6 +132,22 @@ export function get_token_owner(token_id: TokenId): string {
 /********************/
 /* NON-SPEC METHODS */
 /********************/
+
+export function set_beneficiary(beneficiary_account_id: string): void {
+  const predecessor = context.predecessor
+  assert(
+    (!storage.contains(BENEFICIARY_ACCOUNT_ID) && predecessor == context.contractName) ||
+    predecessor == storage.get<string>(BENEFICIARY_ACCOUNT_ID), MUST_BE_CALLED_BY_BENEFICIARY
+  )
+  storage.set<string>(BENEFICIARY_ACCOUNT_ID, beneficiary_account_id)
+}
+
+export function transfer_funds(amount: u128): ContractPromiseBatch {
+  const predecessor = context.predecessor
+
+  assert(predecessor == (storage.get<string>(BENEFICIARY_ACCOUNT_ID) + ''), MUST_BE_CALLED_BY_BENEFICIARY)
+  return ContractPromiseBatch.create(predecessor).transfer(amount)
+}
 
 // Note that ANYONE can call this function! You probably would not want to
 // implement a real NFT like this!
@@ -299,8 +318,6 @@ export function buy_token(token_id: TokenId): ContractPromiseBatch {
   }
 }
 
-
-
 @payable
 export function buy_mix(original_token_id: TokenId, mix: string): ContractPromiseBatch {
   assert(mix.split(';')[1].indexOf('nft:') !== 0, 'mix is already an nft')
@@ -372,7 +389,7 @@ function publish_token_mix_internal(token_id: TokenId, mix: string): void {
 }
 
 export function publish_token_mix_base64(token_id: TokenId, mixbase64: string): void {
-  assert(base64.decode(mixbase64).length <= MAX_MIX_BYTES_BASE64);
+  assert(base64.decode(mixbase64).length <= MAX_MIX_BYTES_BASE64, 'Must be base64 encoded and no more than ' + MAX_MIX_BYTES_BASE64.toString() + 'bytes');
   publish_token_mix_internal(token_id, mixbase64);
 }
 
