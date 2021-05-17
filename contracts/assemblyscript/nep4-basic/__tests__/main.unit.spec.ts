@@ -1,5 +1,5 @@
-import { VMContext, base64 } from 'near-sdk-as'
-import { Context, env, u128 } from "near-sdk-core";
+import { VMContext, base64, util } from 'near-sdk-as'
+import { Context, u128 } from 'near-sdk-core';
 
 // explicitly import functions required by spec
 import {
@@ -381,51 +381,6 @@ describe('nonSpec interface', () => {
     expect(receieved.length).toBe(largecontent.length)
     expect(receieved).toStrictEqual(largecontent)
   })
-  it('should be possible to replace content', () => {
-    const largecontent = new Uint8Array(20 * 1024)
-    for (let n=0;n<largecontent.length;n++) {
-      largecontent[n] = n & 0xff
-    }
-    
-    const largecontentb64 = base64.encode(largecontent)
-    VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
-
-    const aliceToken = nonSpec.mint_to_base64(alice, largecontentb64)
-    
-    VMContext.setPredecessor_account_id(alice)
-    let receieved = nonSpec.get_token_content_base64(aliceToken)
-    expect(receieved.length).toBe(largecontent.length)
-    
-    for (let n=0;n<largecontent.length;n++) {
-      largecontent[largecontent.length - 1 - n] = n & 0xff
-    }
-
-    VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
-
-    nonSpec.replace_content_base64(aliceToken, base64.encode(largecontent))
-    receieved = nonSpec.get_token_content_base64(aliceToken)
-    expect(receieved).toStrictEqual(largecontent)
-  })
-  it('should not be possible for non-owners to replace content', () => {
-    const largecontent = new Uint8Array(20 * 1024)
-    for (let n=0;n<largecontent.length;n++) {
-      largecontent[n] = n & 0xff
-    }
-    
-    const largecontentb64 = base64.encode(largecontent)
-    VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
-
-    currentTokenId = nonSpec.mint_to_base64(alice, largecontentb64)
-    
-    VMContext.setPredecessor_account_id(bob)
-    
-    expect(() => {
-      const contentb64 = base64.encode(new Uint8Array(100))
-      VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(contentb64.length))
-      nonSpec.replace_content_base64(currentTokenId, contentb64)
-    }).toThrow()
-    
-  })
   it('should be possible to view token for free', () => {    
     VMContext.setAttached_deposit(mintprice);
     const tokenId = nonSpec.mint_to_base64(alice, content)
@@ -552,5 +507,112 @@ describe('nonSpec interface', () => {
 
     const remixNFTContent = nonSpec.view_remix_content(remixNFTid)
     expect(remixNFTContent).toBe(originalTokenId.toString()+';'+mix);
-  }) 
-})
+  })
+  it('should be possible to publish a token mix with base64 encoded content', () => {
+    VMContext.setAttached_deposit(mintprice);
+    const tokenId = nonSpec.mint_to_base64(alice, content, true)
+    VMContext.setPredecessor_account_id(bob)
+    nonSpec.publish_token_mix_base64(tokenId, base64.encode(new Uint8Array(nonSpec.MAX_MIX_BYTES_BASE64)))
+    const mixes = nonSpec.get_token_mixes(tokenId)
+    expect(mixes.length).toBe(1)
+  })
+  it('should be fail if trying to publish a token mix with non base64 encoded string', () => {
+    VMContext.setAttached_deposit(mintprice);
+    
+    expect(() => {
+      const tokenId = nonSpec.mint_to_base64(alice, content, true)
+      VMContext.setPredecessor_account_id(bob)
+      nonSpec.publish_token_mix_base64(tokenId, 'abcdefg');
+    }).toThrow();    
+  })
+  it('should be possible to sell the contract', () => {
+    VMContext.setCurrent_account_id(alice);
+    VMContext.setPredecessor_account_id(alice);
+    nonSpec.sell_contract_to(bob, u128.fromString('2000'))
+    VMContext.setPredecessor_account_id(bob)
+    VMContext.setAttached_deposit(u128.fromString('2000'))
+    nonSpec.buy_contract()
+  });
+  it('should only be possible for the selected buyer to buy the contract', () => {
+    VMContext.setCurrent_account_id(alice);
+    VMContext.setPredecessor_account_id(alice);
+    nonSpec.sell_contract_to(bob, u128.fromString('2000'))
+    VMContext.setPredecessor_account_id(carol)
+    VMContext.setAttached_deposit(u128.fromI32(2000))
+    expect(() => {
+      nonSpec.buy_contract()
+    }).toThrow()
+  });
+  it('should be possible to re-sell the contract', () => {
+    VMContext.setCurrent_account_id(alice);
+    VMContext.setPredecessor_account_id(alice);
+    nonSpec.sell_contract_to(bob, u128.fromString('2000'))
+    VMContext.setPredecessor_account_id(bob)
+    VMContext.setAttached_deposit(u128.fromI32(2000))
+    nonSpec.buy_contract()
+    VMContext.setPredecessor_account_id(bob)
+    nonSpec.sell_contract_to(carol, u128.fromString('3000'))
+    VMContext.setPredecessor_account_id(carol)
+    VMContext.setAttached_deposit(u128.fromI32(3000))
+    nonSpec.buy_contract()
+  });
+  it('should not be possible for others to sell the contract', () => {
+    VMContext.setCurrent_account_id(alice)
+    VMContext.setPredecessor_account_id(bob)
+    expect(() => {
+      nonSpec.sell_contract_to(bob, u128.fromString('4000'))
+    }).toThrow()
+  });
+  it('should not be possible for others to resell the contract', () => {
+    VMContext.setCurrent_account_id(alice);
+    VMContext.setPredecessor_account_id(alice);
+    nonSpec.sell_contract_to(bob, u128.fromString('2000'))
+    VMContext.setPredecessor_account_id(bob)
+    VMContext.setAttached_deposit(u128.fromI32(2000))
+    nonSpec.buy_contract()
+    VMContext.setPredecessor_account_id(bob)
+    nonSpec.sell_contract_to(carol, u128.fromString('3000'))
+    VMContext.setPredecessor_account_id(carol)
+    expect(() => {
+      nonSpec.sell_contract_to(bob, u128.fromString('3000'))
+    }).toThrow()
+  });
+  it('should only be possible for beneficiary to transfer funds', () => {
+    VMContext.setCurrent_account_id(alice)
+    VMContext.setAccount_balance(u128.fromI64(999999999999));
+    VMContext.setPredecessor_account_id(bob)
+    expect(() => {
+      nonSpec.transfer_funds(u128.fromI64(200000000000))
+    }).toThrow()
+
+    VMContext.setPredecessor_account_id(alice)
+    expect(() => {
+      nonSpec.transfer_funds(mintprice)
+    }).toThrow()
+    nonSpec.sell_contract_to(bob, u128.fromString('2000'))
+
+    VMContext.setPredecessor_account_id(bob)
+    VMContext.setAttached_deposit(u128.fromI64(2000))
+    nonSpec.buy_contract()
+    const transferAmount = 100000;
+    const accountBalanceBefore = Context.accountBalance.toI64();
+    nonSpec.transfer_funds(u128.fromI64(transferAmount))
+    expect(Context.accountBalance.toI64()).toBe(accountBalanceBefore-transferAmount);
+    
+    VMContext.setPredecessor_account_id(carol)
+    expect(() => {
+      nonSpec.transfer_funds(mintprice)
+    }).toThrow()
+  });
+});
+
+describe('web4', () => {
+  it('should be possible to upload and get web4 content', () => {
+      VMContext.setCurrent_account_id('web4');
+      VMContext.setPredecessor_account_id('web4');
+      const content = 'Hello';
+      nonSpec.upload_web_content('/index.html', base64.encode(util.stringToBytes(content)));
+      const response = nonSpec.web4_get({path: '/index.html', accountId: null, params: new Map(), preloads: new Map(), query: new Map()});
+      expect(response.body).toStrictEqual(util.stringToBytes(content));
+  });
+});

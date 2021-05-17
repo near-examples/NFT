@@ -1,4 +1,4 @@
-/*const nearconfig = {
+const nearconfig = {
     nodeUrl: 'https://rpc.mainnet.near.org',
     walletUrl: 'https://wallet.mainnet.near.org',
     helperUrl: 'https://helper.mainnet.near.org',
@@ -7,8 +7,10 @@
     deps: {
         keyStore: null
     }
-};*/
+};
+const token_id = '3';
 
+/*
 const nearconfig = {
     nodeUrl: 'https://rpc.testnet.near.org',
     walletUrl: 'https://wallet.testnet.near.org',
@@ -20,7 +22,7 @@ const nearconfig = {
     }
 };
 
-const token_id = '11';
+const token_id = '11';*/
 
 export let currentTokenPrice = null;
 export let listeningPrice = null;

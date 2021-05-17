@@ -1,4 +1,4 @@
-import { PersistentMap, storage, context, ContractPromiseBatch, base64 } from 'near-sdk-as'
+import { PersistentMap, storage, context, ContractPromiseBatch, base64, util } from 'near-sdk-as'
 import { Storage, u128 } from 'near-sdk-core';
 
 /**************************/
@@ -13,6 +13,7 @@ type TokenId = u64
 export const MAX_SUPPLY = u64(100)
 export const MAX_MIXES_PER_TOKEN = 20;
 export const MAX_MIX_BYTES = 200;
+export const MAX_MIX_BYTES_BASE64 = 2000;
 
 // The strings used to index variables in storage can be any string
 // Let's set them to single characters to save storage space
@@ -35,6 +36,10 @@ const tokenListenPrice = new PersistentMap<TokenId, string>('f')
 const tokenMixes = new PersistentMap<TokenId,Array<string>>('g')
 const remixTokens = new PersistentMap<TokenId, string>('d')
 
+const BENEFICIARY_ACCOUNT_ID = 'beneficiary_account';
+const SELL_CONTRACT_TO = 'sell_contract_to';
+
+
 /******************/
 /* ERROR MESSAGES */
 /******************/
@@ -51,6 +56,27 @@ export const ERROR_LISTENING_REQUIRES_PAYMENT = 'Listening requires payment, cal
 export const ERROR_OWNERS_NOT_REQUIRED_TO_REQUEST_LISTENING = 'Owners are not required to request listening'
 export const ERROR_MIX_TOO_LARGE = 'Mix too large, max size is '+MAX_MIX_BYTES.toString()
 export const ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING = 'Token does not support mixing'
+export const MUST_BE_CALLED_BY_BENEFICIARY = 'Must be called by beneficiary'
+export const NO_BENEFICIARY_SET = 'Account has no beneficiary'
+export const CONTRACT_NOT_FOR_SALE = 'Contract is not for sale'
+export const INVALID_CONTRACT_BUYER = 'Invalid contract buyer'
+
+const WEB4_STORAGEKEY_PREFIX = 'web4_';
+@nearBindgen
+class Web4Request {
+    accountId: string | null;
+    path: string;
+    params: Map<string, string>;
+    query: Map<string, Array<string>>;
+    preloads: Map<string, Web4Response>;
+}
+
+@nearBindgen
+class Web4Response {
+    contentType: string;
+    body: Uint8Array;
+    preloadUrls: string[] = [];
+}
 
 /******************/
 /* CHANGE METHODS */
@@ -129,6 +155,43 @@ export function get_token_owner(token_id: TokenId): string {
 /* NON-SPEC METHODS */
 /********************/
 
+export function sell_contract_to(sell_to_account_id: string, amount: u128): void {
+  const predecessor = context.predecessor
+  assert(
+    (!storage.contains(BENEFICIARY_ACCOUNT_ID) && predecessor == context.contractName) ||
+    predecessor == storage.get<string>(BENEFICIARY_ACCOUNT_ID), MUST_BE_CALLED_BY_BENEFICIARY
+  )
+  if (sell_to_account_id.length > 0) {
+    storage.set<string>(SELL_CONTRACT_TO, sell_to_account_id+':'+amount.toString())
+  } else {
+    storage.delete(SELL_CONTRACT_TO)
+  }
+}
+
+@payable
+export function buy_contract(): void {
+  const predecessor = context.predecessor
+  assert(storage.contains(SELL_CONTRACT_TO), CONTRACT_NOT_FOR_SALE)
+  const targetBuyerInfo = storage.get<string>(SELL_CONTRACT_TO)!.split(':');
+  const targetBuyer = targetBuyerInfo[0];
+  const amount = u128.fromString(targetBuyerInfo[1]);
+
+  assert(
+    targetBuyer == predecessor, INVALID_CONTRACT_BUYER
+  )
+  assert(context.attachedDeposit == amount, 'wrong amount, price for buying the contract is '+amount.toString())
+  storage.set<string>(BENEFICIARY_ACCOUNT_ID, targetBuyer)
+}
+
+export function transfer_funds(amount: u128): ContractPromiseBatch {
+  const predecessor = context.predecessor
+
+  assert(storage.contains(BENEFICIARY_ACCOUNT_ID), NO_BENEFICIARY_SET)
+  const beneficiary_account = storage.get<string>(BENEFICIARY_ACCOUNT_ID)
+  assert(predecessor == beneficiary_account, MUST_BE_CALLED_BY_BENEFICIARY)
+  return ContractPromiseBatch.create(predecessor).transfer(amount)
+}
+
 // Note that ANYONE can call this function! You probably would not want to
 // implement a real NFT like this!
 
@@ -189,25 +252,6 @@ export function mint_to_base64(owner_id: AccountId, contentbase64: string, suppo
   // return the tokenId – while typical change methods cannot return data, this
   // is handy for unit tests
   return tokenId
-}
-
-export function replace_content_base64(tokenId: TokenId, contentbase64: string, supportmixing: boolean = false): void {
-  const predecessor = context.predecessor
-  const owner = tokenToOwner.getSome(tokenId)
-  assert(owner == predecessor, ERROR_TOKEN_NOT_OWNED_BY_CALLER)
-
-  const mintprice: u128 = u128.pow(u128.from(10), 20) * u128.from(contentbase64.length); // 0.0001 N per character
-  assert(context.attachedDeposit == mintprice, "Method requires deposit of " + mintprice.toString());
-
-  const content = base64.decode(contentbase64);
-  
-  Storage.setBytes('t' + tokenId.toString(), content)
-
-  if (supportmixing) {
-    tokenMixes.set(tokenId,new Array<string>())
-  } else {
-    tokenMixes.delete(tokenId)
-  }
 }
 
 // Get content behind token
@@ -317,8 +361,6 @@ export function buy_token(token_id: TokenId): ContractPromiseBatch {
   }
 }
 
-
-
 @payable
 export function buy_mix(original_token_id: TokenId, mix: string): ContractPromiseBatch {
   assert(mix.split(';')[1].indexOf('nft:') !== 0, 'mix is already an nft')
@@ -360,13 +402,12 @@ export function buy_mix(original_token_id: TokenId, mix: string): ContractPromis
   throw('No mix found')
 }
 
-export function publish_token_mix(token_id: TokenId, mix: u8[]): void {
+function publish_token_mix_internal(token_id: TokenId, mix: string): void {
   assert(tokenMixes.contains(token_id), ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING)
-  assert(mix.length < MAX_MIX_BYTES, ERROR_MIX_TOO_LARGE)
     
   let mixes: Array<string> = tokenMixes.get(token_id)!
 
-  const mixstring = context.predecessor+';'+context.blockTimestamp.toString()+';'+mix.toString();
+  const mixstring = context.predecessor+';'+context.blockTimestamp.toString()+';'+mix;
 
   if (mixes.length < MAX_MIXES_PER_TOKEN) {
     mixes.push(mixstring)
@@ -390,6 +431,45 @@ export function publish_token_mix(token_id: TokenId, mix: u8[]): void {
   tokenMixes.set(token_id, mixes)
 }
 
+export function publish_token_mix_base64(token_id: TokenId, mixbase64: string): void {
+  assert(base64.decode(mixbase64).length <= MAX_MIX_BYTES_BASE64, 'Must be base64 encoded and no more than ' + MAX_MIX_BYTES_BASE64.toString() + 'bytes');
+  publish_token_mix_internal(token_id, mixbase64);
+}
+
+export function publish_token_mix(token_id: TokenId, mix: u8[]): void {
+  assert(mix.length <= MAX_MIX_BYTES, ERROR_MIX_TOO_LARGE)
+  publish_token_mix_internal(token_id, mix.toString());  
+}
+
 export function get_token_mixes(token_id: TokenId): string[] {
   return tokenMixes.get(token_id)!
+}
+
+export function upload_web_content(filename: string, contentbase64: string): void {
+  assert(context.predecessor == context.contractName, "Can only be called by the contract account");
+  const storageKey = WEB4_STORAGEKEY_PREFIX + filename;
+  if (contentbase64.length > 0) {
+    const content = base64.decode(contentbase64);
+    Storage.setBytes(storageKey, content);
+  } else {
+    Storage.delete(storageKey);
+  }
+}
+
+export function web4_get(request: Web4Request): Web4Response {
+  const requestedpath = WEB4_STORAGEKEY_PREFIX + request.path;
+  if (!Storage.contains(requestedpath)) {
+    return { contentType: 'text/html; charset=UTF-8', body: util.stringToBytes('not found'), preloadUrls: []};
+  } else {
+    const content = Storage.getBytes(requestedpath)!;
+    let contentType: string;
+    if (request.path.endsWith('.js')) {
+      contentType = 'application/javascript; charset=UTF-8';
+    } else if(request.path.endsWith('.css')) {
+      contentType = 'text/css; charset=UTF-8';
+    } else {
+      contentType = 'text/html; charset=UTF-8';
+    }
+    return { contentType: contentType, body: content, preloadUrls: []};
+  }
 }

@@ -1,4 +1,5 @@
-import { } from './midimixer.component.js';
+import './audioworkletpolyfill.js'
+import './midimixer.component.js';
 
 // configure minimal network settings and key storage
 const nearconfig = {
