@@ -381,51 +381,6 @@ describe('nonSpec interface', () => {
     expect(receieved.length).toBe(largecontent.length)
     expect(receieved).toStrictEqual(largecontent)
   })
-  it('should be possible to replace content', () => {
-    const largecontent = new Uint8Array(20 * 1024)
-    for (let n=0;n<largecontent.length;n++) {
-      largecontent[n] = n & 0xff
-    }
-    
-    const largecontentb64 = base64.encode(largecontent)
-    VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
-
-    const aliceToken = nonSpec.mint_to_base64(alice, largecontentb64)
-    
-    VMContext.setPredecessor_account_id(alice)
-    let receieved = nonSpec.get_token_content_base64(aliceToken)
-    expect(receieved.length).toBe(largecontent.length)
-    
-    for (let n=0;n<largecontent.length;n++) {
-      largecontent[largecontent.length - 1 - n] = n & 0xff
-    }
-
-    VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
-
-    nonSpec.replace_content_base64(aliceToken, base64.encode(largecontent))
-    receieved = nonSpec.get_token_content_base64(aliceToken)
-    expect(receieved).toStrictEqual(largecontent)
-  })
-  it('should not be possible for non-owners to replace content', () => {
-    const largecontent = new Uint8Array(20 * 1024)
-    for (let n=0;n<largecontent.length;n++) {
-      largecontent[n] = n & 0xff
-    }
-    
-    const largecontentb64 = base64.encode(largecontent)
-    VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
-
-    currentTokenId = nonSpec.mint_to_base64(alice, largecontentb64)
-    
-    VMContext.setPredecessor_account_id(bob)
-    
-    expect(() => {
-      const contentb64 = base64.encode(new Uint8Array(100))
-      VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(contentb64.length))
-      nonSpec.replace_content_base64(currentTokenId, contentb64)
-    }).toThrow()
-    
-  })
   it('should be possible to view token for free', () => {    
     VMContext.setAttached_deposit(mintprice);
     const tokenId = nonSpec.mint_to_base64(alice, content)

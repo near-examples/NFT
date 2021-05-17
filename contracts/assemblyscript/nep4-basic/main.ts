@@ -192,25 +192,6 @@ export function mint_to_base64(owner_id: AccountId, contentbase64: string, suppo
   return tokenId
 }
 
-export function replace_content_base64(tokenId: TokenId, contentbase64: string, supportmixing: boolean = false): void {
-  const predecessor = context.predecessor
-  const owner = tokenToOwner.getSome(tokenId)
-  assert(owner == predecessor, ERROR_TOKEN_NOT_OWNED_BY_CALLER)
-
-  const mintprice: u128 = u128.pow(u128.from(10), 20) * u128.from(contentbase64.length); // 0.0001 N per character
-  assert(context.attachedDeposit == mintprice, "Method requires deposit of " + mintprice.toString());
-
-  const content = base64.decode(contentbase64);
-  
-  Storage.setBytes('t' + tokenId.toString(), content)
-
-  if (supportmixing) {
-    tokenMixes.set(tokenId,new Array<string>())
-  } else {
-    tokenMixes.delete(tokenId)
-  }
-}
-
 // Get content behind token
 @deprecated
 export function get_token_content(token_id: TokenId): string {
