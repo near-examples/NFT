@@ -1329,15 +1329,7 @@ chalk@^3.0.0:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
 
-chalk@^4.0.0, chalk@^4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/chalk/-/chalk-4.1.0.tgz#4e14870a618d9e2edd97dd8345fd9d9dc315646a"
-  integrity sha512-qwx12AxXe2Q5xQ43Ac//I6v5aXTipYrSESdOgzrN+9XjgEpyjpKuvSGaN4qE93f7TQTlerQQ8S+EQ0EyDoVL1A==
-  dependencies:
-    ansi-styles "^4.1.0"
-    supports-color "^7.1.0"
-
-chalk@^4.1.1:
+chalk@^4.0.0, chalk@^4.1.0, chalk@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-4.1.1.tgz#c80b3fab28bf6371e6863325eee67e618b77e6ad"
   integrity sha512-diHzdDKxcU+bAsUboHLPEDQiw0qEe0qd7SYUn3HgcFlWgbDcfLGswOHYeGrHKzG9z6UYf01d9VFMfZxPM1xZSg==
@@ -3713,10 +3705,10 @@ near-api-js@^0.41.0:
     text-encoding-utf-8 "^1.0.2"
     tweetnacl "^1.0.1"
 
-near-cli@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/near-cli/-/near-cli-2.0.0.tgz#9864ffe9011f1eca6695a9f18b979ca82d0d988c"
-  integrity sha512-xuAISqMPGvYhTmVffPeQGPBaIxMliJzGhn3JFN9ixjjxx9z7IAwq5oqrB2EPBoxp2FrChhJxvY9tcKFxqZWS/w==
+near-cli@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/near-cli/-/near-cli-2.0.1.tgz#35f8a3adc2c8f7f95fa28d36cc337aa8888b105d"
+  integrity sha512-5gPvWAgZM7rA9v+T4H/aXM1e3/UnFGlElEaUkrrMaJVDAjbIVF1C8XMZUiA8C8d7Mzi7ItfD+d7uT0npUIbNEg==
   dependencies:
     ascii-table "0.0.9"
     bn.js "^5.1.1"
