@@ -43,18 +43,16 @@ const PUBLISHER_FEE = 0
 const ARTICLE_PRICE = 1
 
 // nft metadata, nep-171
-/*
-const METADATA = 'j'
-const Metadata_Obj = new NFTContractMetadata()
-Metadata_Obj.spec = "nft-1.0.0"
-Metadata_Obj.name = "some Article about someting" // required, ex. "Mochi Rising — Digital Edition" or "Metaverse 3"
-Metadata_Obj.symbol = "article-01" // required, ex. "MOCHI"
-Metadata_Obj.icon = "https://near.org/wp-content/uploads/2019/03/icon-user-first.svg" // Data URL
-Metadata_Obj.base_uri = null // Centralized gateway known to have reliable access to decentralized storage assets referenced by `reference` or `media` URLs
-Metadata_Obj.reference = null // URL to a JSON file with more info
-Metadata_Obj.reference_hash = null // Base64-encoded sha256 hash of JSON from reference field. Required if `reference` is included.
+const METADATA = new NFTContractMetadata()
+METADATA.spec = "nft-1.0.0"
+METADATA.name = "some Article about someting" // required, ex. "Mochi Rising — Digital Edition" or "Metaverse 3"
+METADATA.symbol = "article-01" // required, ex. "MOCHI"
+METADATA.icon = "https://near.org/wp-content/uploads/2019/03/icon-user-first.svg" // Data URL
+METADATA.base_uri = null // Centralized gateway known to have reliable access to decentralized storage assets referenced by `reference` or `media` URLs
+METADATA.reference = null // URL to a JSON file with more info
+METADATA.reference_hash = null // Base64-encoded sha256 hash of JSON from reference field. Required if `reference` is included.
 
-*/
+
 /******************/
 /* ERROR MESSAGES */
 /******************/
@@ -114,12 +112,14 @@ export function transfer(new_owner_id: string, token_id: TokenId): void {
 
 //add publisher to the array
 export function add_publisher(account_id: AccountId): void {
-  const owner = storage.getString(ADMIN)
+  const owner = get_admin()
   assert(owner != account_id, 'admin cannot be publisher')
   let publisherFee = get_publisher_fee()
   let receivedAmt = context.attachedDeposit
   assert(receivedAmt >= publisherFee, 'attached amount is not enough')
   publishers.set(account_id, 1)
+  // transfer the fee to admin account
+  ContractPromiseBatch.create(owner).transfer(publisherFee)
   if(receivedAmt > publisherFee) {
     // refund excess amount to sender
     // tranfer the deposit to token owner and smart contract
@@ -132,13 +132,13 @@ export function add_publisher(account_id: AccountId): void {
 export function init_admin(): void {
   assert(storage.getString(ADMIN) == null, "Already initialized admin")
   storage.setString(ADMIN, context.predecessor)
-  assert(storage.getString(ADMIN) == context.predecessor, "initialization failed")
+  assert(get_admin() == context.predecessor, "initialization failed")
 }
 
 // set maximum supply to ever be minted
 // can only be done once
 export function init_max_supply(max_supp: u64): void {
-  let registered_admin = storage.getString(ADMIN)
+  let registered_admin = get_admin()
   assert(context.predecessor == registered_admin, "only admin can initialize max supply")
   assert(storage.getPrimitive<u64>(MAX_SUPPLY, 0) == 0, "Already initialized max supply")
   storage.set(MAX_SUPPLY, max_supp)
@@ -146,7 +146,7 @@ export function init_max_supply(max_supp: u64): void {
 }
 
 export function set_pub_fee(pub_fee: Price): boolean {
-  let admin = storage.getString(ADMIN)
+  let admin = get_admin()
   let pred = context.predecessor
   assert(pred == admin, "only admin can set publisher fee")
   prices.set(PUBLISHER_FEE as u8, pub_fee)
@@ -154,12 +154,38 @@ export function set_pub_fee(pub_fee: Price): boolean {
 }
 
 export function set_price(price: Price): boolean {
-  let admin = storage.getString(ADMIN)
+  let admin = get_admin()
   let pred = context.predecessor
   assert(pred == admin, "only admin can set article price")
   prices.set(ARTICLE_PRICE as u8, price)
   return true
 }
+
+// Buy token 
+export function buy_articles(account_id: AccountId, amount: u64): void {
+  assert(publishers.contains(account_id), 'Must be a publisher')
+  let receivedAmt = context.attachedDeposit
+  let unit_price = get_price()
+  assert(u128.mul(unit_price, u128.from(amount)) <= receivedAmt, 'attached amount is not enough')
+  let currSupply = get_current_supply()
+  let maxSupply = get_max_supply()
+  assert(currSupply + amount <= maxSupply, 'tokens minted cannot exceed max supply')
+  // mint the requested amount of tokens for account_id
+  for (let i: u64 = 0; i < amount; i++) {
+    _mint_to(account_id)
+  }
+  let owner = get_admin()
+  let total: u128 = u128.mul(unit_price, u128.from(amount))
+  // transfer the total sum to the admin
+  ContractPromiseBatch.create(owner).transfer(total)
+
+  if(receivedAmt > total) {
+    // refund excess amount to sender
+    // tranfer the deposit to token owner and smart contract
+    ContractPromiseBatch.create(context.predecessor).transfer(receivedAmt - total)
+  }
+}
+
 
 /****************/
 /* VIEW METHODS */
@@ -195,8 +221,8 @@ export function get_current_supply(): u64 {
   return storage.getPrimitive<u64>(CURRENT_SUPPLY, 0)
 }
 
-export function get_admin(): string | null {
-  return storage.getString(ADMIN)
+export function get_admin(): string {
+  return <string> storage.getString(ADMIN)
 }
 
 export function get_publisher_fee() : Price {
@@ -212,10 +238,11 @@ export function get_price() : Price {
 }
 
 /*
-export function nft_metadata(): string {
-  return JSON.stringify(Metadata_Obj)
+export function nft_metadata(): NFTContractMetadata {
+  return METADATA
 }
 */
+
 
 /********************/
 /* NON-SPEC METHODS */
