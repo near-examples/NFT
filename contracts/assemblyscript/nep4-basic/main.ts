@@ -1,11 +1,24 @@
-import { PersistentMap, storage, logging, context } from 'near-sdk-as'
+import { PersistentMap, storage, context, ContractPromiseBatch, u128 } from 'near-sdk-as'
+
 
 /**************************/
 /* DATA TYPES AND STORAGE */
 /**************************/
 
+class NFTContractMetadata {
+  spec: string = "default"; // required, essentially a version like "nft-1.0.0"
+  name: string = "default"; // required, ex. "Mochi Rising — Digital Edition" or "Metaverse 3"
+  symbol: string = "default"; // required, ex. "MOCHI"
+  icon: string|null; // Data URL
+  base_uri: string|null; // Centralized gateway known to have reliable access to decentralized storage assets referenced by `reference` or `media` URLs
+  reference: string|null; // URL to a JSON file with more info
+  reference_hash: string|null; // Base64-encoded sha256 hash of JSON from reference field. Required if `reference` is included.
+}
+
 type AccountId = string
 type TokenId = u64
+type Price = u128
+
 
 // The strings used to index variables in storage can be any string
 // Let's set them to single characters to save storage space
@@ -23,6 +36,25 @@ const MAX_SUPPLY = 'd'
 // store for admin account id, used to give special privileges
 const ADMIN = 'e'
 
+const publishers = new PersistentMap<AccountId, u8>('f')
+
+const prices = new PersistentMap<u8, Price>('j')
+const PUBLISHER_FEE = 0
+const ARTICLE_PRICE = 1
+
+// nft metadata, nep-171
+/*
+const METADATA = 'j'
+const Metadata_Obj = new NFTContractMetadata()
+Metadata_Obj.spec = "nft-1.0.0"
+Metadata_Obj.name = "some Article about someting" // required, ex. "Mochi Rising — Digital Edition" or "Metaverse 3"
+Metadata_Obj.symbol = "article-01" // required, ex. "MOCHI"
+Metadata_Obj.icon = "https://near.org/wp-content/uploads/2019/03/icon-user-first.svg" // Data URL
+Metadata_Obj.base_uri = null // Centralized gateway known to have reliable access to decentralized storage assets referenced by `reference` or `media` URLs
+Metadata_Obj.reference = null // URL to a JSON file with more info
+Metadata_Obj.reference_hash = null // Base64-encoded sha256 hash of JSON from reference field. Required if `reference` is included.
+
+*/
 /******************/
 /* ERROR MESSAGES */
 /******************/
@@ -80,22 +112,53 @@ export function transfer(new_owner_id: string, token_id: TokenId): void {
   tokenToOwner.set(token_id, new_owner_id)
 }
 
+//add publisher to the array
+export function add_publisher(account_id: AccountId): void {
+  const owner = storage.getString(ADMIN)
+  assert(owner != account_id, 'admin cannot be publisher')
+  let publisherFee = get_publisher_fee()
+  let receivedAmt = context.attachedDeposit
+  assert(receivedAmt >= publisherFee, 'attached amount is not enough')
+  publishers.set(account_id, 1)
+  if(receivedAmt > publisherFee) {
+    // refund excess amount to sender
+    // tranfer the deposit to token owner and smart contract
+    ContractPromiseBatch.create(context.predecessor).transfer(receivedAmt - publisherFee)
+  }
+}
+
 // journalist has to call this to identify himself as admin
 // this gives him special privileges. This can only be done once
 export function init_admin(): void {
-  assert(storage.get<string>(ADMIN, null) == null, "Already initialized admin")
-  storage.setString(ADMIN, context.sender)
-  assert(storage.get<string>(ADMIN, null) == context.sender, "initialization failed")
-  logging.log("admin set to : " + context.sender)
+  assert(storage.getString(ADMIN) == null, "Already initialized admin")
+  storage.setString(ADMIN, context.predecessor)
+  assert(storage.getString(ADMIN) == context.predecessor, "initialization failed")
 }
 
 // set maximum supply to ever be minted
 // can only be done once
 export function init_max_supply(max_supp: u64): void {
+  let registered_admin = storage.getString(ADMIN)
+  assert(context.predecessor == registered_admin, "only admin can initialize max supply")
   assert(storage.getPrimitive<u64>(MAX_SUPPLY, 0) == 0, "Already initialized max supply")
   storage.set(MAX_SUPPLY, max_supp)
   assert(storage.getPrimitive<u64>(MAX_SUPPLY, 0) == max_supp, "initialization failed")
-  logging.log("admin set to : " + max_supp.toString())
+}
+
+export function set_pub_fee(pub_fee: Price): boolean {
+  let admin = storage.getString(ADMIN)
+  let pred = context.predecessor
+  assert(pred == admin, "only admin can set publisher fee")
+  prices.set(PUBLISHER_FEE as u8, pub_fee)
+  return true
+}
+
+export function set_price(price: Price): boolean {
+  let admin = storage.getString(ADMIN)
+  let pred = context.predecessor
+  assert(pred == admin, "only admin can set article price")
+  prices.set(ARTICLE_PRICE as u8, price)
+  return true
 }
 
 /****************/
@@ -135,6 +198,24 @@ export function get_current_supply(): u64 {
 export function get_admin(): string | null {
   return storage.getString(ADMIN)
 }
+
+export function get_publisher_fee() : Price {
+  return prices.getSome(PUBLISHER_FEE as u8)
+}
+
+export function is_publisher(account_id: AccountId) : boolean {
+  return publishers.contains(account_id)
+}
+
+export function get_price() : Price {
+  return prices.getSome(ARTICLE_PRICE as u8)
+}
+
+/*
+export function nft_metadata(): string {
+  return JSON.stringify(Metadata_Obj)
+}
+*/
 
 /********************/
 /* NON-SPEC METHODS */
