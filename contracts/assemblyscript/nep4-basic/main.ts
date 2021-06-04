@@ -1,4 +1,4 @@
-import { PersistentMap, storage, context } from 'near-sdk-as'
+import { PersistentMap, storage, logging, context } from 'near-sdk-as'
 
 /**************************/
 /* DATA TYPES AND STORAGE */
@@ -6,10 +6,6 @@ import { PersistentMap, storage, context } from 'near-sdk-as'
 
 type AccountId = string
 type TokenId = u64
-
-// Note that MAX_SUPPLY is implemented here as a simple constant
-// It is exported only to facilitate unit testing
-export const MAX_SUPPLY = u64(10)
 
 // The strings used to index variables in storage can be any string
 // Let's set them to single characters to save storage space
@@ -20,8 +16,12 @@ const tokenToOwner = new PersistentMap<TokenId, AccountId>('a')
 // complicates the code and costs more in storage rent.
 const escrowAccess = new PersistentMap<AccountId, AccountId>('b')
 
-// This is a key in storage used to track the current minted supply
-const TOTAL_SUPPLY = 'c'
+// key in storage used to track the current minted supply
+const CURRENT_SUPPLY = 'c'
+// maximum supply that can be ever minted, it can only be set once
+const MAX_SUPPLY = 'd'
+// store for admin account id, used to give special privileges
+const ADMIN = 'e'
 
 /******************/
 /* ERROR MESSAGES */
@@ -80,6 +80,23 @@ export function transfer(new_owner_id: string, token_id: TokenId): void {
   tokenToOwner.set(token_id, new_owner_id)
 }
 
+// journalist has to call this to identify himself as admin
+// this gives him special privileges. This can only be done once
+export function init_admin(): void {
+  assert(storage.get<string>(ADMIN, null) == null, "Already initialized admin")
+  storage.setString(ADMIN, context.sender)
+  assert(storage.get<string>(ADMIN, null) == context.sender, "initialization failed")
+  logging.log("admin set to : " + context.sender)
+}
+
+// set maximum supply to ever be minted
+// can only be done once
+export function init_max_supply(max_supp: u64): void {
+  assert(storage.getPrimitive<u64>(MAX_SUPPLY, 0) == 0, "Already initialized max supply")
+  storage.set(MAX_SUPPLY, max_supp)
+  assert(storage.getPrimitive<u64>(MAX_SUPPLY, 0) == max_supp, "initialization failed")
+  logging.log("admin set to : " + max_supp.toString())
+}
 
 /****************/
 /* VIEW METHODS */
@@ -107,29 +124,42 @@ export function get_token_owner(token_id: TokenId): string {
   return tokenToOwner.getSome(token_id)
 }
 
+export function get_max_supply(): u64 {
+  return storage.getPrimitive<u64>(MAX_SUPPLY, 0)
+}
+
+export function get_current_supply(): u64 {
+  return storage.getPrimitive<u64>(CURRENT_SUPPLY, 0)
+}
+
+export function get_admin(): string | null {
+  return storage.getString(ADMIN)
+}
+
 /********************/
 /* NON-SPEC METHODS */
 /********************/
 
-// Note that ANYONE can call this function! You probably would not want to
+// internal function for minting an NFT
 // implement a real NFT like this!
-export function mint_to(owner_id: AccountId): u64 {
+function _mint_to(owner_id: AccountId): u64 {
   // Fetch the next tokenId, using a simple indexing strategy that matches IDs
   // to current supply, defaulting the first token to ID=1
   //
   // * If your implementation allows deleting tokens, this strategy will not work!
   // * To verify uniqueness, you could make IDs hashes of the data that makes tokens
   //   special; see https://twitter.com/DennisonBertram/status/1264198473936764935
-  const tokenId = storage.getPrimitive<u64>(TOTAL_SUPPLY, 1)
+  const tokenId = storage.getPrimitive<u64>(CURRENT_SUPPLY, 0)
+  const maxSupply = storage.getPrimitive<u64>(MAX_SUPPLY, 0)
 
   // enforce token limits – not part of the spec but important!
-  assert(tokenId <= MAX_SUPPLY, ERROR_MAXIMUM_TOKEN_LIMIT_REACHED)
+  assert(tokenId <= maxSupply, ERROR_MAXIMUM_TOKEN_LIMIT_REACHED)
 
   // assign ownership
   tokenToOwner.set(tokenId, owner_id)
 
   // increment and store the next tokenId
-  storage.set<u64>(TOTAL_SUPPLY, tokenId + 1)
+  storage.set<u64>(CURRENT_SUPPLY, tokenId + 1)
 
   // return the tokenId – while typical change methods cannot return data, this
   // is handy for unit tests
