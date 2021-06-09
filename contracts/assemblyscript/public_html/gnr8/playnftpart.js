@@ -96,10 +96,16 @@ async function loadMusic(tokenId, remimxTokenId, sampleRate) {
 
 async function playMusic(ctx, analyzer) {
     wasm = (await WebAssembly.instantiate(wasm_bytes, { environment: { SAMPLERATE: ctx.sampleRate } })).instance.exports;
-    let chunkStartTime = ctx.currentTime + 0.2;
+    
     const numbuffers = 50;
     let bufferno = 0;
     const chunkInterval = wasmbuffersize * numbuffers / ctx.sampleRate;
+    const gainNode = ctx.createGain();
+    gainNode.connect(ctx.destination);
+    if (analyzer) {
+        analyzer.setInput(gainNode);
+    }
+    let chunkStartTime = ctx.currentTime + 0.2;
 
     while (true) {
         const processorBuffer = ctx.createBuffer(2, wasmbuffersize * numbuffers, ctx.sampleRate);
@@ -119,11 +125,8 @@ async function playMusic(ctx, analyzer) {
         }
         const bufferSource = ctx.createBufferSource();
         bufferSource.buffer = processorBuffer;
-        bufferSource.connect(ctx.destination);
-        bufferSource.start(chunkStartTime);
-        if (analyzer) {
-            analyzer.setInput(bufferSource);
-        }
+        bufferSource.connect(gainNode);
+        bufferSource.start(chunkStartTime);        
         chunkStartTime += chunkInterval;
 
         await new Promise((r) => setTimeout(r, chunkInterval));
