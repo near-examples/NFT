@@ -1,0 +1,46 @@
+name: CI
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  detectonly:
+    name: Detect use of .only
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Detect use of .only
+        run: |
+          grep -rq --include '*.spec.js' \.only\( . && echo 'You have .only() in your tests!' && exit 1
+          exit 0
+  unittest:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run unit tests
+        run: |
+          yarn install
+          yarn test:unit:as
+  simulator:
+    name: Simulator
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run simulator
+        run: |
+          yarn install
+          yarn build:as
+          yarn simulator
+  testnet:
+    name: Testnet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run on testnet
+        run: |
+          yarn install
+          yarn build:as
+          yarn deploy:dev
+          yarn test:dev

@@ -24,7 +24,7 @@ function compileContract(fqPath) {
     output, // output file
     [
       "-O3z",
-      "--debug", // Shows debug output
+      //"--debug", // Shows debug output
       "--validate", // Validate the generated wasm module
       "--measure", // shows compiler run time
       "--runPasses",

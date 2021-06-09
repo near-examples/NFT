@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        #currentbalancepanel {
+            background-color: #888;
+            color: #fff;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Transfer credits</h1>
+    <p>
+        Give away credits as a gift to another user.        
+    </p>
+    
+    <p>
+        <label for="receiver_account_input">Receiver account id</label>
+        <input type="text" onchange="updateBalances()" id="receiver_account_input" placeholder="Receiver Account" style="width: 200px;">
+    </p><p>
+        <label for="amount_input">Amount to transfer</label>
+        <input type="number" id="amount_input" min="2" value="10" placeholder="Amount">
+    </p><p>
+        <button onclick="transferCredits()">Transfer</button>
+    </p>
+
+    <div id="currentbalancepanel">
+        <p>
+            <span id="senderaccountspan"></span> (you) current balance: <span id="userbalance"></span>
+        </p><p id="receiverbalanceparagraph">
+            <span id="receiveraccountspan"></span> balance: <span id="receiverbalance"></span>
+        </p>        
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/gh/nearprotocol/near-api-js/dist/near-api-js.js"></script>
+    <script type="module" src="transfercredits.js"></script>
+</body>
+
+</html>

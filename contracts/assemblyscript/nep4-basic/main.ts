@@ -1,5 +1,6 @@
 import { PersistentMap, storage, context, ContractPromiseBatch, base64, util } from 'near-sdk-as'
-import { Storage, u128 } from 'near-sdk-core';
+import { Storage, u128 } from 'near-sdk-core'
+import { sha256HashInit, sha256HashUpdate, sha256HashFinal } from '../../../node_modules/wasm-crypto/assembly/crypto';
 
 /**************************/
 /* DATA TYPES AND STORAGE */
@@ -7,13 +8,17 @@ import { Storage, u128 } from 'near-sdk-core';
 
 type AccountId = string
 type TokenId = u64
+type ListenRequest = string
+type ListenCredit = string
 
 // Note that MAX_SUPPLY is implemented here as a simple constant
 // It is exported only to facilitate unit testing
 export const MAX_SUPPLY = u64(100)
-export const MAX_MIXES_PER_TOKEN = 20;
-export const MAX_MIX_BYTES = 200;
-export const MAX_MIX_BYTES_BASE64 = 2000;
+export const MAX_MIXES_PER_TOKEN = 20
+export const MAX_MIX_BYTES = 200
+export const MAX_MIX_BYTES_BASE64 = 2000
+export const LISTEN_PRICE = u128.from('10000000000000000000000') // 0.01 per listen
+export const LISTEN_REQUEST_TIMEOUT: u64 = 5 * 60 * 1000000000 // 5 secs
 
 // The strings used to index variables in storage can be any string
 // Let's set them to single characters to save storage space
@@ -30,15 +35,14 @@ const TOTAL_SUPPLY = 'c'
 
 @deprecated("content is stored as Uint8Array")
 const tokenToContent = new PersistentMap<TokenId, string>('d')
-
-const tokenForSale = new PersistentMap<TokenId, string>('e')
-const tokenListenPrice = new PersistentMap<TokenId, string>('f')
-const tokenMixes = new PersistentMap<TokenId,Array<string>>('g')
 const remixTokens = new PersistentMap<TokenId, string>('d')
+const tokenForSale = new PersistentMap<TokenId, string>('e')
+
+const tokenMixes = new PersistentMap<TokenId, Array<string>>('g')
+const listenCredit = new PersistentMap<AccountId, ListenCredit>('lc')
 
 const BENEFICIARY_ACCOUNT_ID = 'beneficiary_account';
 const SELL_CONTRACT_TO = 'sell_contract_to';
-
 
 /******************/
 /* ERROR MESSAGES */
@@ -52,10 +56,15 @@ export const ERROR_OWNER_ID_DOES_NOT_MATCH_EXPECTATION = 'Owner id does not matc
 export const ERROR_TOKEN_NOT_OWNED_BY_CALLER = 'Token is not owned by the caller. Please use transfer_from for this scenario'
 export const ERROR_TOKEN_NOT_FOR_SALE = 'Token is not for sale'
 export const ERROR_LISTENING_NOT_AVAILABLE = 'Listening is not available'
+export const ERROR_LISTENING_NOT_AUTHORIZED = 'Listening is not authorized'
 export const ERROR_LISTENING_REQUIRES_PAYMENT = 'Listening requires payment, call request_listening first'
-export const ERROR_OWNERS_NOT_REQUIRED_TO_REQUEST_LISTENING = 'Owners are not required to request listening'
-export const ERROR_MIX_TOO_LARGE = 'Mix too large, max size is '+MAX_MIX_BYTES.toString()
+export const ERROR_LISTENING_EXPIRED = 'Listening request expired, please create a new'
+export const ERROR_LISTENING_CREDIT_NOT_ENOUGH = 'Not enough credits'
+export const ERROR_LISTENING_CREDIT_TRANSFER_AMOUNT_NEGATIVE = 'Stealing credits is not allowed'
+export const ERROR_LISTENING_CREDIT_TRANSFER_RECEIVER_INVALID = 'Invalid receiver'
+export const ERROR_MIX_TOO_LARGE = 'Mix too large, max size is ' + MAX_MIX_BYTES.toString()
 export const ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING = 'Token does not support mixing'
+export const ERROR_NO_LISTENING_CREDIT = 'No credits'
 export const MUST_BE_CALLED_BY_BENEFICIARY = 'Must be called by beneficiary'
 export const NO_BENEFICIARY_SET = 'Account has no beneficiary'
 export const CONTRACT_NOT_FOR_SALE = 'Contract is not for sale'
@@ -64,18 +73,18 @@ export const INVALID_CONTRACT_BUYER = 'Invalid contract buyer'
 const WEB4_STORAGEKEY_PREFIX = 'web4_';
 @nearBindgen
 class Web4Request {
-    accountId: string | null;
-    path: string;
-    params: Map<string, string>;
-    query: Map<string, Array<string>>;
-    preloads: Map<string, Web4Response>;
+  accountId: string | null;
+  path: string;
+  params: Map<string, string>;
+  query: Map<string, Array<string>>;
+  preloads: Map<string, Web4Response>;
 }
 
 @nearBindgen
 class Web4Response {
-    contentType: string;
-    body: Uint8Array;
-    preloadUrls: string[] = [];
+  contentType: string;
+  body: Uint8Array;
+  preloadUrls: string[] = [];
 }
 
 /******************/
@@ -162,7 +171,7 @@ export function sell_contract_to(sell_to_account_id: string, amount: u128): void
     predecessor == storage.get<string>(BENEFICIARY_ACCOUNT_ID), MUST_BE_CALLED_BY_BENEFICIARY
   )
   if (sell_to_account_id.length > 0) {
-    storage.set<string>(SELL_CONTRACT_TO, sell_to_account_id+':'+amount.toString())
+    storage.set<string>(SELL_CONTRACT_TO, sell_to_account_id + ':' + amount.toString())
   } else {
     storage.delete(SELL_CONTRACT_TO)
   }
@@ -179,7 +188,7 @@ export function buy_contract(): void {
   assert(
     targetBuyer == predecessor, INVALID_CONTRACT_BUYER
   )
-  assert(context.attachedDeposit == amount, 'wrong amount, price for buying the contract is '+amount.toString())
+  assert(context.attachedDeposit == amount, 'wrong amount, price for buying the contract is ' + amount.toString())
   storage.set<string>(BENEFICIARY_ACCOUNT_ID, targetBuyer)
 }
 
@@ -247,7 +256,7 @@ export function mint_to_base64(owner_id: AccountId, contentbase64: string, suppo
   storage.set<u64>(TOTAL_SUPPLY, tokenId + 1)
 
   if (supportmixing) {
-    tokenMixes.set(tokenId,new Array<string>());
+    tokenMixes.set(tokenId, new Array<string>());
   }
   // return the tokenId – while typical change methods cannot return data, this
   // is handy for unit tests
@@ -267,47 +276,93 @@ export function view_remix_content(token_id: TokenId): string {
   return remixTokens.getSome(token_id)
 }
 
-@payable
-export function request_listening(token_id: TokenId): ContractPromiseBatch {
-  const predecessor = context.predecessor
+function spend_listening_credit(listener: string, token_id: TokenId, listenRequestPasswordHash: string): void {
   const owner = tokenToOwner.getSome(token_id)
-  assert(owner != predecessor, ERROR_OWNERS_NOT_REQUIRED_TO_REQUEST_LISTENING)
-  assert(tokenListenPrice.contains(token_id), ERROR_LISTENING_NOT_AVAILABLE)
-  const listenPrice = u128.from(tokenListenPrice.get(token_id)!);
-  assert(context.attachedDeposit == listenPrice, "Method requires deposit " + listenPrice.toString())
-  
-  const listeningKey = 'l:' + predecessor
-  Storage.set<u64>(listeningKey, token_id)
-  // 99 % to owner
-  const amountToOwner = changetype<u128>(context.attachedDeposit * u128.fromI32(99) / u128.fromI32(100))
-  return ContractPromiseBatch.create(owner).transfer(amountToOwner)  
+  if (owner != listener) {
+    assert(listenCredit.contains(listener), ERROR_NO_LISTENING_CREDIT)
+    const currentListenCredit = I32.parseInt(listenCredit.get(listener)!)
+
+    assert(currentListenCredit > 0, ERROR_NO_LISTENING_CREDIT)
+    listenCredit.set(listener, (currentListenCredit - 1).toString())
+
+    // credit the NFT owner
+    const ownerListenCredit: i32 = listenCredit.contains(owner) ? I32.parseInt(listenCredit.get(owner)!) : 0
+    listenCredit.set(owner, (ownerListenCredit + 1).toString())
+  }
+  const listeningKey = 'l:' + listener + ':' + token_id.toString()
+  Storage.set<ListenRequest>(listeningKey, listenRequestPasswordHash + ',' + context.blockTimestamp.toString())
+}
+
+export function request_listening(token_id: TokenId, listenRequestPasswordHash: string, remix_token_id: TokenId = 0): void {
+  const listener = context.predecessor
+  spend_listening_credit(listener, token_id, listenRequestPasswordHash)
+  if (remix_token_id > 0) {
+    spend_listening_credit(listener, remix_token_id, listenRequestPasswordHash)
+  }
+}
+
+export function view_listening_credit(account: AccountId): i32 {
+  const currentListenCredit: i32 = listenCredit.contains(account) ? I32.parseInt(listenCredit.get(account)!) : 0
+  return currentListenCredit
+}
+
+@payable
+export function buy_listening_credit(): void {
+  const predecessor = context.predecessor
+
+  const currentListenCredit: u128 = listenCredit.contains(predecessor) ? u128.fromString(listenCredit.get(predecessor)!) : u128.Zero
+  listenCredit.set(predecessor, (currentListenCredit +
+    (context.attachedDeposit / LISTEN_PRICE)).toString())
+}
+
+export function transfer_listening_credit(receiver_account: string, amount: i32): void {
+  assert(amount > 0, ERROR_LISTENING_CREDIT_TRANSFER_AMOUNT_NEGATIVE)
+  assert(receiver_account.length > 2 && receiver_account.length <= 64, ERROR_LISTENING_CREDIT_TRANSFER_RECEIVER_INVALID)
+  const predecessor = context.predecessor
+  const senderCurrentListenCredit: i32 = listenCredit.contains(predecessor) ? I32.parseInt(listenCredit.get(predecessor)!) : 0
+  assert(senderCurrentListenCredit >= amount, ERROR_LISTENING_CREDIT_NOT_ENOUGH)
+  const receiverCurrentListenCredit: i32 = listenCredit.contains(receiver_account) ? I32.parseInt(listenCredit.get(receiver_account)!) : 0
+
+  listenCredit.set(predecessor, (senderCurrentListenCredit - amount).toString())
+  listenCredit.set(receiver_account, (receiverCurrentListenCredit + amount).toString())
 }
 
 export function view_token_content_base64(token_id: TokenId): String {
   return base64.encode(Storage.getBytes('t' + token_id.toString())!)
 }
 
-export function get_token_content_base64(token_id: TokenId): Uint8Array {
-  const predecessor = context.predecessor
-  const owner = tokenToOwner.getSome(token_id)
-  
-  if (owner != predecessor) {
-    const listeningKey = 'l:' + predecessor;
-    assert(Storage.getPrimitive<u64>(listeningKey, 0) === token_id, ERROR_LISTENING_REQUIRES_PAYMENT)
-    Storage.delete(listeningKey)
-  }  
+function verifyListenRequestPassword(token_id: TokenId, caller: string, listenRequestPassword: string): void {
+  const listeningKey = 'l:' + caller + ':' + token_id.toString()
+
+  assert(Storage.contains(listeningKey), ERROR_LISTENING_REQUIRES_PAYMENT)
+  const listenRequestParts = Storage.getPrimitive<ListenRequest>(listeningKey, '').split(',')
+  const listenRequestPasswordHash = base64.decode(listenRequestParts[0])
+  const listenRequestTimeStamp = U64.parseInt(listenRequestParts[1])
+
+  const hashState = sha256HashInit();
+  sha256HashUpdate(hashState, Uint8Array.wrap(String.UTF8.encode(listenRequestPassword)))
+  const hash = sha256HashFinal(hashState)
+  let hashEquals = true;
+  for (let n = 0; n < hash.length; n++) {
+    if (hash[n] != listenRequestPasswordHash[n]) {
+      hashEquals = false
+      break
+    }
+  }
+
+  assert(hashEquals, ERROR_LISTENING_NOT_AUTHORIZED)
+  assert((context.blockTimestamp - listenRequestTimeStamp) < LISTEN_REQUEST_TIMEOUT, ERROR_LISTENING_EXPIRED)
+}
+
+export function get_token_content_base64(token_id: TokenId, caller: string, listenRequestPassword: string): Uint8Array {
+  verifyListenRequestPassword(token_id, caller, listenRequestPassword)
   const contentbytes = Storage.getBytes('t' + token_id.toString())!
   return contentbytes
 }
 
-export function get_listening_price(token_id: TokenId): String {
-  return tokenListenPrice.get(token_id)!;
-}
-
-export function set_listening_price(token_id: TokenId, price: u128): void {
-  const predecessor = context.predecessor
-  assert(predecessor == tokenToOwner.get(token_id), ERROR_TOKEN_NOT_OWNED_BY_CALLER)
-  tokenListenPrice.set(token_id, price.toString())
+export function get_remix_token_content(token_id: TokenId, caller: string, listenRequestPassword: string): string {
+  verifyListenRequestPassword(token_id, caller, listenRequestPassword)
+  return remixTokens.getSome(token_id)
 }
 
 export function sell_token(token_id: TokenId, price: u128): void {
@@ -339,7 +394,7 @@ export function buy_token(token_id: TokenId): ContractPromiseBatch {
   tokenToOwner.set(token_id, predecessor)
   tokenForSale.delete(token_id)
 
-  if (remixTokens.contains(token_id)) {
+  if (token_id > 1 && remixTokens.contains(token_id)) {
     const remixcontentparts = remixTokens.get(token_id)!.split(';')
     const original_token_id = u128.fromString(remixcontentparts[0]).toU64();
     const original_token_owner = tokenToOwner.get(original_token_id)!
@@ -352,8 +407,8 @@ export function buy_token(token_id: TokenId): ContractPromiseBatch {
     const amountToContract = changetype<u128>(context.attachedDeposit * u128.fromI32(1) / u128.fromI32(100))
     const amountToRemixOwner = context.attachedDeposit - amountToContract - amountToRemixAuthor - amountToOriginalTokenOwner
     return ContractPromiseBatch.create(owner).transfer(amountToRemixOwner)
-            .then(original_token_owner).transfer(amountToOriginalTokenOwner)
-            .then(remix_author).transfer(amountToRemixAuthor)
+      .then(original_token_owner).transfer(amountToOriginalTokenOwner)
+      .then(remix_author).transfer(amountToRemixAuthor)
   } else {
     // 1% to contract
     const amountToContract = changetype<u128>(context.attachedDeposit * u128.fromI32(1) / u128.fromI32(100))
@@ -366,18 +421,16 @@ export function buy_mix(original_token_id: TokenId, mix: string): ContractPromis
   assert(mix.split(';')[1].indexOf('nft:') !== 0, 'mix is already an nft')
 
   let mixes: Array<string> = tokenMixes.get(original_token_id)!
-  let matchingMixIndex = -1;
 
-  for (let n=0;n<mixes.length; n++) {
+  for (let n = 0; n < mixes.length; n++) {
     if (mixes[n] == mix) {
-      matchingMixIndex = n;
       // create a new NFT
       const tokenId = storage.getPrimitive<u64>(TOTAL_SUPPLY, 1)
 
       const predecessor = context.predecessor
       // assign ownership
       tokenToOwner.set(tokenId, predecessor)
-      remixTokens.set(tokenId, original_token_id.toString() + ';' +mix)
+      remixTokens.set(tokenId, original_token_id.toString() + ';' + mix)
 
       // increment and store the next tokenId
       storage.set<u64>(TOTAL_SUPPLY, tokenId + 1)
@@ -390,31 +443,31 @@ export function buy_mix(original_token_id: TokenId, mix: string): ContractPromis
 
       const askingPrice = u128.fromString('10000000000000000000000000')
       assert(context.attachedDeposit == askingPrice, "Method requires deposit " + askingPrice.toString())
-      
+
       // 40 % to owner, 40 % to mix author, 20% to contract
       const amountToOwner = changetype<u128>(context.attachedDeposit * u128.fromI32(40) / u128.fromI32(100))
       const amountToMixAuthor = amountToOwner
 
       return ContractPromiseBatch.create(originalTokenOwner).transfer(amountToOwner)
-              .then(mixauthor).transfer(amountToMixAuthor)
+        .then(mixauthor).transfer(amountToMixAuthor)
     }
   }
-  throw('No mix found')
+  throw ('No mix found')
 }
 
 function publish_token_mix_internal(token_id: TokenId, mix: string): void {
   assert(tokenMixes.contains(token_id), ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING)
-    
+
   let mixes: Array<string> = tokenMixes.get(token_id)!
 
-  const mixstring = context.predecessor+';'+context.blockTimestamp.toString()+';'+mix;
+  const mixstring = context.predecessor + ';' + context.blockTimestamp.toString() + ';' + mix;
 
   if (mixes.length < MAX_MIXES_PER_TOKEN) {
     mixes.push(mixstring)
   } else {
     let oldestAvailableMixIndex = -1
     let oldestMixBlockTimestamp = context.blockTimestamp
-    for (let n=0;n<mixes.length;n++) {
+    for (let n = 0; n < mixes.length; n++) {
       const mixparts = mixes[n].split(';')
       if (mixparts.length > 2) {
         // is not yet an NFT
@@ -425,7 +478,7 @@ function publish_token_mix_internal(token_id: TokenId, mix: string): void {
         }
       }
     }
-    assert (oldestAvailableMixIndex > -1, 'No more remixes allowed')
+    assert(oldestAvailableMixIndex > -1, 'No more remixes allowed')
     mixes[oldestAvailableMixIndex] = mixstring
   }
   tokenMixes.set(token_id, mixes)
@@ -438,7 +491,7 @@ export function publish_token_mix_base64(token_id: TokenId, mixbase64: string): 
 
 export function publish_token_mix(token_id: TokenId, mix: u8[]): void {
   assert(mix.length <= MAX_MIX_BYTES, ERROR_MIX_TOO_LARGE)
-  publish_token_mix_internal(token_id, mix.toString());  
+  publish_token_mix_internal(token_id, mix.toString());
 }
 
 export function get_token_mixes(token_id: TokenId): string[] {
@@ -459,17 +512,17 @@ export function upload_web_content(filename: string, contentbase64: string): voi
 export function web4_get(request: Web4Request): Web4Response {
   const requestedpath = WEB4_STORAGEKEY_PREFIX + request.path;
   if (!Storage.contains(requestedpath)) {
-    return { contentType: 'text/html; charset=UTF-8', body: util.stringToBytes('not found'), preloadUrls: []};
+    return { contentType: 'text/html; charset=UTF-8', body: util.stringToBytes('not found'), preloadUrls: [] };
   } else {
     const content = Storage.getBytes(requestedpath)!;
     let contentType: string;
     if (request.path.endsWith('.js')) {
       contentType = 'application/javascript; charset=UTF-8';
-    } else if(request.path.endsWith('.css')) {
+    } else if (request.path.endsWith('.css')) {
       contentType = 'text/css; charset=UTF-8';
     } else {
       contentType = 'text/html; charset=UTF-8';
     }
-    return { contentType: contentType, body: content, preloadUrls: []};
+    return { contentType: contentType, body: content, preloadUrls: [] };
   }
 }

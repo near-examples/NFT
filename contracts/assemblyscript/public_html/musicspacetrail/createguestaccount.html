@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        
+    </style>
+</head>
+
+<body>
+    <h1>Create guest account</h1>
+    <p>You are logged in as <span id="accountidspan"></span></p>
+
+    <p>You can create a guest account and fund it with gas and an access key to request listening on the <a target="_blank" href="https://explorer.mainnet.near.org/accounts/psalomo.near">psalomo.near</a> smart contract</p>
+    <button onclick="createGuestAccount()">Create guest account</button>
+    <p id="guestaccountresultspan"></p>
+    <script src="https://cdn.jsdelivr.net/gh/nearprotocol/near-api-js/dist/near-api-js.js"></script>
+    <script type="module">
+        /*const nearconfig = {
+            nodeUrl: 'https://rpc.mainnet.near.org',
+            walletUrl: 'https://wallet.mainnet.near.org',
+            helperUrl: 'https://helper.mainnet.near.org',
+            networkId: 'mainnet',
+            contractName: 'psalomo.near',
+            deps: {
+                keyStore: null
+            }
+        };*/
+        const nearconfig = {
+            nodeUrl: 'https://rpc.testnet.near.org',
+            walletUrl: 'https://wallet.testnet.near.org',
+            helperUrl: 'https://helper.testnet.near.org',
+            networkId: 'testnet',
+            contractName: 'sellnft.testnet',
+            deps: {
+                keyStore: null
+            }
+        };
+
+        const guestaccountresultspan = document.getElementById('guestaccountresultspan');
+
+        window.createGuestAccount = () => {
+            const accountkeypair = nearApi.utils.KeyPairEd25519.fromRandom();
+            const accountid = Buffer.from(accountkeypair.publicKey.data).toString('hex');            
+            sessionStorage.setItem('accountkeypair', accountkeypair.toString());
+            walletConnection.account().sendMoney(
+                accountid,
+                nearApi.utils.format.parseNearAmount('0.1')
+            );
+        }
+        (async () => {
+            nearconfig.deps.keyStore = new nearApi.keyStores.BrowserLocalStorageKeyStore();
+            window.near = await nearApi.connect(nearconfig);
+            window.walletConnection = new nearApi.WalletConnection(near);
+            console.log(walletConnection.account().accountId)
+            if (!walletConnection.account().accountId) {
+                walletConnection.requestSignIn();
+            } else {
+                document.getElementById('accountidspan').innerHTML = walletConnection.account().accountId;
+            }
+            const accountkeypairstring = sessionStorage.getItem('accountkeypair');
+            if (accountkeypairstring) {
+                const accountkeypair = nearApi.utils.KeyPairEd25519.fromString(accountkeypairstring);
+
+                const accountid = Buffer.from(accountkeypair.publicKey.data).toString('hex');
+                walletConnection._keyStore.setKey(nearconfig.networkId, accountid, accountkeypair);
+
+                const functionaccesskeypair = nearApi.utils.KeyPairEd25519.fromRandom();
+                const accessobj = {
+                    accountid: accountid,
+                    keypair: functionaccesskeypair.toString()
+                }                
+                const account = await near.account(accountid);
+
+                await account.addKey(functionaccesskeypair.publicKey, nearconfig.contractName, ['request_listening'], nearApi.utils.format.parseNearAmount('0.1'));
+
+                console.log(await account.getAccessKeys());
+
+                guestaccountresultspan.innerHTML = btoa(JSON.stringify(accessobj));
+            }
+        })();
+    </script>
+</body>
+
+</html>

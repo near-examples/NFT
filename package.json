@@ -12,16 +12,24 @@
     "test": "yarn test:unit:as && yarn test:unit:rs",
     "test:unit:as": "asp --verbose --nologo -c contracts/assemblyscript/as-pect.config.js -f unit.spec",
     "test:unit:rs": "(cd contracts/rust && cargo test -- --nocapture --color always)",
-    "simulator": "jest contracts/assemblyscript/simulator"
+    "simulator": "cp contracts/assemblyscript/simulator/sdk-patch-runtime.js node_modules/near-sdk-simulator/dist/runtime.js &&jest contracts/assemblyscript/simulator",
+    "deploy:dev": "echo n | near dev-deploy contracts/assemblyscript/build/release/main.wasm",
+    "test:dev": "jest contracts/assemblyscript/testnet",
+    "serve": "http-server contracts/assemblyscript/public_html",
+    "musicspacetrail": "(cd contracts/assemblyscript/public_html/musicspacetrail && rm -Rf dist && rollup -c rollup-config.js)"
   },
   "devDependencies": {
+    "@web/rollup-plugin-html": "^1.8.0",
     "jest": "^26.6.3",
     "near-cli": "^1.5.2",
-    "near-sdk-as": "^3.1.0",
-    "rollup": "^2.50.4",
+    "near-sdk-as": "^3.2.3",
+    "rollup": "^2.53.2",
     "rollup-plugin-terser": "^7.0.2"
   },
   "engines": {
     "node": ">=12.0.0"
+  },
+  "dependencies": {
+    "wasm-crypto": "^0.0.12"
   }
 }

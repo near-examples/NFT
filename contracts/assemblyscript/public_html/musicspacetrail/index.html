@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        html, body {
+            overscroll-behavior-x: none;
+            height: 100%;
+        }
+        body {
+            background-color: black;
+            font-family: monospace;
+            font-size: 14px;
+            color: white;
+            overflow: hidden;
+            margin: 0;
+            user-select: none;
+        }
+
+        #timeslider,
+        #timeslidercontainer {
+            width: 100%;
+        }
+
+        #timeslidercontainer {
+            background: rgba(0,0,0);
+            background-size: 100% 100%;
+            display: flex;
+            align-content: center;
+            height: 30px;
+            border-radius: 10px;
+        }
+
+        #togglePlayButton {
+            font-size: 30px;
+            background-color: rgba(100, 100, 100, 0.3);
+            padding: 0;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            color: white;
+        }
+
+        #controlpanel {
+            text-align: center;
+            position: absolute;
+            bottom: 18px;
+            left: 5px;
+            right: 5px;
+            display: none;
+        }
+
+        #info,
+        #transactionstatus {
+            margin: auto;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .fadein {
+            animation-name: fadein;
+            animation-duration: 2s;
+            animation-fill-mode: forwards;
+        }
+
+        .fadeout {
+            animation-name: fadeout;
+            animation-duration: 2s;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes fadein {
+            to {
+                color: rgba(255, 255, 255, 1.0);
+            }
+
+            from {
+                color: rgba(255, 255, 255, 0.0);
+            }
+        }
+
+        @keyframes fadeout {
+            from {
+                color: rgba(255, 255, 255, 1.0);
+            }
+
+            to {
+                color: rgba(255, 255, 255, 0.0);
+            }
+        }
+
+        #loginpanel {
+            display: none;
+        }
+
+        #userpanel {
+            display: none;
+        }
+
+        #userpanel button, #loginpanel button {
+            border: none;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0px 0px 10px 5px #777;
+        
+            color: black;
+            padding: 5px;
+            font-size: 15px;
+        }
+        #userpanel button:hover,  #loginpanel button:hover {
+            background-color: #aaa;
+        }
+        #copyright {            
+            color: #888;
+            font-size: 13px;
+            position: fixed;
+            bottom: 0px;
+            right: 0px;
+            padding: 2px;
+            z-index: 1000;
+        }
+        #logoutbutton {
+            position:absolute;
+            right: 3px;
+            top: 3px;
+            font-size: 13px;
+            background-color: #aaa !important;
+            padding: 3px !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="info" class="fadein">
+        <h1>music space trail</h1>
+
+        <div id="loginpanel">
+            <p>please log in</p>
+            <button id="loginButton" onclick="login()">login</button>
+        </div>
+        <div id="userpanel">
+            <h3>welcome <span id="username"></span></h3>
+
+            <p>you have <span id="creditscount"></span> credits left</p>
+            <p>buy credits:   
+                <button onclick="buyListeningCredit(0.1)">10 ( 0.1N ) </button>
+                <button onclick="buyListeningCredit(1)">100 ( 1N )</button>
+            </p>
+            <button id="logoutbutton" onclick="logout()">&#9032;</button>
+        </div>
+    </div>
+    <p id="transactionstatus"></p>
+    <div id="controlpanel">
+        <button id="togglePlayButton" onclick="togglePlay()">&#9654;</button><br />
+        <div id="timeslidercontainer">
+            <input type="range" id="timeslider" />
+        </div>
+    </div>
+    <div id="copyright">
+        <span>Copyright (c) 2021 Peter Salomonsen</span>
+    </div>
+    <script src="https://cdn.jsdelivr.net/gh/nearprotocol/near-api-js/dist/near-api-js.js"></script>
+    <script src="https://unpkg.com/pako@2.0.3/dist/pako.min.js"></script>
+    <script src="main.js" type="module"></script>
+</body>
+
+</html>
