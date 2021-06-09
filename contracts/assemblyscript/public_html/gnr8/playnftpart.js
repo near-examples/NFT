@@ -65,8 +65,7 @@ async function loadMusic(tokenId, remimxTokenId, sampleRate) {
         }
     });
 
-    endBufferNo = beatposToBufferNo(musicdata[mixerdatapos + 32 + 1] * COLUMNS_PER_BEAT);
-    
+    endBufferNo = beatposToBufferNo(musicdata[mixerdatapos + 32 + 1]);
     const pianorolldatabytes = musicdata.slice(0, mixerdatapos);
     
     let n = 0;
@@ -106,8 +105,9 @@ async function playMusic(ctx, analyzer) {
         const processorBuffer = ctx.createBuffer(2, wasmbuffersize * numbuffers, ctx.sampleRate);
         for (let n = 0; n < numbuffers; n++) {
             eventlist[bufferno++]?.forEach(evt => wasm.shortmessage(evt[0],evt[1],evt[2]));
+
             if (bufferno === endBufferNo) {
-                bufferno = 0;
+                bufferno = 0;                
             }
             wasm.fillSampleBuffer();
             processorBuffer.getChannelData(0).set(new Float32Array(wasm.memory.buffer,
