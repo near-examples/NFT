@@ -13,7 +13,7 @@ Prerequisites
 =============
 If you're using Gitpod, you can skip this step.
 
-  * Make sure Rust is installed per the prerequisites in [`near-sdk-rs`](https://github.com/nearprotocol/near-sdk-rs).
+  * Make sure Rust is installed per the prerequisites in [`near-sdk-rs`](https://github.com/near/near-sdk-rs).
   * Make sure [near-cli](https://github.com/near/near-cli) is installed.
 
 Explore this contract
