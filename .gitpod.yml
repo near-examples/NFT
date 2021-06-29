@@ -4,4 +4,4 @@ image:
 tasks:
   - before: nvm use default && npm install near-cli -g --no-optional
     init: yarn && brew install tree
-    command: clear && echo Welcome to Exploring AssemblyScript Contracts with NEAR Protocol
+    command: clear && echo Explore non-fungible tokens on NEAR Protocol

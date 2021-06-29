@@ -24,8 +24,8 @@ The source for this contract is in `nft/lib.rs`. It provides methods to manage a
 Building this contract
 ======================
 Run the following, and we'll build our rust project up via cargo. This will generate our WASM binaries into our `res/` directory. This is the smart contract we'll be deploying onto the NEAR blockchain later.
-```bash
-./build.sh
+```batch
+build.bat
 ```
 
 Testing this contract
@@ -47,42 +47,42 @@ In the project root, log in to your newly created account with `near-cli` by fol
 
 To make this tutorial easier to copy/paste, we're going to set an environment variable for our account id. In the below command, replace `MY_ACCOUNT_NAME` with the account name we just logged in with, including the `.testnet` (or `.near` for `mainnet`):
 
-    ID=MY_ACCOUNT_NAME
+    set ID=MY_ACCOUNT_NAME
 
 We can tell if the environment variable is set correctly if our command line prints the account name after this command:
 
-    echo $ID
+    echo %ID%
 
 Now we can deploy the compiled contract in this example to your account:
 
-    near deploy --wasmFile res/non_fungible_token.wasm --accountId $ID
+    near deploy --wasmFile res/non_fungible_token.wasm --accountId %ID%
 
 NFT contract should be initialized before usage. More info about the metadata at ['nomicon.io'](https://nomicon.io/Standards/NonFungibleToken/Metadata.html). But for now, we'll initialize with the default metadata.
 
-    near call $ID new_default_meta '{"owner_id": "'$ID'"}' --accountId $ID
+    near call %ID% new_default_meta "{\"owner_id\": \""%ID%"\"}" --accountId %ID%
 
 We'll be able to view our metadata right after:
 
-    near view $ID nft_metadata
+    near view %ID% nft_metadata
 
 Then, let's mint our first token. This will create a NFT based on Olympus Mons where only one copy exists:
 
-    near call $ID nft_mint '{"token_id": "0", "token_owner_id": "'$ID'", "token_metadata": { "title": "Olympus Mons", "description": "Tallest mountain in charted solar system", "copies": 1}}' --accountId $ID --deposit 10
+    near call %ID% nft_mint "{\"token_id\": \"0\", \"token_owner_id\": \""%ID%"\", \"token_metadata\": { \"title\": \"Olympus Mons\", \"description\": \"Tallest mountain in charted solar system\", \"copies\": 1}}' --accountId %ID% --deposit 10
 
 Transferring our NFT
 ====================
 
 Let's set up an account to transfer our freshly minted token to. This account will be a sub-account of the NEAR account we logged in with originally via `near login`.
 
-    near create-account alice.$ID --masterAccount $ID --initialBalance 10
+    near create-account alice.%ID% --masterAccount %ID% --initialBalance 10
 
 Checking Alice's account for tokens:
 
-    near view $ID nft_tokens_for_owner '{"account_id": "'alice.$ID'"}'
+    near view %ID% nft_tokens_for_owner "{\"account_id": \""alice.%ID%"\"}"
 
 Then we'll transfer over the NFT into Alice's account. Exactly 1 yoctoNEAR of deposit should be attached:
 
-    near call $ID nft_transfer '{"token_id": "0", "receiver_id": "alice.'$ID'", "memo": "transfer ownership"}' --accountId $ID --deposit 0.000000000000000000000001
+    near call %ID% nft_transfer "{\"token_id\": \"0\", \"receiver_id\": \""alice.%ID%"\", \"memo\": \"transfer ownership\"}" --accountId %ID% --deposit 0.000000000000000000000001
 
 Checking Alice's account again shows us that she has the Olympus Mons token.
 
