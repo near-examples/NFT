@@ -1,8 +1,4 @@
-exports.p58 = {
-	series_name: 'Processing Music NFT',
-	src: `
 
-    
 
     @params
     {
@@ -10,7 +6,7 @@ exports.p58 = {
         max_supply: '100',
         mint: {
             backgroundColor: {
-                default: [255, 255, 255],
+                default: [0, 0, 20],
                 type: 'color-arr',
             },
             clearSpeed: {
@@ -42,10 +38,10 @@ exports.p58 = {
                 type: 'color-arr',
             },
             opacity: {
-                default: 100,
+                default: 50,
                 type: 'int',
                 min: 0,
-                max: 255,
+                max: 150,
             }, 
         }
     }
@@ -224,13 +220,7 @@ exports.p58 = {
 
     function draw() {
         background(...backgroundColor, clearSpeed);
-        textAlign(CENTER, CENTER);
-        if (!clicked) {
-            text('click me', width/2, height/2)
-        } else {
-            text('created using short editable music\nNFTs at psalomo.near.page', width/2, height/2)
-        }
-    
+        
         let spectrum = fft.analyze();
     
         let randNoise = noise(frameCount / 40 * noiseSpeed / 100)
@@ -245,7 +235,7 @@ exports.p58 = {
         let x, y, rad;
         for (i = 0; i < len; i++) {
             x = i/len * Math.PI * 2
-            y = map(spectrum[i], 0, 255, h2, 0)
+            y = map(spectrum[i], 0, 240, h2, 0)
             rad = 1/(y/height*4) * size
             if (rad > h2) rad = h2
             ellipse(
@@ -254,14 +244,25 @@ exports.p58 = {
                 rad, rad
             )
         }
+        
+        textAlign(CENTER, CENTER);
+        textSize(32);
+        fill(255,200,200);
+        
+        if (!clicked) {
+            text('click me', width/2, height/2)
+        } else {
+            t = new Date().getTime() / 1000
+            
+            extrax = Math.cos(t) * 10
+            extray = Math.sin(t) * 10
+            text('music NFT created at', width/2 - extrax, height/2- 30 - extray)
+            text('psalomo.near.page', width/2 + extrax, height/2+ 30 + extray)
+        }
     }
     function mousePressed() {
         userStartAudio();
         clicked = true;
     }
     @js
-                
-
-                
-`
-};
+ 

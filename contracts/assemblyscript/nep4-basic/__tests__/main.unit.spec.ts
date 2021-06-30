@@ -9,6 +9,7 @@ import {
   transfer_from,
   check_access,
   get_token_owner,
+  LISTEN_TIMEOUT,
 } from '../main'
 
 // wrap all other functions in `nonSpec` variable, to make it clear when
@@ -257,7 +258,7 @@ describe('nonSpec interface', () => {
     VMContext.setAttached_deposit(mintprice);
     const tokenId = nonSpec.mint_to_base64(alice, content)
     VMContext.setPredecessor_account_id(alice)
-    expect(base64.encode(nonSpec.get_token_content_base64(tokenId))).toStrictEqual(content);
+    expect(base64.encode(nonSpec.get_token_content_base64('alice:'+tokenId.toString()+'.a'))).toStrictEqual(content);
   })
   it('should get legacy content', () => {
     const mintprice = u128.fromString('8000000000000000000000000');
@@ -307,8 +308,8 @@ describe('nonSpec interface', () => {
       VMContext.setPredecessor_account_id(alice)      
       const tokenId = nonSpec.mint_to_base64(alice, content)
       VMContext.setPredecessor_account_id(bob)
-      expect(base64.encode(nonSpec.get_token_content_base64(tokenId))).toStrictEqual(content)
-    }).toThrow(nonSpec.ERROR_LISTENING_NOT_AVAILABLE)
+      expect(base64.encode(nonSpec.get_token_content_base64('bob:'+tokenId.toString()+'.aa'))).toStrictEqual(content)
+    }).toThrow()
   })
   it('should not be allowed to get content if not paying for listening', () => {    
     expect(() => {
@@ -318,7 +319,7 @@ describe('nonSpec interface', () => {
       const listenprice = u128.fromString('1000000000000000000000')
       nonSpec.set_listening_price(tokenId, listenprice)
       VMContext.setPredecessor_account_id(bob)
-      expect(base64.encode(nonSpec.get_token_content_base64(tokenId))).toStrictEqual(content)
+      expect(base64.encode(nonSpec.get_token_content_base64('a:'+tokenId.toString()+'.aa'))).toStrictEqual(content)
     }).toThrow()
   })
   it('should be allowed to get content if listening price is set', () => {
@@ -330,9 +331,9 @@ describe('nonSpec interface', () => {
     VMContext.setPredecessor_account_id(bob)
     VMContext.setAttached_deposit(listenprice)
     nonSpec.request_listening(tokenId)
-    expect(base64.encode(nonSpec.get_token_content_base64(tokenId))).toStrictEqual(content)
+    expect(base64.encode(nonSpec.get_token_content_base64('bob:'+tokenId.toString()+'.aa'))).toStrictEqual(content)
   })
-  it('listeners should not be allowed to get content twice', () => {
+  it('listeners should not be allowed to get content after 24 hours', () => {
     VMContext.setAttached_deposit(mintprice);
     VMContext.setPredecessor_account_id(alice)
     currentTokenId = nonSpec.mint_to_base64(alice, content)
@@ -341,10 +342,11 @@ describe('nonSpec interface', () => {
     VMContext.setPredecessor_account_id(bob)
     VMContext.setAttached_deposit(listenprice)
     nonSpec.request_listening(currentTokenId)
-    expect(base64.encode(nonSpec.get_token_content_base64(currentTokenId))).toStrictEqual(content)
+    expect(base64.encode(nonSpec.get_token_content_base64('bob:'+currentTokenId.toString()+'.aa'))).toStrictEqual(content)
     expect(() => {
       VMContext.setPredecessor_account_id(bob)
-      nonSpec.get_token_content_base64(currentTokenId)
+      VMContext.setBlock_timestamp(Context.blockTimestamp + LISTEN_TIMEOUT);
+      nonSpec.get_token_content_base64('bob:'+currentTokenId.toString()+'.aa')
     }).toThrow()
   })
   it('token owners should receive listen fee', () => {
@@ -377,7 +379,7 @@ describe('nonSpec interface', () => {
     const aliceToken = nonSpec.mint_to_base64(alice, largecontentb64)
     
     VMContext.setPredecessor_account_id(alice)
-    const receieved = nonSpec.get_token_content_base64(aliceToken)
+    const receieved = nonSpec.get_token_content_base64('alice:' + aliceToken.toString() + '.a')
     expect(receieved.length).toBe(largecontent.length)
     expect(receieved).toStrictEqual(largecontent)
   })

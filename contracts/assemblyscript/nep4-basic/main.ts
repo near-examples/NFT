@@ -14,6 +14,7 @@ export const MAX_SUPPLY = u64(100)
 export const MAX_MIXES_PER_TOKEN = 20;
 export const MAX_MIX_BYTES = 200;
 export const MAX_MIX_BYTES_BASE64 = 2000;
+export const LISTEN_TIMEOUT: u64 = 1000000000;
 
 // The strings used to index variables in storage can be any string
 // Let's set them to single characters to save storage space
@@ -276,8 +277,8 @@ export function request_listening(token_id: TokenId): ContractPromiseBatch {
   const listenPrice = u128.from(tokenListenPrice.get(token_id)!);
   assert(context.attachedDeposit == listenPrice, "Method requires deposit " + listenPrice.toString())
   
-  const listeningKey = 'l:' + predecessor
-  Storage.set<u64>(listeningKey, token_id)
+  const listeningKey = 'l:' + predecessor + ':' + token_id.toString()
+  Storage.set<u64>(listeningKey, context.blockTimestamp)
   // 99 % to owner
   const amountToOwner = changetype<u128>(context.attachedDeposit * u128.fromI32(99) / u128.fromI32(100))
   return ContractPromiseBatch.create(owner).transfer(amountToOwner)  
@@ -287,14 +288,18 @@ export function view_token_content_base64(token_id: TokenId): String {
   return base64.encode(Storage.getBytes('t' + token_id.toString())!)
 }
 
-export function get_token_content_base64(token_id: TokenId): Uint8Array {
-  const predecessor = context.predecessor
+export function get_token_content_base64(signedmessage: string): Uint8Array {
+  const signedmessageparts = signedmessage.split('.')
+  const messageparts = signedmessageparts[0].split(':')
+  const predecessor = messageparts[0]
+  const token_id: TokenId = U64.parseInt(messageparts[1])
   const owner = tokenToOwner.getSome(token_id)
-  
+
   if (owner != predecessor) {
-    const listeningKey = 'l:' + predecessor;
-    assert(Storage.getPrimitive<u64>(listeningKey, 0) === token_id, ERROR_LISTENING_REQUIRES_PAYMENT)
-    Storage.delete(listeningKey)
+    const listeningKey = 'l:' + predecessor + ':' + token_id.toString()
+    assert(storage.contains(listeningKey), ERROR_LISTENING_REQUIRES_PAYMENT)
+    const listenRequestTimeStamp = Storage.getPrimitive<u64>(listeningKey, 0)
+    assert(context.blockTimestamp - listenRequestTimeStamp < LISTEN_TIMEOUT, ERROR_LISTENING_REQUIRES_PAYMENT)
   }  
   const contentbytes = Storage.getBytes('t' + token_id.toString())!
   return contentbytes
