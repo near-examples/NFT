@@ -80,6 +80,40 @@ it('should buy a remix, put it up for sale, and another buying it', () => {
     expect((contract.balance - contractBalanceBefore) / Math.pow(10,20)).toBeCloseTo(Math.pow(10, 4)); 
 })
 
+it('should require payment for listening every 24 hr', () => {
+        const runtime = new sim.Runtime();
+        
+        const contract = runtime.newAccount('contract', 'contracts/assemblyscript/build/release/main.wasm');
+        runtime.setContext(sim.createContext(contract));
+
+        const peter = runtime.newAccount('peter');
+        const bob = runtime.newAccount('bob');
+        const alice = runtime.newAccount('alice');
+        const carol = runtime.newAccount('carol');
+    
+        // peter is minting
+        let result = peter.call_other('contract', 'mint_to_base64', {
+            owner_id: 'peter', supportmixing: true,
+            contentbase64: Buffer.from('test').toString('base64')
+        },null,'800000000000000000000');
+
+        const token_id = JSON.parse(result.return_data);
+        expect(token_id).toBe(1);
+
+        const listenprice = '800000000000000000000';
+        result = peter.call_other('contract', 'set_listening_price', {token_id: ''+token_id, price: listenprice});
+
+        result = bob.call_other('contract', 'request_listening', {token_id: ''+token_id}, null, listenprice);
+        
+        result = contract.view('get_token_content_base64', {signedmessage: 'bob:'+token_id.toString()+':a'});
+        expect(result.return_data).toBe(Buffer.from('test').toString('base64'));
+   
+        runtime.context.block_timestamp += 1000000000;
+        result = contract.view('get_token_content_base64', {signedmessage: 'bob:'+token_id.toString()+':a'});
+   
+        expect(result.return_data).toBe("None");
+        expect(result.err.FunctionCallError.HostError.GuestPanic.panic_msg).toContain("Listening requires payment");
+});
 
 it('should buy contract and transfer funds to beneficiary', () => {
         const runtime = new sim.Runtime();
