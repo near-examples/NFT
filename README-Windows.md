@@ -32,7 +32,7 @@ Testing this contract
 =====================
 We have some tests that can be ran. The following will just run our simple tests to verify that our contract code is working.
 ```bash
-cargo test --workspace --package non-fungible-token -- --nocapture
+cargo test -- --nocapture
 ```
 The more complex simulation tests aren't ran with this command, but we can find them in `tests/sim`.
 
