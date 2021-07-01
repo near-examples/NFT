@@ -1,0 +1,20 @@
+name: Tests
+on: push
+jobs:
+  tests:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+      - name: Install modules
+        run: yarn
+      - name: Run tests
+        env:
+          IS_GITHUB_ACTION: true
+        run: cargo build --all --target wasm32-unknown-unknown --release
