@@ -1,5 +1,6 @@
-import { VMContext, base64, util } from 'near-sdk-as'
+import { VMContext, base64, base58, util } from 'near-sdk-as'
 import { Context, u128 } from 'near-sdk-core';
+import { signEdPublicKey } from '../crypto';
 
 // explicitly import functions required by spec
 import {
@@ -15,6 +16,9 @@ import {
 // wrap all other functions in `nonSpec` variable, to make it clear when
 // tests are using functionality that isn't defined by the spec
 import * as nonSpec from '../main'
+import { signEd } from '../crypto';
+import { signEdVerify } from '../crypto';
+
 
 const alice = 'alice'
 const bob = 'bob'
@@ -26,6 +30,12 @@ const mintprice = u128.fromString('800000000000000000000');
 
 let currentTokenId: u64;
 let currentMix: string;
+
+const keybytes: u8[] = [211, 153, 89, 234, 218, 124, 178, 241, 157, 184, 70, 63, 98, 87, 0, 119, 76, 62, 71, 142, 147, 44, 98, 95, 158, 230, 249, 0, 224, 37, 192, 3, 110, 12, 217, 42, 243, 2, 10, 27, 43, 124, 123, 118, 18, 18, 16, 32, 39, 115, 156, 184, 180, 50, 132, 185, 254, 230, 106, 7, 164, 84, 193, 120];
+const KEYPAIR = new Uint8Array(64);
+for (var n = 0; n < keybytes.length; n++) {
+  KEYPAIR[n] = keybytes[n];
+}
 
 describe('grant_access', () => {
   it('grants access to the given account_id for all the tokens that account has', () => {
@@ -258,7 +268,11 @@ describe('nonSpec interface', () => {
     VMContext.setAttached_deposit(mintprice);
     const tokenId = nonSpec.mint_to_base64(alice, content)
     VMContext.setPredecessor_account_id(alice)
-    expect(base64.encode(nonSpec.get_token_content_base64('alice:'+tokenId.toString()+'.a'))).toStrictEqual(content);
+    const messagebytes = Uint8Array.wrap(String.UTF8.encode('alice:' + tokenId.toString()))
+
+    const signaturebytes = signEd(messagebytes, KEYPAIR)
+    const signedmessage = base64.encode(messagebytes) + '.' + base64.encode(signaturebytes)
+    expect(base64.encode(nonSpec.get_token_content_base64(signedmessage))).toStrictEqual(content);
   })
   it('should get legacy content', () => {
     const mintprice = u128.fromString('8000000000000000000000000');
@@ -302,24 +316,24 @@ describe('nonSpec interface', () => {
     VMContext.setPredecessor_account_id(carol)
     expect(get_token_owner(tokenId)).toStrictEqual(bob)
   });
-  it('should not be allowed to get content if listening price is not set', () => {    
+  it('should not be allowed to get content if listening price is not set', () => {
     expect(() => {
       VMContext.setAttached_deposit(mintprice);
-      VMContext.setPredecessor_account_id(alice)      
+      VMContext.setPredecessor_account_id(alice)
       const tokenId = nonSpec.mint_to_base64(alice, content)
       VMContext.setPredecessor_account_id(bob)
-      expect(base64.encode(nonSpec.get_token_content_base64('bob:'+tokenId.toString()+'.aa'))).toStrictEqual(content)
+      expect(base64.encode(nonSpec.get_token_content_base64('bob:' + tokenId.toString() + '.aa'))).toStrictEqual(content)
     }).toThrow()
   })
-  it('should not be allowed to get content if not paying for listening', () => {    
+  it('should not be allowed to get content if not paying for listening', () => {
     expect(() => {
       VMContext.setAttached_deposit(mintprice);
-      VMContext.setPredecessor_account_id(alice)      
+      VMContext.setPredecessor_account_id(alice)
       const tokenId = nonSpec.mint_to_base64(alice, content)
       const listenprice = u128.fromString('1000000000000000000000')
       nonSpec.set_listening_price(tokenId, listenprice)
       VMContext.setPredecessor_account_id(bob)
-      expect(base64.encode(nonSpec.get_token_content_base64('a:'+tokenId.toString()+'.aa'))).toStrictEqual(content)
+      expect(base64.encode(nonSpec.get_token_content_base64('a:' + tokenId.toString() + '.aa'))).toStrictEqual(content)
     }).toThrow()
   })
   it('should be allowed to get content if listening price is set', () => {
@@ -330,8 +344,16 @@ describe('nonSpec interface', () => {
     nonSpec.set_listening_price(tokenId, listenprice);
     VMContext.setPredecessor_account_id(bob)
     VMContext.setAttached_deposit(listenprice)
+
+    const pkstring = base58.encode(signEdPublicKey(KEYPAIR));
+
+    VMContext.setSigner_account_pk(pkstring);
     nonSpec.request_listening(tokenId)
-    expect(base64.encode(nonSpec.get_token_content_base64('bob:'+tokenId.toString()+'.aa'))).toStrictEqual(content)
+
+    const messagebytes = Uint8Array.wrap(String.UTF8.encode('bob:' + tokenId.toString()));
+    const signaturebytes = signEd(messagebytes, KEYPAIR);
+    const signedmessage = base64.encode(messagebytes) + '.' + base64.encode(signaturebytes);
+    expect(base64.encode(nonSpec.get_token_content_base64(signedmessage))).toStrictEqual(content)
   })
   it('listeners should not be allowed to get content after 24 hours', () => {
     VMContext.setAttached_deposit(mintprice);
@@ -341,98 +363,114 @@ describe('nonSpec interface', () => {
     nonSpec.set_listening_price(currentTokenId, listenprice);
     VMContext.setPredecessor_account_id(bob)
     VMContext.setAttached_deposit(listenprice)
+    const pkstring = base58.encode(signEdPublicKey(KEYPAIR));
+
+    VMContext.setSigner_account_pk(pkstring);
+    
     nonSpec.request_listening(currentTokenId)
-    expect(base64.encode(nonSpec.get_token_content_base64('bob:'+currentTokenId.toString()+'.aa'))).toStrictEqual(content)
+
+    const messagebytes = Uint8Array.wrap(String.UTF8.encode('bob:' + currentTokenId.toString()));
+    const signaturebytes = signEd(messagebytes, KEYPAIR);
+    const signedmessage = base64.encode(messagebytes) + '.' + base64.encode(signaturebytes);
+    expect(base64.encode(nonSpec.get_token_content_base64(signedmessage))).toStrictEqual(content)
+
     expect(() => {
-      VMContext.setPredecessor_account_id(bob)
       VMContext.setBlock_timestamp(Context.blockTimestamp + LISTEN_TIMEOUT);
-      nonSpec.get_token_content_base64('bob:'+currentTokenId.toString()+'.aa')
+      const messagebytes = Uint8Array.wrap(String.UTF8.encode('bob:' + currentTokenId.toString()));
+      const signaturebytes = signEd(messagebytes, KEYPAIR);
+      const signedmessage = base64.encode(messagebytes) + '.' + base64.encode(signaturebytes);
+      nonSpec.get_token_content_base64(signedmessage)      
     }).toThrow()
   })
   it('token owners should receive listen fee', () => {
     VMContext.setAttached_deposit(mintprice)
     VMContext.setPredecessor_account_id(alice)
     currentTokenId = nonSpec.mint_to_base64(alice, content)
-    
+
     const listenprice = u128.fromString('1000000000000000000000')
     nonSpec.set_listening_price(currentTokenId, listenprice);
-  
+
     VMContext.setAccount_balance(u128.fromString('0'))
 
     VMContext.setPredecessor_account_id(bob)
     VMContext.setAttached_deposit(listenprice)
     nonSpec.request_listening(currentTokenId)
-  
+
     expect(Context.accountBalance).toBe(u128.fromString('10000000000000000000'))
     VMContext.setPredecessor_account_id(alice)
     expect(Context.accountBalance).toBe(u128.fromString('1000000000000000000000'))
   })
   it('should be possible to mint 20kb', () => {
     const largecontent = new Uint8Array(20 * 1024)
-    for (let n=0;n<largecontent.length;n++) {
+    for (let n = 0; n < largecontent.length; n++) {
       largecontent[n] = n & 0xff
     }
-    
+
     const largecontentb64 = base64.encode(largecontent)
     VMContext.setAttached_deposit(u128.fromString('100000000000000000000') * u128.fromI32(largecontentb64.length))
 
     const aliceToken = nonSpec.mint_to_base64(alice, largecontentb64)
-    
+
     VMContext.setPredecessor_account_id(alice)
-    const receieved = nonSpec.get_token_content_base64('alice:' + aliceToken.toString() + '.a')
-    expect(receieved.length).toBe(largecontent.length)
-    expect(receieved).toStrictEqual(largecontent)
+    const pkstring = base58.encode(signEdPublicKey(KEYPAIR));
+    VMContext.setSigner_account_pk(pkstring);    
+    nonSpec.request_listening(aliceToken)
+
+    const messagebytes = Uint8Array.wrap(String.UTF8.encode('alice:' + aliceToken.toString()));
+    const signaturebytes = signEd(messagebytes, KEYPAIR);
+    const signedmessage = base64.encode(messagebytes) + '.' + base64.encode(signaturebytes);
+    expect(nonSpec.get_token_content_base64(signedmessage)).toStrictEqual(largecontent)
   })
-  it('should be possible to view token for free', () => {    
+  it('should be possible to view token for free', () => {
     VMContext.setAttached_deposit(mintprice);
     const tokenId = nonSpec.mint_to_base64(alice, content)
     VMContext.setPredecessor_account_id(bob)
     const result = nonSpec.view_token_content_base64(tokenId)
     expect(result).toStrictEqual(content)
   })
-  it('should not be possible to publish a token mix if token does not support it', () => {    
+  it('should not be possible to publish a token mix if token does not support it', () => {
     expect(() => {
       VMContext.setAttached_deposit(mintprice);
       const tokenId = nonSpec.mint_to_base64(alice, content)
       VMContext.setPredecessor_account_id(bob)
-      nonSpec.publish_token_mix(tokenId, [55,33,21])
+      nonSpec.publish_token_mix(tokenId, [55, 33, 21])
     }).toThrow()
   })
   it('should be possible to publish a token mix', () => {
     VMContext.setAttached_deposit(mintprice);
     const tokenId = nonSpec.mint_to_base64(alice, content, true)
     VMContext.setPredecessor_account_id(bob)
-    nonSpec.publish_token_mix(tokenId, [55,33,21])
+    nonSpec.publish_token_mix(tokenId, [55, 33, 21])
     const mixes = nonSpec.get_token_mixes(tokenId)
     expect(mixes.length).toBe(1)
   })
-  it('oldest mix should be replaced if there are already '+nonSpec.MAX_MIXES_PER_TOKEN.toString()+' mixes', () => {
+  it('oldest mix should be replaced if there are already ' + nonSpec.MAX_MIXES_PER_TOKEN.toString() + ' mixes', () => {
     VMContext.setAttached_deposit(mintprice);
-    
+
     const tokenId = nonSpec.mint_to_base64(alice, content, true)
     VMContext.setPredecessor_account_id(bob)
-    for (let n=0;n<nonSpec.MAX_MIXES_PER_TOKEN * 2; n++) {
+    for (let n = 0; n < nonSpec.MAX_MIXES_PER_TOKEN * 2; n++) {
       const blocktimestamp = n;
       VMContext.setBlock_timestamp(blocktimestamp);
-      nonSpec.publish_token_mix(tokenId, [n as u8, (n+1) as u8])
-      
+      nonSpec.publish_token_mix(tokenId, [n as u8, (n + 1) as u8])
+
       const mixes = nonSpec.get_token_mixes(tokenId)
-      expect(mixes.length).toBeLessThanOrEqual(nonSpec.MAX_MIXES_PER_TOKEN);  
+      expect(mixes.length).toBeLessThanOrEqual(nonSpec.MAX_MIXES_PER_TOKEN);
       if (mixes.length < nonSpec.MAX_MIXES_PER_TOKEN) {
-        expect(mixes.length).toBe(n + 1, 'mixes length should be ' + (n+1).toString());
+        expect(mixes.length).toBe(n + 1, 'mixes length should be ' + (n + 1).toString());
       }
-      expect(mixes[n % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob+';'+blocktimestamp.toString()+';'+n.toString()+','+(n+1).toString()+'', 'mix content [0] should be '+n.toString());
-      
-      if (n>0) {
-        expect(mixes[(n-1) % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob+';'+(blocktimestamp-1).toString()+';'+(n-1).toString()+','+(n).toString(), 'mix content [1] should be '+n.toString());        
+      expect(mixes[n % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob + ';' + blocktimestamp.toString() + ';' + n.toString() + ',' + (n + 1).toString() + '', 'mix content [0] should be ' + n.toString());
+
+      if (n > 0) {
+        expect(mixes[(n - 1) % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob + ';' + (blocktimestamp - 1).toString() + ';' + (n - 1).toString() + ',' + (n).toString(), 'mix content [1] should be ' + n.toString());
       }
     }
-  })  
+  })
   it('should be possible to buy a token mix', () => {
     VMContext.setAttached_deposit(mintprice);
     const tokenId = nonSpec.mint_to_base64(alice, content, true)
     VMContext.setPredecessor_account_id(bob)
-    nonSpec.publish_token_mix(tokenId, [55,33,21])
+    nonSpec.publish_token_mix(tokenId, [55, 33, 21])
     const mixes = nonSpec.get_token_mixes(tokenId)
     expect(mixes.length).toBe(1)
     VMContext.setPredecessor_account_id(carol)
@@ -442,38 +480,38 @@ describe('nonSpec interface', () => {
   })
   it('should not be possible to publish over a mix that is sold', () => {
     VMContext.setAttached_deposit(mintprice);
-    
+
     const tokenId = nonSpec.mint_to_base64(alice, content, true)
     expect(tokenId).toBe(1)
 
     VMContext.setPredecessor_account_id(bob)
-    for (let n=0;n<nonSpec.MAX_MIXES_PER_TOKEN * 2; n++) {
+    for (let n = 0; n < nonSpec.MAX_MIXES_PER_TOKEN * 2; n++) {
       const blocktimestamp = n;
       VMContext.setBlock_timestamp(blocktimestamp);
       if (n < nonSpec.MAX_MIXES_PER_TOKEN) {
-        nonSpec.publish_token_mix(tokenId, [n as u8, (n+1) as u8])
+        nonSpec.publish_token_mix(tokenId, [n as u8, (n + 1) as u8])
       } else {
         expect(() => {
           nonSpec.publish_token_mix(1, [1, 2])
         }).toThrow()
       }
-      
+
       const mixes = nonSpec.get_token_mixes(tokenId)
 
       if (n < nonSpec.MAX_MIXES_PER_TOKEN) {
-        expect(mixes[n % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob+';'+blocktimestamp.toString()+';'+n.toString()+','+(n+1).toString()+'', 'mix content ['+n.toString()+'] should be '+n.toString())
+        expect(mixes[n % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob + ';' + blocktimestamp.toString() + ';' + n.toString() + ',' + (n + 1).toString() + '', 'mix content [' + n.toString() + '] should be ' + n.toString())
         VMContext.setAttached_deposit(u128.fromString('10000000000000000000000000'))
         nonSpec.buy_mix(tokenId, mixes[n])
       } else {
-        expect(mixes[n % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob+';nft:'+(tokenId + ((n% nonSpec.MAX_MIXES_PER_TOKEN)+1)).toString(), 'mix content ['+n.toString()+'] should be an NFT with id '+(tokenId + n - nonSpec.MAX_MIXES_PER_TOKEN).toString())
-      }      
+        expect(mixes[n % nonSpec.MAX_MIXES_PER_TOKEN]).toBe(bob + ';nft:' + (tokenId + ((n % nonSpec.MAX_MIXES_PER_TOKEN) + 1)).toString(), 'mix content [' + n.toString() + '] should be an NFT with id ' + (tokenId + n - nonSpec.MAX_MIXES_PER_TOKEN).toString())
+      }
     }
   })
-  it('should not be possible to mint a mix twice', () => {    
+  it('should not be possible to mint a mix twice', () => {
     VMContext.setAttached_deposit(mintprice);
     currentTokenId = nonSpec.mint_to_base64(alice, content, true)
     VMContext.setPredecessor_account_id(bob)
-    nonSpec.publish_token_mix(currentTokenId, [55,33,21])
+    nonSpec.publish_token_mix(currentTokenId, [55, 33, 21])
     const mixes = nonSpec.get_token_mixes(currentTokenId)
     expect(mixes.length).toBe(1)
     currentMix = mixes[0]
@@ -490,7 +528,7 @@ describe('nonSpec interface', () => {
     VMContext.setAttached_deposit(mintprice);
     const originalTokenId = nonSpec.mint_to_base64(alice, content, true)
     VMContext.setPredecessor_account_id(bob)
-    nonSpec.publish_token_mix(currentTokenId, [55,33,21])
+    nonSpec.publish_token_mix(currentTokenId, [55, 33, 21])
     let mixes = nonSpec.get_token_mixes(currentTokenId)
     expect(mixes.length).toBe(1)
     const mix = mixes[0]
@@ -508,7 +546,7 @@ describe('nonSpec interface', () => {
     nonSpec.buy_token(remixNFTid)
 
     const remixNFTContent = nonSpec.view_remix_content(remixNFTid)
-    expect(remixNFTContent).toBe(originalTokenId.toString()+';'+mix);
+    expect(remixNFTContent).toBe(originalTokenId.toString() + ';' + mix);
   })
   it('should be possible to publish a token mix with base64 encoded content', () => {
     VMContext.setAttached_deposit(mintprice);
@@ -520,12 +558,12 @@ describe('nonSpec interface', () => {
   })
   it('should be fail if trying to publish a token mix with non base64 encoded string', () => {
     VMContext.setAttached_deposit(mintprice);
-    
+
     expect(() => {
       const tokenId = nonSpec.mint_to_base64(alice, content, true)
       VMContext.setPredecessor_account_id(bob)
       nonSpec.publish_token_mix_base64(tokenId, 'abcdefg');
-    }).toThrow();    
+    }).toThrow();
   })
   it('should be possible to sell the contract', () => {
     VMContext.setCurrent_account_id(alice);
@@ -599,8 +637,8 @@ describe('nonSpec interface', () => {
     const transferAmount = 100000;
     const accountBalanceBefore = Context.accountBalance.toI64();
     nonSpec.transfer_funds(u128.fromI64(transferAmount))
-    expect(Context.accountBalance.toI64()).toBe(accountBalanceBefore-transferAmount);
-    
+    expect(Context.accountBalance.toI64()).toBe(accountBalanceBefore - transferAmount);
+
     VMContext.setPredecessor_account_id(carol)
     expect(() => {
       nonSpec.transfer_funds(mintprice)
@@ -610,11 +648,11 @@ describe('nonSpec interface', () => {
 
 describe('web4', () => {
   it('should be possible to upload and get web4 content', () => {
-      VMContext.setCurrent_account_id('web4');
-      VMContext.setPredecessor_account_id('web4');
-      const content = 'Hello';
-      nonSpec.upload_web_content('/index.html', base64.encode(util.stringToBytes(content)));
-      const response = nonSpec.web4_get({path: '/index.html', accountId: null, params: new Map(), preloads: new Map(), query: new Map()});
-      expect(response.body).toStrictEqual(util.stringToBytes(content));
+    VMContext.setCurrent_account_id('web4');
+    VMContext.setPredecessor_account_id('web4');
+    const content = 'Hello';
+    nonSpec.upload_web_content('/index.html', base64.encode(util.stringToBytes(content)));
+    const response = nonSpec.web4_get({ path: '/index.html', accountId: null, params: new Map(), preloads: new Map(), query: new Map() });
+    expect(response.body).toStrictEqual(util.stringToBytes(content));
   });
 });

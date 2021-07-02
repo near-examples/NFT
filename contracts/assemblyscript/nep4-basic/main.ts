@@ -1,5 +1,6 @@
-import { PersistentMap, storage, context, ContractPromiseBatch, base64, util } from 'near-sdk-as'
-import { Storage, u128 } from 'near-sdk-core';
+import { PersistentMap, storage, context, ContractPromiseBatch, base64, base58, util } from 'near-sdk-as'
+import { Storage, u128 } from 'near-sdk-core'
+import { signEdVerify } from './crypto'
 
 /**************************/
 /* DATA TYPES AND STORAGE */
@@ -7,6 +8,7 @@ import { Storage, u128 } from 'near-sdk-core';
 
 type AccountId = string
 type TokenId = u64
+type ListenRequest = string
 
 // Note that MAX_SUPPLY is implemented here as a simple constant
 // It is exported only to facilitate unit testing
@@ -54,7 +56,6 @@ export const ERROR_TOKEN_NOT_OWNED_BY_CALLER = 'Token is not owned by the caller
 export const ERROR_TOKEN_NOT_FOR_SALE = 'Token is not for sale'
 export const ERROR_LISTENING_NOT_AVAILABLE = 'Listening is not available'
 export const ERROR_LISTENING_REQUIRES_PAYMENT = 'Listening requires payment, call request_listening first'
-export const ERROR_OWNERS_NOT_REQUIRED_TO_REQUEST_LISTENING = 'Owners are not required to request listening'
 export const ERROR_MIX_TOO_LARGE = 'Mix too large, max size is '+MAX_MIX_BYTES.toString()
 export const ERROR_TOKEN_DOES_NOT_SUPPORT_MIXING = 'Token does not support mixing'
 export const MUST_BE_CALLED_BY_BENEFICIARY = 'Must be called by beneficiary'
@@ -271,17 +272,23 @@ export function view_remix_content(token_id: TokenId): string {
 @payable
 export function request_listening(token_id: TokenId): ContractPromiseBatch {
   const predecessor = context.predecessor
-  const owner = tokenToOwner.getSome(token_id)
-  assert(owner != predecessor, ERROR_OWNERS_NOT_REQUIRED_TO_REQUEST_LISTENING)
-  assert(tokenListenPrice.contains(token_id), ERROR_LISTENING_NOT_AVAILABLE)
-  const listenPrice = u128.from(tokenListenPrice.get(token_id)!);
-  assert(context.attachedDeposit == listenPrice, "Method requires deposit " + listenPrice.toString())
   
+  const owner = tokenToOwner.getSome(token_id)
+  if(owner != predecessor) {
+    assert(tokenListenPrice.contains(token_id), ERROR_LISTENING_NOT_AVAILABLE)
+    const listenPrice = u128.from(tokenListenPrice.get(token_id)!);
+    assert(context.attachedDeposit == listenPrice, "Method requires deposit " + listenPrice.toString())
+  }  
   const listeningKey = 'l:' + predecessor + ':' + token_id.toString()
-  Storage.set<u64>(listeningKey, context.blockTimestamp)
-  // 99 % to owner
-  const amountToOwner = changetype<u128>(context.attachedDeposit * u128.fromI32(99) / u128.fromI32(100))
-  return ContractPromiseBatch.create(owner).transfer(amountToOwner)  
+
+  Storage.set<ListenRequest>(listeningKey, context.senderPublicKey + ',' + context.blockTimestamp.toString())
+  if(owner != predecessor) {
+    // 99 % to owner
+    const amountToOwner = changetype<u128>(context.attachedDeposit * u128.fromI32(99) / u128.fromI32(100))
+    return ContractPromiseBatch.create(owner).transfer(amountToOwner)
+  } else {
+    return ContractPromiseBatch.create(owner)
+  }
 }
 
 export function view_token_content_base64(token_id: TokenId): String {
@@ -290,7 +297,8 @@ export function view_token_content_base64(token_id: TokenId): String {
 
 export function get_token_content_base64(signedmessage: string): Uint8Array {
   const signedmessageparts = signedmessage.split('.')
-  const messageparts = signedmessageparts[0].split(':')
+  const messagebytes = base64.decode(signedmessageparts[0])
+  const messageparts = String.UTF8.decode(messagebytes.buffer).split(':')
   const predecessor = messageparts[0]
   const token_id: TokenId = U64.parseInt(messageparts[1])
   const owner = tokenToOwner.getSome(token_id)
@@ -298,7 +306,11 @@ export function get_token_content_base64(signedmessage: string): Uint8Array {
   if (owner != predecessor) {
     const listeningKey = 'l:' + predecessor + ':' + token_id.toString()
     assert(storage.contains(listeningKey), ERROR_LISTENING_REQUIRES_PAYMENT)
-    const listenRequestTimeStamp = Storage.getPrimitive<u64>(listeningKey, 0)
+    const listenRequestParts = Storage.getPrimitive<ListenRequest>(listeningKey, '').split(',')
+    const listenRequestTimeStamp = U64.parseInt(listenRequestParts[1])
+    const listenRequestPk = base58.decode('1'+listenRequestParts[0]).slice(1);
+
+    assert(signEdVerify(base64.decode(signedmessageparts[1]), messagebytes, listenRequestPk), 'blabla')
     assert(context.blockTimestamp - listenRequestTimeStamp < LISTEN_TIMEOUT, ERROR_LISTENING_REQUIRES_PAYMENT)
   }  
   const contentbytes = Storage.getBytes('t' + token_id.toString())!
