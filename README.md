@@ -19,7 +19,7 @@ If you're using Gitpod, you can skip this step.
 Explore this contract
 =====================
 
-The source for this contract is in `nft/lib.rs`. It provides methods to manage access to tokens, transfer tokens, check access, and get token owner. Note, some further exploration inside the rust macros is needed to see how the `NonFungibleToken` contract is implemented.
+The source for this contract is in `nft/src/lib.rs`. It provides methods to manage access to tokens, transfer tokens, check access, and get token owner. Note, some further exploration inside the rust macros is needed to see how the `NonFungibleToken` contract is implemented.
 
 Building this contract
 ======================
@@ -30,11 +30,11 @@ Run the following, and we'll build our rust project up via cargo. This will gene
 
 Testing this contract
 =====================
-We have some tests that can be ran. The following will just run our simple tests to verify that our contract code is working.
+We have some tests that can be run. The following will just run our simple tests to verify that our contract code is working.
 ```bash
 cargo test -- --nocapture
 ```
-The more complex simulation tests aren't ran with this command, but we can find them in `tests/sim`.
+The more complex simulation tests aren't run with this command, but we can find them in `tests/sim`.
 
 Using this contract
 ===================
@@ -57,7 +57,7 @@ Now we can deploy the compiled contract in this example to your account:
 
     near deploy --wasmFile res/non_fungible_token.wasm --accountId $ID
 
-NFT contract should be initialized before usage. More info about the metadata at ['nomicon.io'](https://nomicon.io/Standards/NonFungibleToken/Metadata.html). But for now, we'll initialize with the default metadata.
+NFT contract should be initialized before usage. More info about the metadata at [nomicon.io](https://nomicon.io/Standards/NonFungibleToken/Metadata.html). But for now, we'll initialize with the default metadata.
 
     near call $ID new_default_meta '{"owner_id": "'$ID'"}' --accountId $ID
 
