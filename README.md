@@ -39,7 +39,47 @@ The more complex simulation tests aren't ran with this command, but we can find 
 Using this contract
 ===================
 
-This smart contract will get deployed to your NEAR account. For this example, please create a new NEAR account. Because NEAR allows the ability to upgrade contracts on the same account, initialization functions must be cleared. If you'd like to run this example on a NEAR account that has had prior contracts deployed, please use the `near-cli` command `near delete`, and then recreate it in Wallet. To create (or recreate) an account, please follow the directions in [Test Wallet](https://wallet.testnet.near.org) or ([NEAR Wallet](https://wallet.near.org/) if we're using mainnet).
+### Quickest deploy
+
+You can build and deploy this smart contract to a development account. [Dev Accounts](https://docs.near.org/docs/concepts/account#dev-accounts) are auto-generated accounts to assist in developing and testing smart contracts. Please see the [Standard deploy](#standard-deploy) section for creating a more personalized account to deploy to.
+
+```bash
+near dev-deploy --wasmFile res/non_fungible_token.wasm --helperUrl https://near-contract-helper.onrender.com
+```
+
+Behind the scenes, this is creating an account and deploying a contract to it. On the console, notice a message like:
+
+>Done deploying to dev-1234567890123
+
+In this instance, the account is `dev-1234567890123`. A file has been created containing a key pair to
+the account, located at `neardev/dev-account`. To make the next few steps easier, we're going to set an
+environment variable containing this development account id and use that when copy/pasting commands.
+Run this command to the environment variable:
+
+```bash
+source neardev/dev-account.env
+```
+
+You can tell if the environment variable is set correctly if your command line prints the account name after this command:
+```bash
+echo $CONTRACT_NAME
+```
+
+The next command will initialize the contract using the `new` method:
+
+```bash
+near call $CONTRACT_NAME new_default_meta '{"owner_id": "'$CONTRACT_NAME'"}' --accountId $CONTRACT_NAME
+```
+
+To view the NFT metadata:
+
+```bash
+near view $CONTRACT_NAME nft_metadata
+```
+
+### Standard deploy
+
+This smart contract will get deployed to your NEAR account. For this example, please create a new NEAR account. Because NEAR allows the ability to upgrade contracts on the same account, initialization functions must be cleared. If you'd like to run this example on a NEAR account that has had prior contracts deployed, please use the `near-cli` command `near delete`, and then recreate it in Wallet. To create (or recreate) an account, please follow the directions in [Test Wallet](https://wallet.testnet.near.org) or ([NEAR Wallet](https://wallet.near.org/) if we're using `mainnet`).
 
 In the project root, log in to your newly created account with `near-cli` by following the instructions after this command.
 
