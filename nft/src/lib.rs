@@ -83,7 +83,7 @@ impl Contract {
         }
     }
 
-    /// Mint a new token with ID=`token_id` belonging to `token_owner_id`.
+    /// Mint a new token with ID=`token_id` belonging to `receiver_id`.
     ///
     /// Since this example implements metadata, it also requires per-token metadata to be provided
     /// in this call. `self.tokens.mint` will also require it to be Some, since
@@ -95,10 +95,10 @@ impl Contract {
     pub fn nft_mint(
         &mut self,
         token_id: TokenId,
-        token_owner_id: ValidAccountId,
+        receiver_id: ValidAccountId,
         token_metadata: TokenMetadata,
     ) -> Token {
-        self.tokens.mint(token_id, token_owner_id, Some(token_metadata))
+        self.tokens.mint(token_id, receiver_id, Some(token_metadata))
     }
 }
 
