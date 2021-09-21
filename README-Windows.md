@@ -30,7 +30,7 @@ build.bat
 
 Testing this contract
 =====================
-We have some tests that can be run. The following will just run our simple tests to verify that our contract code is working.
+We have some tests that you can run. For example, the following will run our simple tests to verify that our contract code is working.
 ```bash
 cargo test -- --nocapture
 ```
