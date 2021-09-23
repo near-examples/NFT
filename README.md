@@ -44,7 +44,7 @@ Using this contract
 You can build and deploy this smart contract to a development account. [Dev Accounts](https://docs.near.org/docs/concepts/account#dev-accounts) are auto-generated accounts to assist in developing and testing smart contracts. Please see the [Standard deploy](#standard-deploy) section for creating a more personalized account to deploy to.
 
 ```bash
-near dev-deploy --wasmFile res/non_fungible_token.wasm --helperUrl https://near-contract-helper.onrender.com
+near dev-deploy --wasmFile res/non_fungible_token.wasm
 ```
 
 Behind the scenes, this is creating an account and deploying a contract to it. On the console, notice a message like:
