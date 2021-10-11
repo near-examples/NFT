@@ -5,9 +5,9 @@ authors = ["Near Inc <hello@near.org>"]
 edition = "2018"
 
 [dependencies]
-near-sdk = "3.1.0"
-near-sdk-sim = "3.2.0"
-near-contract-standards = "3.1.1"
+near-sdk = "4.0.0-pre.2"
+near-sdk-sim = "4.0.0-pre.2"
+near-contract-standards = "4.0.0-pre.2"
 
 # remember to include a line for each contract
 non-fungible-token = { path = "./nft" }
