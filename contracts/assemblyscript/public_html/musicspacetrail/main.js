@@ -32,7 +32,7 @@ const transactionstatus = document.getElementById('transactionstatus');
 
 const wasmbuffersize = 128;
 const SERIALIZE_TIME_RESOLUTION = 8;
-const COLUMNS_PER_BEAT = 8;
+
 let bpm;
 let wasm_bytes;
 let eventlist;
