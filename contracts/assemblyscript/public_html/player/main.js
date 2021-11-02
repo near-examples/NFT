@@ -47,6 +47,14 @@ export async function byteArrayToBase64(data) {
     });
 }
 
+export async function login() {
+    await walletConnection.requestSignIn(
+        nearconfig.contractName,
+        'wasm-music'
+    );
+    await loadAccountData();
+}
+
 export async function viewTokenOwner(token_id) {
     return await walletConnection.account().viewFunction(nearconfig.contractName, 'get_token_owner', { token_id: token_id });
 }
