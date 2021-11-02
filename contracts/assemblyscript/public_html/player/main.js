@@ -178,7 +178,10 @@ window.togglePlay = async () => {
         sellbutton.style.display = 'inline';
         sellbutton.addEventListener('click', async () => {
             sellbutton.remove();
-            await sell(currentTokenId, prompt('price', currentPrice));
+            const price = prompt('price', nearApi.utils.format.formatNearAmount(currentPrice));
+            if (price !== null) {
+                await sell(currentTokenId, price);
+            }
             location.reload();
         });
     } else {
