@@ -90,11 +90,6 @@
             }
         }
 
-        #loginpanel {
-            display: none;
-        }
-
-
         #copyright {            
             color: #888;
             font-size: 13px;
@@ -104,24 +99,23 @@
             padding: 2px;
             z-index: 1000;
         }
-        #logoutbutton {
-            position:absolute;
-            right: 3px;
-            top: 3px;
-            font-size: 13px;
-            background-color: #aaa !important;
-            padding: 3px !important;
-        }
     </style>
 </head>
 
 <body>
     <div id="info">
         <br />
-        <h1>WebAssembly Music at NEARCON 2021</h1>
+
+        <h3>
+            WebAssembly Music stored on the NEAR protocol blockchain
+        </h3>
+        <p>NFT owner: <span id="tokenownerspan"></span></p>
+        <p id="ownersinfo"></p>
         <p>
-            music stored on the NEAR protocol blockchain
+        <button id="buybutton" style="display: none;"></button>
+        <button id="sellbutton" style="display: none;">Sell</button>
         </p>
+    
     </div>
     <p id="transactionstatus"></p>
     <div id="controlpanel">

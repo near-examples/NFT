@@ -1,7 +1,7 @@
 import { getAudioWorkletProcessorUrl } from './audioworkletprocessor.js';
 import { getRenderWorkerUrl } from './renderworker.js';
 
-const nearconfigt = {
+const nearconfig = {
     nodeUrl: 'https://rpc.mainnet.near.org',
     walletUrl: 'https://wallet.mainnet.near.org',
     helperUrl: 'https://helper.mainnet.near.org',
@@ -12,7 +12,7 @@ const nearconfigt = {
     }
 };
 
-const nearconfig = {
+const nearconfigt = {
     nodeUrl: 'https://rpc.testnet.near.org',
     walletUrl: 'https://wallet.testnet.near.org',
     helperUrl: 'https://helper.testnet.near.org',
@@ -31,6 +31,9 @@ let initPromise;
 let audioWorkletNode;
 let playing = false;
 let renderWorker;
+let walletConnection;
+
+let currentTokenId = location.search.replace(/.*id=([0-9]+).*/,"$1");
 
 const audioContext = new AudioContext({latencyHint: 'playback'});
 const endBufferNo = Math.round(audioContext.sampleRate * 169411 / (1000 * 128));
@@ -42,6 +45,34 @@ export async function byteArrayToBase64(data) {
         fr.onload = () => r(fr.result.split('base64,')[1]);
         fr.readAsDataURL(new Blob([data]));
     });
+}
+
+export async function viewTokenOwner(token_id) {
+    return await walletConnection.account().viewFunction(nearconfig.contractName, 'get_token_owner', { token_id: token_id });
+}
+
+export async function viewTokenPrice(token_id) {
+    return await walletConnection.account().viewFunction(nearconfig.contractName, 'view_price', { token_id: token_id });
+}
+
+export async function buy(token_id, price) {
+    try {
+        if (!walletConnection.getAccountId()) {
+            login();
+        }
+        const deposit = price;
+        const result = await walletConnection.account().functionCall(nearconfig.contractName, 'buy_token', { token_id: token_id }, undefined, deposit);
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+export async function sell(token_id, price) {
+    if (!price || price === 0 || price === '0') {
+        await walletConnection.account().functionCall(nearconfig.contractName, 'remove_token_from_sale', { token_id: token_id });
+    } else {
+        await walletConnection.account().functionCall(nearconfig.contractName, 'sell_token', { token_id: token_id, price: nearApi.utils.format.parseNearAmount(price) });
+    }
 }
 
 async function getTokenContent(token_id) {
@@ -111,7 +142,7 @@ async function togglePlay() {
         initPromise = new Promise(async (resolve, reject) => {
             try {
                 await audioContext.resume();
-                await loadMusic(location.search.replace(/.*id=([0-9]+).*/,"$1"));
+                await loadMusic(currentTokenId);
                 await initPlay();
                 resolve();
             } catch (e) {
@@ -130,21 +161,37 @@ window.togglePlay = async () => {
     await togglePlay();
 }
 
-window.login = async () => {
-    await walletConnection.requestSignIn(
-        nearconfig.contractName,
-        'wasm-music'
-    );
-    await loadAccountData();
-}
-
-window.logout = async () => {
-    await walletConnection.signOut();
-    location.reload();
-}
-
 (async () => {
     nearconfig.deps.keyStore = new nearApi.keyStores.BrowserLocalStorageKeyStore();
-    window.near = await nearApi.connect(nearconfig);
-    window.walletConnection = new nearApi.WalletConnection(near);
+    walletConnection = new nearApi.WalletConnection(await nearApi.connect(nearconfig));
+    const currentTokenOwner = await viewTokenOwner(currentTokenId);
+    document.getElementById('tokenownerspan').innerHTML = currentTokenOwner;
+
+    if (currentTokenOwner === walletConnection.getAccountId()) {
+        const sellbutton = document.getElementById('sellbutton');
+        let currentPrice = 0;
+        try {
+            currentPrice = await viewTokenPrice(currentTokenId);
+            const ownersInfo = document.getElementById('ownersinfo');
+            ownersInfo.innerHTML = `you are selling for ${nearApi.utils.format.formatNearAmount(currentPrice)} NEAR`;
+        } catch (e) {}
+        sellbutton.style.display = 'inline';
+        sellbutton.addEventListener('click', async () => {
+            sellbutton.remove();
+            await sell(currentTokenId, prompt('price', currentPrice));
+            location.reload();
+        });
+    } else {
+        try {
+            const price = await viewTokenPrice(currentTokenId);
+            if (price) {
+                const buybutton = document.getElementById('buybutton');
+                buybutton.innerHTML = `Buy for ${nearApi.utils.format.formatNearAmount(price)} NEAR`;
+                buybutton.style.display = 'inline';
+                buybutton.addEventListener('click', () => buy(currentTokenId, price));
+            }
+        } catch(e) {
+            console.log('not for sale', e);
+        }
+    }
 })();
