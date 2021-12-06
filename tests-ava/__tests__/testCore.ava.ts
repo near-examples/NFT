@@ -21,7 +21,7 @@ workspace.test('Simple transfer', async (test, { root, alice, nft }) => {
 });
 
 
-workspace.test('Transfer call fast return to sender', async (test, { root, alice, tokenReceiver, nft }) => {
+workspace.test('Transfer call fast return to sender', async (test, { root, tokenReceiver, nft }) => {
     await root.call(
         nft,
         'nft_transfer_call',
@@ -39,7 +39,7 @@ workspace.test('Transfer call fast return to sender', async (test, { root, alice
 });
 
 
-workspace.test('Transfer call slow return to sender', async (test, { root, alice, tokenReceiver, nft }) => {
+workspace.test('Transfer call slow return to sender', async (test, { root, tokenReceiver, nft }) => {
     await root.call(
         nft,
         'nft_transfer_call',
@@ -57,7 +57,7 @@ workspace.test('Transfer call slow return to sender', async (test, { root, alice
 });
 
 
-workspace.test('Transfer call fast keep with sender', async (test, { root, alice, tokenReceiver, nft }) => {
+workspace.test('Transfer call fast keep with sender', async (test, { root, tokenReceiver, nft }) => {
     await root.call(
         nft,
         'nft_transfer_call',
@@ -73,7 +73,7 @@ workspace.test('Transfer call fast keep with sender', async (test, { root, alice
     test.is(token.owner_id, tokenReceiver.accountId);
 });
 
-workspace.test('Transfer call slow keep with sender', async (test, { root, alice, tokenReceiver, nft }) => {
+workspace.test('Transfer call slow keep with sender', async (test, { root, tokenReceiver, nft }) => {
     await root.call(
         nft,
         'nft_transfer_call',
@@ -90,7 +90,7 @@ workspace.test('Transfer call slow keep with sender', async (test, { root, alice
     test.is(token.owner_id, tokenReceiver.accountId);
 });
 
-workspace.test('Transfer call receiver panics', async (test, { root, alice, tokenReceiver, nft }) => {
+workspace.test('Transfer call receiver panics', async (test, { root, tokenReceiver, nft }) => {
     await root.call(
         nft,
         'nft_transfer_call',

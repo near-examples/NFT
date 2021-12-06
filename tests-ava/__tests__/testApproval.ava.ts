@@ -10,8 +10,12 @@ workspace.test('Simple approve', async (test, { root, alice, tokenReceiver, nft 
             token_id: '0',
             account_id: alice,
         },
-        { attachedDeposit: new BN('270000000000000000000'), gas: tGas('150') } // need more deposit than the sim-tests, cause names are longer
+        { 
+            attachedDeposit: new BN('270000000000000000000'), // need more deposit than the sim-tests, cause names are longer
+            gas: tGas('150') 
+        },
     );
+
     // check nft_is_approved, don't provide approval_id
     test.assert(
         await nft.view(
@@ -95,8 +99,8 @@ workspace.test('Simple approve', async (test, { root, alice, tokenReceiver, nft 
 });
 
 
-workspace.test('Approval with call', async (test, { root, alice, approvalReceiver, nft }) => {
-    let outcome:string = await root.call(
+workspace.test('Approval with call', async (test, { root, approvalReceiver, nft }) => {
+    let outcome: string = await root.call(
         nft,
         'nft_approve',
         {
@@ -122,3 +126,118 @@ workspace.test('Approval with call', async (test, { root, alice, approvalReceive
     );
     test.is(outcome, msg);
 });
+
+workspace.test('Approved account transfers token', async (test, { root, alice, nft }) => {
+    await root.call(
+        nft,
+        'nft_approve',
+        {
+            token_id: '0',
+            account_id: alice,
+
+        },
+        { attachedDeposit: new BN('270000000000000000000'), gas: tGas('150') },
+    );
+
+    await alice.call(
+        nft,
+        'nft_transfer',
+        {
+            receiver_id: alice,
+            token_id: '0',
+            approval_id: 1,
+            memo: 'gotcha! bahahaha',
+        },
+        { attachedDeposit: '1', gas: tGas('150') }
+    );
+
+    const token: any = await nft.view('nft_token', { token_id: '0' });
+    test.is(token.owner_id, alice.accountId);
+});
+
+workspace.test('Revoke', async (test, { root, alice, tokenReceiver, nft }) => {
+    // root approves alice
+    await root.call(
+        nft,
+        'nft_approve',
+        {
+            token_id: '0',
+            account_id: alice,
+
+        },
+        { attachedDeposit: new BN('270000000000000000000'), gas: tGas('150') },
+    );
+
+    // root approves token_receiver
+    await root.call(
+        nft,
+        'nft_approve',
+        {
+            token_id: '0',
+            account_id: tokenReceiver,
+        },
+        { attachedDeposit: new BN('360000000000000000000'), gas: tGas('150') }
+    );
+
+    // root revokes alice
+    await root.call(nft, 'nft_revoke', { token_id: '0', account_id: alice }, { attachedDeposit: '1' });
+
+    // alice is revoked...
+    test.false(
+        await nft.view('nft_is_approved', { token_id: '0', approved_account_id: alice })
+    );
+
+    // but token_receiver is still approved
+    test.true(
+        await nft.view('nft_is_approved', { token_id: '0', approved_account_id: tokenReceiver })
+    );
+
+    // root revokes token_receiver
+    await root.call(nft, 'nft_revoke', { token_id: '0', account_id: tokenReceiver }, { attachedDeposit: '1' });
+
+    // alice is still revoked...
+    test.false(
+        await nft.view('nft_is_approved', { token_id: '0', approved_account_id: alice })
+    );
+
+    // ...and now so is token_receiver
+    test.false(
+        await nft.view('nft_is_approved', { token_id: '0', approved_account_id: tokenReceiver })
+    );
+})
+
+
+workspace.test('Revoke all', async (test, { root, alice, tokenReceiver, nft }) => {
+    // root approves alice
+    await root.call(
+        nft,
+        'nft_approve',
+        {
+            token_id: '0',
+            account_id: alice,
+
+        },
+        { attachedDeposit: new BN('270000000000000000000'), gas: tGas('150') },
+    );
+
+    // root approves token_receiver
+    await root.call(
+        nft,
+        'nft_approve',
+        {
+            token_id: '0',
+            account_id: tokenReceiver,
+        },
+        { attachedDeposit: new BN('360000000000000000000'), gas: tGas('150') }
+    );
+
+    await root.call(nft, 'nft_revoke_all', { token_id: '0' }, { attachedDeposit: '1' });
+
+    // everyone revoked...
+    test.false(
+        await nft.view('nft_is_approved', { token_id: '0', approved_account_id: alice })
+    );
+    test.false(
+        await nft.view('nft_is_approved', { token_id: '0', approved_account_id: tokenReceiver })
+    );
+})
