@@ -1,0 +1,3 @@
+{
+  "extends": "near-workspaces-ava/tsconfig.ava.json"
+}
