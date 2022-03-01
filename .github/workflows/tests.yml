@@ -1,5 +1,8 @@
 name: Tests
-on: push
+on: 
+  repository_dispatch:
+    types: [tests-report]
+  push:
 jobs:
   tests:
     strategy:
