@@ -6,14 +6,15 @@ import { login, logout } from "./utils";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 // React Bootstraps imports
-import { Nav, Navbar, Container, Row, Card, Alert } from "react-bootstrap";
+import { Nav, Navbar, Container, Row, Card, Alert, Col } from "react-bootstrap";
 
 // Custom Components
 import MintingTool from "./Components/MintingTool";
 import InfoBubble from "./Components/InfoBubble";
+import CreateNFT from "./Components/CreateNFT";
 
 // assets
-import Logo from "./assets/logo-white.svg";
+import Logo from "./assets/main.png";
 
 import getConfig from "./config";
 const { networkId } = getConfig(process.env.NODE_ENV || "development");
@@ -52,7 +53,7 @@ export default function App() {
               height='30'
               className='d-inline-block align-top'
             />{" "}
-            NEAR Protocol
+            Tjelailah's NEAR NFT
           </Navbar.Brand>
           <Navbar.Toggle aria-controls='responsive-navbar-nav' />
           <Navbar.Collapse id='responsive-navbar-nav'>
@@ -81,11 +82,16 @@ export default function App() {
             to see your new "Go Team" NFT!
           </Alert>
         </Row>
-        <Row>
-          <InfoBubble />
-        </Row>
-        <Row style={{ marginTop: "3vh" }}>
-          <MintingTool userNFTStatus={userHasNFT} />
+        <Row className="cards">
+          <Col >
+            <InfoBubble />
+          </Col>
+          <Col>
+            <MintingTool userNFTStatus={userHasNFT} />
+          </Col>
+          <Col>
+            <CreateNFT />
+          </Col>
         </Row>
       </Container>
     </React.Fragment>

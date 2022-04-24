@@ -4,7 +4,7 @@ import { Form, Button, Card, Container, Row, Alert, Col } from "react-bootstrap"
 import { keys } from "regenerator-runtime";
 const BN = require("bn.js");
 
-const MintingTool = (props) => {
+const CreateNFT = () => {
   const mintNFT = async () => {
     await window.contract.nft_mint(
       {
@@ -40,7 +40,7 @@ const MintingTool = (props) => {
               NFT
             </p>
             <Button
-            disabled={props.userNFTStatus || window.accountId === ""}
+            disabled={window.accountId === ""}
             onClick={mintNFT}
             style={{ 
               position: "absolute",
@@ -53,8 +53,8 @@ const MintingTool = (props) => {
            {/* </Col> */}
         {/* </Row> */}
         <Row className='d-flex justify-content-center'>
-          {console.log(props.userNFTStatus)}
-          {props.userNFTStatus ? (
+          {console.log(window.accountId)}
+          {window.accountId ? (
             <Alert variant='danger' style={{ marginTop: "2vh" }}>
               <p style={{ textAlign: "center" }}>
                 bruh/sis.... You have an NFT already. You can see it{" "}
@@ -71,6 +71,6 @@ const MintingTool = (props) => {
   );
 };
 
-MintingTool.propTypes = {};
+CreateNFT.propTypes = {};
 
-export default MintingTool;
+export default CreateNFT;

@@ -140,6 +140,15 @@ li {
   padding-bottom: 1em;
 }
 
+.cards {
+  display: inline-block;
+}
+
+.minting-cards {
+  border: none;
+  padding: 30px;
+}
+
 aside {
   animation: notify ease-in-out 10s;
   background-color: var(--shadow);
