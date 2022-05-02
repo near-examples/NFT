@@ -1,0 +1,435 @@
+%%
+%%  Copyright (C) 2020, 2021 by Xiangdong Zeng <xdzeng96@gmail.com>
+%%
+%%  This work may be distributed and/or modified under the
+%%  conditions of the LaTeX Project Public License, either
+%%  version 1.3c of this license or (at your option) any later
+%%  version. The latest version of this license is in:
+%%
+%%    http://www.latex-project.org/lppl.txt
+%%
+%%  and version 1.3 or later is part of all distributions of
+%%  LaTeX version 2005/12/01 or later.
+%%
+%%  This work has the LPPL maintenance status `maintained'.
+%%
+%%  The Current Maintainer of this work is Xiangdong Zeng.
+%%
+\documentclass{l3doc}
+\usepackage{array,booktabs,emoji,fontspec,geometry,graphicx,longtable,xcolor}
+
+\geometry{left=3cm, right=1.6cm, vmargin=3.2cm}
+\setmainfont{NotoSerif}[
+  Extension      = .ttf,
+  UprightFont    = *-Light,
+  BoldFont       = *-Medium,
+  ItalicFont     = *-LightItalic,
+  BoldItalicFont = *-MediumItalic,
+]
+\setsansfont{NotoSans}[
+  Extension      = .ttf,
+  UprightFont    = *-SemiCondensed,
+  BoldFont       = *-SemiCondensedBold,
+  ItalicFont     = *-SemiCondensedItalic,
+  BoldItalicFont = *-SemiCondensedBoldItalic,
+]
+\setmonofont{NotoSansMono}[
+  Ligatures      = CommonOff,
+  Extension      = .ttf,
+  UprightFont    = *-CondensedLight,
+  BoldFont       = *-CondensedMedium,
+]
+% \setemojifont{Twemoji Mozilla}[BoldFont=*]
+\setemojifont{TwemojiMozilla.ttf}[Path=fonts/twemoji-colr/, BoldFont=*]
+
+\newfontface\fontja{Source Han Serif Light}
+\newfontface\fontsymbol{Noto Sans Symbols Light}
+\newfontface\ttcond{NotoSansMono-ExtraCondensedLight.ttf}[Ligatures=CommonOff]
+
+\makeatletter
+\ExplSyntaxOn
+
+\cs_set:Npn \@pnumwidth { 1.8em }
+
+\cs_set_protected:Npn \__codedoc_meta_original:n #1
+  {
+    {\fontsymbol\symbol{"2329}}
+    \kern.2pt
+    \group_begin:
+      \normalfont \rmfamily \itshape
+      \edef \meta@hyphen@restore
+        { \hyphenchar \the \font \the \hyphenchar \font }
+      \hyphenchar \font \m@ne
+      \language \l@nohyphenation
+      #1 \/
+      \meta@hyphen@restore
+    \group_end:
+    \kern-.2pt
+    {\fontsymbol\symbol{"232A}}
+  }
+
+\DeclareRobustCommand{\LaTeX}{
+  L\kern-.34em
+  \raisebox{.36ex}{\scalebox{0.9}{\textsc{a}}}
+  \kern-.12em
+  \TeX}
+
+\def\@fnsymbol#1{
+  \ensuremath{
+    \ifcase #1
+      \or \text{\emoji{globe-with-meridians}}
+      \or \text{\emoji{email}}
+    \fi}}
+
+\bool_new:N \g__emoji_doc_after_group_bool
+\bool_new:N \g__emoji_doc_first_group_bool
+\int_new:N  \g__emoji_doc_group_count_int
+\int_new:N  \g__emoji_doc_subgroup_count_int
+\int_new:N  \g__emoji_doc_total_count_int
+\str_new:N  \g__emoji_doc_group_str
+\str_new:N  \g__emoji_doc_subgroup_str
+
+\cs_set:Npn \__emoji_def:nnnnn
+  {
+    \int_gincr:N \g__emoji_doc_group_count_int
+    \int_gincr:N \g__emoji_doc_subgroup_count_int
+    \int_gincr:N \g__emoji_doc_total_count_int
+    \char_set_catcode_other:N \^
+    \__emoji_def_aux:nnnnn
+  }
+\cs_set:Npn \__emoji_def_aux:nnnnn #1#2#3#4#5
+  {
+      \emoji {#2}
+    & \ttcond \scriptsize #2
+    & \ttcond \scriptsize
+      \clist_use:nn {#3} { , ~ }
+    & \scriptsize #4
+    & \ttcond \scriptsize
+      \str_set:Nn \l_tmpa_str {#1}
+      \str_replace_all:Nnn \l_tmpa_str { ^ ^ ^ ^ ^ ^ 0 } { , }
+      \str_replace_all:Nnn \l_tmpa_str { ^ ^ ^ ^ }       { , }
+      \exp_args:Nx \clist_use:nn
+        { \str_uppercase:f { \str_tail:N \l_tmpa_str } }
+        { ~ }
+    & \ttcond \scriptsize E#5
+    \char_set_catcode_math_superscript:N \^
+    \\
+  }
+
+\newcolumntype {C} [1] { > { \centering   \arraybackslash } m {#1} }
+\newcolumntype {P} [1] { > { \raggedright \arraybackslash } m {#1} }
+
+\cs_set:Npn \__emoji_group:n #1
+  {
+    \bool_if:NTF \g__emoji_doc_first_group_bool
+      { \bool_set_false:N \g__emoji_doc_first_group_bool }
+      { \__emoji_doc_end_group: }
+    \str_gset:Nn \g__emoji_doc_group_str {#1}
+    \str_gremove_all:Nn \g__emoji_doc_group_str { ~\&~ }
+    \exp_args:Nx \subsubsection
+      { #1 ~ ( \exp_not:N \ref* { count: emoji@ \g__emoji_doc_group_str } ) }
+    \newcounter { emoji@ \g__emoji_doc_group_str }
+    \int_gzero:N \g__emoji_doc_group_count_int
+    \bool_set_true:N \g__emoji_doc_after_group_bool
+  }
+
+\cs_set:Npn \__emoji_subgroup:n #1
+  {
+    \bool_if:NF \g__emoji_doc_after_group_bool
+      { \__emoji_doc_end_longtable: }
+    \bool_set_false:N \g__emoji_doc_after_group_bool
+    \str_gset:Nn \g__emoji_doc_subgroup_str {#1}
+    \str_gremove_all:Nn \g__emoji_doc_subgroup_str { ~\&~ }
+    \newcounter { emoji@ \g__emoji_doc_subgroup_str }
+    \int_gzero:N \g__emoji_doc_subgroup_count_int
+    \__emoji_doc_begin_longtable:x
+      { #1 ~ ( \exp_not:N \ref* { count: emoji@ \g__emoji_doc_subgroup_str } ) }
+  }
+
+\cs_set:Npn \__emoji_doc_begin_longtable:n #1
+  {
+    \begin{longtable} { C{1.1cm} P{3.6cm} P{2.4cm} P{3.6cm} C{1.8cm} C{1.2cm} }
+        \caption{#1} \\
+        \__emoji_doc_longtable_head:
+      \endfirsthead
+        \__emoji_doc_longtable_head:
+      \endhead
+        \bottomrule
+      \endfoot
+  }
+\cs_generate_variant:Nn \__emoji_doc_begin_longtable:n { x }
+
+\cs_set:Npn \__emoji_doc_longtable_head:
+  {
+    \toprule
+      \strong{\small Emoji}
+    & \strong{\small Fullname}
+    & \strong{\small Aliases}
+    & \strong{\small Description}
+    & \strong{\small Codepoints}
+    & \strong{\small Version} \\
+    \midrule
+  }
+
+\cs_set:Npn \__emoji_doc_end_longtable:
+  {
+    \end{longtable}
+    \int_set:cn
+      { c@emoji@ \g__emoji_doc_subgroup_str }
+      { \g__emoji_doc_subgroup_count_int - 1 }
+    \refstepcounter { emoji@ \g__emoji_doc_subgroup_str }
+    \label { count: emoji@ \g__emoji_doc_subgroup_str }
+  }
+
+\cs_set:Npn \__emoji_doc_end_group:
+  {
+    \__emoji_doc_end_longtable:
+    \int_set:cn
+      { c@emoji@ \g__emoji_doc_group_str }
+      { \g__emoji_doc_group_count_int - 1 }
+    \refstepcounter { emoji@ \g__emoji_doc_group_str }
+    \label { count: emoji@ \g__emoji_doc_group_str }
+  }
+
+\cs_new_protected:Npn \EMOJITABLE
+  {
+    \bool_set_true:N \g__emoji_doc_first_group_bool
+    \input { emoji-table.def }
+    \__emoji_doc_end_group:
+    \newcounter { emoji }
+    \int_set:cn { c@emoji } { \g__emoji_doc_total_count_int - 1 }
+    \refstepcounter { emoji }
+    \label { count: emoji }
+    \ExplSyntaxOff
+  }
+
+\ExplSyntaxOff
+\makeatother
+
+\hypersetup{citecolor=green!75!black}
+\linespread{1.2}
+
+\def\LuaLaTeX{Lua\LaTeX}
+\def\LuaHBTeX{LuaHB\TeX}
+
+\def\contentsname{\emoji{snowman} Contents}
+\def\refname{\emoji{mortar-board} References}
+
+\title{The \pkg{emoji} package \thanks{\url{https://github.com/stone-zeng/latex-emoji}} \\
+  Emoji support in (Lua)\LaTeX}
+\author{Xiangdong Zeng \thanks{\url{xdzeng96@gmail.com}}}
+\date{\emoji{date} 2021/07/17\quad v0.2.2}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{\emoji{hamburger} Introduction}
+
+\strong{Emoji} (\emoji{jp}: {\fontja 絵文字}) are pictographs (pictorial symbols) that are
+typically presented in a colorful cartoon form and used inline in text. They represent things
+such as faces, weather, vehicles and buildings, food and drink, animals and plants, or icons
+that represent emotions, feelings, or activities.\textsuperscript{\cite{utr51}}
+
+In 2019, \href{https://github.com/luigiScarso}{Luigi Scarso} has integrated the
+\href{https://github.com/harfbuzz/harfbuzz}{HarfBuzz} library into \LuaTeX.%
+\footnote{\href{https://github.com/khaledhosny}{Khaled Hosny} has also created a similar project
+  \href{https://github.com/khaledhosny/harftex}{HarfTeX}.}
+While the original purpose is to optimize the rendering of indic and arabic scripts, emoji are
+also supported by this new extended version of \TeX{} at the same time.
+
+The \pkg{emoji} package allows user to typeset emoji in a \LaTeX{} document. It requires
+\LuaHBTeX{}, which is the backend of \texttt{lualatex} since \TeX{} Live 2020. In \TeX{} Live
+2019, only \texttt{lualatex-dev} can be used to compile.
+
+Emoji has been included in the Unicode Standard since 2009. The \pkg{emoji} package support
+the latest version Emoji 13.1 (published on 2020-09-18).%
+\footnote{Starting with version 11.0, the repertoire of emoji characters is synchronized with
+  the Unicode Standard, and has the same version numbering system.}
+
+\section{\emoji{fire} Basic usage}
+
+\subsection{\emoji{car} Load the package}
+
+The package should be loaded in the usual way:
+
+\begin{verbatim}
+  \usepackage{emoji}
+\end{verbatim}
+
+\subsection{\emoji{beer} Set emoji fonts}
+
+On Windows, macOS or Linux systems, the \pkg{emoji} package will automatically select available
+emoji fonts. If the package can't find any emoji fonts, or if you want to change the default font,
+you can use the following command to set emoji font manually.
+
+\begin{function}{\setemojifont}
+  \begin{syntax}
+    \cs{setemojifont}\marg{font}\oarg{font features}
+  \end{syntax}
+  This command is similar to \cs{setmainfont} provided by \pkg{fontspec}, but only works for
+  emoji. The optional \meta{font features} should be a key-value list, which is described in the
+  document of \pkg{fontspec} package in detail.
+
+  You can use this command in the preamble or in the document body. Only emoji afterwards will
+  be affected.
+\end{function}
+
+Examples:
+
+\begin{verbatim}
+  % Font name
+  \setemojifont{Apple Color Emoji}
+
+  % File name with explicit path
+  \setemojifont{EmojiOneMozilla.ttf}[Path=./fonts/]
+\end{verbatim}
+
+\subsection{\emoji{art} Use emoji}
+
+\begin{function}{\emoji}
+  \begin{syntax}
+    \cs{emoji}\marg{name}
+  \end{syntax}
+  This is the main command to use emoji. All valid \meta{name} can be found in
+  \autoref{subsec:emoji-list} (fullnames and aliases are both OK).
+\end{function}
+
+Examples:
+
+\begin{verbatim}
+  \emoji{joy}
+  \emoji{+1}
+  \emoji{family-man-woman-girl-boy}
+  \emoji{woman-and-man-holding-hands-light-skin-tone-medium-dark-skin-tone}
+\end{verbatim}
+
+\emoji{joy} \emoji{+1} \emoji{family-man-woman-girl-boy}
+\emoji{woman-and-man-holding-hands-light-skin-tone-medium-dark-skin-tone}
+
+\section{\emoji{electric-plug} Technical details}
+
+\subsection{\emoji{orange-book} Emoji list}
+\label{subsec:emoji-list}
+
+The emoji and their description are from Unicode's
+\href{https://www.unicode.org/Public/emoji/latest/emoji-test.txt}{\file{emoji-test.txt}},
+while the aliases are from GitHub's
+\href{https://github.com/github/gemoji/blob/master/db/emoji.json}{\file{emoji.json}}.
+
+There are totally \ref*{count:emoji} emoji listed here. This should equal to the number of
+fully-qualified emoji and components in Unicode standard.
+
+In the following list, emoji is shown with Twemoji font. The fullname is actually a sanitized
+version of description, which is from the CLDR short name. The version field \texttt{Ex.x}
+corresponds to the Emoji version when the emoji character or emoji sequence was first defined.
+
+\EMOJITABLE
+
+\subsection{\emoji{hammer-and-wrench} Fonts}
+
+At present, \LuaHBTeX{} doesn's support OpenType \texttt{SVG} table, so not all color emoji fonts
+can be used normally. Some typical fonts are listed in \autoref{tab:emoji-fonts}.
+
+\begingroup
+
+\def\y{\emoji{white-check-mark}}
+\def\x{\emoji{negative-squared-cross-mark}}
+\small
+
+\begin{longtable}{cccccc}
+    \caption{Typical color emoji fonts}
+    \label{tab:emoji-fonts}
+  \endfirsthead
+    \toprule
+      \strong{Font name}
+    & \strong{OpenType table(s)}
+    & \strong{Bitmap?}
+    & \strong{Vector?}
+    & \strong{Support?}
+    & \strong{Reference} \\
+    \midrule
+      Apple Color Emoji   & \texttt{sbix}               & \y &    & \y &                     \\
+      Segoe UI Emoji      & \texttt{COLR}/\texttt{CPAL} &    & \y & \y &                     \\
+      EmojiOne Mozilla    & \texttt{COLR}/\texttt{CPAL} &    & \y & \y & \cite{twemoji-colr} \\
+      Twemoji Mozilla     & \texttt{COLR}/\texttt{CPAL} &    & \y & \y & \cite{twemoji-colr} \\
+      Noto Color Emoji    & \texttt{CBDT}/\texttt{CBLC} & \y &    & \y & \cite{noto-emoji}   \\
+      JoyPixels           & \texttt{CBDT}/\texttt{CBLC} & \y &    & \y & \cite{joypixels}    \\
+      EmojiOne            & \texttt{SVG}                &    & \y & \x & \cite{emojione}     \\
+      Twitter Color Emoji & \texttt{SVG}                &    & \y & \x & \cite{twemoji}      \\
+    \bottomrule
+\end{longtable}
+
+\endgroup
+
+This document uses the following fonts:
+
+\begin{itemize}
+  \item Noto Serif
+  \item Noto Sans
+  \item Noto Sans Mono
+  \item Noto Sans Symbols
+  \item Source Han Serif ({\fontja 源ノ明朝})
+  \item Twemoji Mozilla
+\end{itemize}
+
+\subsection{\emoji{construction} Known issues}
+
+The \pkg{emoji} package is highly experimental and may have a lot of bugs inevitably. For example:
+
+\begin{itemize}
+  \item Spacing around emoji may be abnormal
+  \item The emoji may not be copied from PDF
+\end{itemize}
+
+If you have any problems when using this package, please create an issue on GitHub or send
+an email to the author.
+
+\subsection{\emoji{pencil} Todo list}
+
+The following features may be added in the future:
+
+\begin{itemize}
+  \item Allow direct input of emoji
+  \item Add options including default skin tones, genders, etc.
+  \item Support more fonts
+  \item Automatically fallback
+\end{itemize}
+
+\begin{thebibliography}{9}
+  \def\newblock{\\}
+  \small
+
+  \bibitem{utr51}
+  Unicode\textregistered{} Technical Standard \#51: Unicode Emoji
+  \newblock \url{https://www.unicode.org/reports/tr51/}
+
+  \bibitem{emojipedia}
+  \emoji{orange-book} Emojipedia --- \emoji{smiley} Home of Emoji Meanings
+  \emoji{information-desk-person}\emoji{ok-hand}\emoji{bamboo}\emoji{heart-eyes}
+  \newblock \url{https://emojipedia.org/}
+
+  \bibitem{noto-emoji}
+  Noto Color Emoji --- Google Noto Fonts
+  \newblock \url{https://www.google.com/get/noto/help/emoji/}
+
+  \bibitem{twemoji}
+  Twemoji
+  \newblock \url{https://twemoji.twitter.com/}
+
+  \bibitem{twemoji-colr}
+  Twemoji font in COLR/CPAL layered format\footnote{Before v0.3, it was based on EmojiOne.}
+  \newblock \url{https://github.com/mozilla/twemoji-colr}
+
+  \bibitem{emojione}
+  OpenType-SVG font of EmojiOne 2.3
+  \newblock \url{https://github.com/adobe-fonts/emojione-color}
+
+  \bibitem{joypixels}
+  JoyPixels\texttrademark{} --- Emoji as a Service (formerly EmojiOne)
+  \newblock \url{https://www.joypixels.com/}
+\end{thebibliography}
+
+\end{document}

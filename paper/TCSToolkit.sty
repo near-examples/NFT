@@ -1,0 +1,233 @@
+% Style file created by Ryan O'Donnell, Jan. 2022
+\usepackage{listings}
+\usepackage{amsmath,amssymb,amsthm,amsfonts,latexsym,mathtools,mathdots,bbm,graphicx,float}
+\usepackage{braket,caption,subcaption,ellipsis,xcolor,textcomp,thmtools,thm-restate,cmap,mleftright}
+\usepackage[backref,colorlinks,citecolor=blue,bookmarks=true]{hyperref}
+\usepackage[nameinlink]{cleveref}
+\crefname{ineq}{inequality}{inequalities}
+\creflabelformat{ineq}{#2{\upshape(#1)}#3}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+
+% environments
+\declaretheorem[numberwithin=section]{theorem}
+\declaretheorem[sibling=theorem]{lemma}
+\declaretheorem[sibling=theorem]{claim}
+\declaretheorem[sibling=theorem]{proposition}
+\declaretheorem[sibling=theorem]{fact}
+\declaretheorem[sibling=theorem]{corollary}
+\declaretheorem[sibling=theorem]{conjecture}
+\declaretheorem[sibling=theorem]{question}
+\declaretheorem[sibling=theorem]{answer}
+\declaretheorem[sibling=theorem]{solution}
+\declaretheorem[sibling=theorem]{hypothesis}
+\declaretheorem[sibling=theorem]{exercise}
+\theoremstyle{definition}
+\declaretheorem[sibling=theorem]{definition}
+\declaretheorem[sibling=theorem]{remark}
+\declaretheorem[sibling=theorem]{notation}
+\declaretheorem[sibling=theorem]{observation}
+\declaretheorem[sibling=theorem]{example}
+
+\newcommand{\ignore}[1]{}
+
+% probability type operators
+        \let\Pr\relax
+\DeclareMathOperator*{\Pr}{\mathbf{Pr}}
+\DeclareMathOperator*{\E}{\mathbf{E}}
+\DeclareMathOperator*{\Ex}{\mathbf{E}}
+\DeclareMathOperator*{\Var}{\mathbf{Var}}
+\DeclareMathOperator*{\Cov}{\mathbf{Cov}}
+\DeclareMathOperator*{\stddev}{\mathbf{stddev}}
+\DeclareMathOperator{\littlesum}{{\textstyle \sum}}
+\DeclareMathOperator{\littleprod}{{\textstyle \prod}}
+\DeclareMathOperator*{\avg}{avg}
+
+
+% math terms 
+\DeclareMathOperator{\poly}{poly}
+\DeclareMathOperator{\polylog}{polylog}
+\DeclareMathOperator{\size}{size}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\dist}{dist}
+\DeclareMathOperator{\vol}{vol}
+\DeclareMathOperator{\spn}{span}
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\codim}{codim}
+\newcommand{\pluseq}{\mathrel{+}=}
+\DeclareMathOperator{\diag}{diag}
+
+% number systems
+\newcommand{\R}{\mathbbm R}
+\newcommand{\C}{\mathbbm C}
+\newcommand{\N}{\mathbbm N}
+\newcommand{\Z}{\mathbbm Z}
+\newcommand{\F}{\mathbbm F}
+\newcommand{\Q}{\mathbbm Q}
+
+% complexity classes
+\newcommand{\PTIME}{\mathsf{P}}
+\newcommand{\LOGSPACE}{\mathsf{L}}
+\newcommand{\ZPP}{\mathsf{ZPP}}
+\newcommand{\RP}{\mathsf{RP}}
+\newcommand{\BPP}{\mathsf{BPP}}
+\newcommand{\NP}{\mathsf{NP}}
+\newcommand{\TC}{\mathsf{TC}}
+\newcommand{\AC}{\mathsf{AC}}
+\newcommand{\SC}{\mathsf{SC}}
+\newcommand{\SZK}{\mathsf{SZK}}
+\newcommand{\AM}{\mathsf{AM}}
+\newcommand{\IP}{\mathsf{IP}}
+\newcommand{\PSPACE}{\mathsf{PSPACE}}
+\newcommand{\EXP}{\mathsf{EXP}}
+\newcommand{\MIP}{\mathsf{MIP}}
+\newcommand{\NEXP}{\mathsf{NEXP}}
+\newcommand{\BQP}{\mathsf{BQP}}
+
+% short forms
+\newcommand{\eps}{\epsilon}
+\newcommand{\lam}{\lambda}
+\newcommand{\dleta}{\delta}
+\newcommand{\simga}{\sigma}
+\newcommand{\vphi}{\varphi}
+\newcommand{\la}{\langle}
+\newcommand{\ra}{\rangle}
+\newcommand{\wt}[1]{\widetilde{#1}}
+\newcommand{\wh}[1]{\widehat{#1}}
+\newcommand{\ol}[1]{\overline{#1}}
+\newcommand{\ul}[1]{\underline{#1}}
+\newcommand{\ot}{\otimes}
+\newcommand{\zo}{\{0,1\}}
+\newcommand{\co}{:}                       %\newcommand{\co}{\colon}
+\newcommand{\bdry}{\partial}
+\newcommand{\grad}{\nabla}
+\newcommand{\transp}{^\intercal}
+\newcommand{\inv}{^{-1}}
+\newcommand{\symmdiff}{\triangle} \newcommand{\symdiff}{\symmdiff}
+\newcommand{\half}{\tfrac{1}{2}}
+\newcommand{\bbone}{\mathbbm 1}
+\newcommand{\Id}{\bbone}
+
+
+% calligraphic letters
+\newcommand{\calA}{\mathcal{A}}
+\newcommand{\calB}{\mathcal{B}}
+\newcommand{\calC}{\mathcal{C}}
+\newcommand{\calD}{\mathcal{D}}
+\newcommand{\calE}{\mathcal{E}}
+\newcommand{\calF}{\mathcal{F}}
+\newcommand{\calG}{\mathcal{G}}
+\newcommand{\calH}{\mathcal{H}}
+\newcommand{\calI}{\mathcal{I}}
+\newcommand{\calJ}{\mathcal{J}}
+\newcommand{\calK}{\mathcal{K}}
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\calM}{\mathcal{M}}
+\newcommand{\calN}{\mathcal{N}}
+\newcommand{\calO}{\mathcal{O}}
+\newcommand{\calP}{\mathcal{P}}
+\newcommand{\calQ}{\mathcal{Q}}
+\newcommand{\calR}{\mathcal{R}}
+\newcommand{\calS}{\mathcal{S}}
+\newcommand{\calT}{\mathcal{T}}
+\newcommand{\calU}{\mathcal{U}}
+\newcommand{\calV}{\mathcal{V}}
+\newcommand{\calW}{\mathcal{W}}
+\newcommand{\calX}{\mathcal{X}}
+\newcommand{\calY}{\mathcal{Y}}
+\newcommand{\calZ}{\mathcal{Z}}
+
+% bold
+\newcommand{\bone}{\boldsymbol{1}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bdelta}{\boldsymbol{\delta}}
+\newcommand{\bepsilon}{\boldsymbol{\epsilon}}
+\newcommand{\blambda}{\boldsymbol{\lambda}}
+\newcommand{\bomega}{\boldsymbol{\omega}}
+\newcommand{\bpi}{\boldsymbol{\pi}}
+\newcommand{\bphi}{\boldsymbol{\phi}}
+\newcommand{\bvphi}{\boldsymbol{\varphi}}
+\newcommand{\bpsi}{\boldsymbol{\psi}}
+\newcommand{\bsigma}{\boldsymbol{\sigma}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\btau}{\boldsymbol{\tau}}
+\newcommand{\ba}{\boldsymbol{a}}
+\newcommand{\bb}{\boldsymbol{b}}
+\newcommand{\bc}{\boldsymbol{c}}
+\newcommand{\bd}{\boldsymbol{d}}
+\newcommand{\be}{\boldsymbol{e}}
+\newcommand{\boldf}{\boldsymbol{f}}
+\newcommand{\bg}{\boldsymbol{g}}
+\newcommand{\bh}{\boldsymbol{h}}
+\newcommand{\bi}{\boldsymbol{i}}
+\newcommand{\bj}{\boldsymbol{j}}
+\newcommand{\bk}{\boldsymbol{k}}
+\newcommand{\bell}{\boldsymbol{\ell}}
+\newcommand{\bm}{\boldsymbol{m}}
+\newcommand{\bn}{\boldsymbol{n}}
+\newcommand{\bo}{\boldsymbol{o}}
+\newcommand{\bp}{\boldsymbol{p}}
+\newcommand{\bq}{\boldsymbol{q}}
+\newcommand{\br}{\boldsymbol{r}}
+\newcommand{\bs}{\boldsymbol{s}}
+\newcommand{\bt}{\boldsymbol{t}}
+\newcommand{\bu}{\boldsymbol{u}}
+\newcommand{\bv}{\boldsymbol{v}}
+\newcommand{\bw}{\boldsymbol{w}}
+\newcommand{\bx}{{\boldsymbol{x}}}
+\newcommand{\by}{\boldsymbol{y}}
+\newcommand{\bz}{\boldsymbol{z}}
+\newcommand{\bA}{\boldsymbol{A}}
+\newcommand{\bB}{\boldsymbol{B}}
+\newcommand{\bC}{\boldsymbol{C}}
+\newcommand{\bD}{\boldsymbol{D}}
+\newcommand{\bE}{\boldsymbol{E}}
+\newcommand{\bF}{\boldsymbol{F}}
+\newcommand{\bG}{\boldsymbol{G}}
+\newcommand{\bH}{\boldsymbol{H}}
+\newcommand{\bI}{\boldsymbol{I}}
+\newcommand{\bJ}{\boldsymbol{J}}
+\newcommand{\bK}{\boldsymbol{K}}
+\newcommand{\bL}{\boldsymbol{L}}
+\newcommand{\bM}{\boldsymbol{M}}
+\newcommand{\bN}{\boldsymbol{N}}
+\newcommand{\bP}{\boldsymbol{P}}
+\newcommand{\bQ}{\boldsymbol{Q}}
+\newcommand{\bR}{\boldsymbol{R}}
+\newcommand{\bS}{\boldsymbol{S}}
+\newcommand{\bT}{\boldsymbol{T}}
+\newcommand{\bU}{\boldsymbol{U}}
+\newcommand{\bV}{\boldsymbol{V}}
+\newcommand{\bW}{\boldsymbol{W}}
+\newcommand{\bX}{\boldsymbol{X}}
+\newcommand{\bY}{\boldsymbol{Y}}
+\newcommand{\bZ}{\boldsymbol{Z}}
+
+% bold calligraphic
+\newcommand{\bcalG}{\boldsymbol{\calG}} \newcommand{\calbG}{\bcalG}
+\newcommand{\bcalX}{\boldsymbol{\calX}} \newcommand{\calbX}{\bcalX}
+\newcommand{\bcalY}{\boldsymbol{\calY}} \newcommand{\calbY}{\bcalY}
+\newcommand{\bcalZ}{\boldsymbol{\calZ}} \newcommand{\calbZ}{\bcalZ}
+
+% left-right wrappers
+\DeclarePairedDelimiter\parens{\lparen}{\rparen}
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\braces{\lbrace}{\rbrace}
+\DeclarePairedDelimiter\bracks{\lbrack}{\rbrack}
+\DeclarePairedDelimiter\angles{\langle}{\rangle}
+
+
+% something for figures
+\newcommand{\myfig}[4]{\begin{figure}[H] \centering \includegraphics[width=#1\textwidth]{#2} \caption{#3} \label{#4} \end{figure}}
+
+\newcommand{\limto}[3]{\underset{#1 \rightarrow #2}{\lim}#1}
+
+\DeclareMathOperator{\binomial}{binomial}
+\newcommand*\xor{\oplus}

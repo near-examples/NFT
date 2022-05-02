@@ -1,0 +1,109 @@
+\documentclass[11pt,titlepage]{article}
+\usepackage{TCSToolkit}
+
+\newcommand{\dofloor}[1]{\lfloor#1\rfloor}
+\newcommand{\doceil}[1]{\lceil#1\rceil}
+
+
+%%%%% Stuff you can change %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\myname}{Lev Stambler}
+%
+
+
+%
+% Final tip: you can reference HW5 in your TeX using \Cref{hw:5}; 
+% and, you can reference HW5.Problem3 in your TeX using \Cref{prob:5.3}
+%
+
+
+%%%%% Section-renaming code by egreg
+\makeatletter
+% we use \prefix@<level> only if it is defined
+\renewcommand{\@seccntformat}[1]{%
+  \ifcsname prefix@#1\endcsname
+    \csname prefix@#1\endcsname
+  \else
+    \csname the#1\endcsname\quad
+  \fi}
+% Now we define our homework section prefixes
+% \newcommand\prefix@section{Homework \thesection: }
+% \newcommand{\prefix@subsection}{Problem \thesubsection: }
+% \newcommand{\prefix@subsubsection}{Section \thesubsubsection: }
+\makeatother
+%%%%%
+
+
+
+
+\begin{document}
+
+\title{Drawing Math}
+
+\author{\myname}
+
+\date{\today}
+
+\maketitle
+
+\pagebreak
+\section{Introduction}
+- Numberphile video
+- I was bored and this looked fun
+- I wasn't paying attention in one of my lectures...
+- This paper is purely for funs... for now
+
+\section{Background}
+- Digital math
+- Euler's formula
+- I payed attention in some of my lectures
+
+\section{Definitions and questions}
+\subsection{Definitions}
+Say you (yes you!) had a turtle living in $D$ dimensional Euclidean
+space and in discrete time. At time step $i$, where $i \in \Z$ and $i > 0$,
+the turtle has position $p_i \in \R^D$.
+Then, lets define $\Delta p_{i+1} = p_{i+1} - p_i$; in other words, $\Delta p_{i+1}$ is the change in position from time $i$ to $i + 1$.
+
+Now say that the turtle's movement is determined by $k$ seed parameters drawn from
+the same set. Then, for some state space $\mathcal{S}$,
+define $s_i^j \in \mathcal{S}$ to be some arbitrary
+state associated with timestamp $i$ for the $j$th seed parameter where $j \in [k]$.
+Next we will define a set of functions $SU_j: \mathcal{S} \rightarrow \mathcal{S}$
+(for $S$tate $U$pdater) such that $s_{i + 1}^j = SU_j(s_i^j, i)$. Note that for
+$j, a \in [m]$ where $j \neq a$, $s_{i+1}^j$ is determined solely by $s_i^j$ and $i$ and not
+$s_i^a$.
+
+Now that we have our machinery built up, lets define $f^k: \mathcal{S} \rightarrow \R$
+and $Comb: \R^k \rightarrow \R^d$ such that
+$$
+  \Delta p_{i + 1} = Comb\left(f^1(s^1_{i + 1}), f^2(s^2_{i + 1}), ..., f^k(s^k_{i + 1})\right).
+$$
+In other words, $Comb$ takes in a real number determined by the state of each seed and
+returns an update to the position of the turtle.
+
+\subsection{Our case}
+We only consider the case where
+$$
+  Comb(x_1, x_2, ..., x_k) = \left(\prod_{i=1}^k x_j ^ {\mathrm{incl}_1^j}, ..., \prod_{i=1}^k x_j ^ {\mathrm{incl}_D^j}\right)
+$$
+where $incl_d^j \in \set{0, 1}$ for $d \in [D]$ indicates whether to include a given
+$x \in R$ determined by seed $j$ for position update in the $d$th dimension.
+
+
+
+\section{Results}
+\cite{watrous2018theory}
+
+\section{Conclusion}
+
+\section{Open Questions}
+
+
+\section*{Acknowledgments}
+
+
+\bibliographystyle{alpha}
+\bibliography{bib/ref}
+
+
+\end{document}

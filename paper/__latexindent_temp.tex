@@ -1,0 +1,69 @@
+Let $K$ be a $k$-wise independent generator with output size $n$ and seed size $\ell'$.
+Note, that using BCH codes as discussed in class, we can construct such a generator which is computable in $\text{poly}(n)$
+time and with $\ell' = O\mleft(k \log n\mright)$.
+% TODO: q
+
+Then, let $G$ be an $\epsilon$-biased generator with output size $\ell'$.
+Using Reed Solomon codes concatenated with Hadamard codes, we can get such a generator
+which is computable in $\text{poly}(n/\epsilon)$ time with seed size 
+$$
+	\ell = O\mleft(\log(\ell'/\epsilon)\mright) = O\mleft(
+			\log \mleft(
+				\frac{k \log n}{\epsilon}
+			\mright)
+		\mright) = O\mleft(
+			\log(k) + \log\log(n) + \log(1/\epsilon)
+		\mright).
+$$
+
+
+Then, to create an $\epsilon$-almost $k$-wise independent generator, $P$, 
+let $P(s) = K(G(s))$ where $s$ is a seed. Note that the seed size is
+$O(\log(k) + \log\log(n) + \log(1/\epsilon))$ and $A$ is computable in $\text{poly}(n/\epsilon)$ time.
+
+Note that because $K, G$ are defined by linear codes, we can rewrite 
+$P(s)$ as $s \bG \bK$ where $\bG, \bK$ are matrices.
+
+Then, take a $w \in \F_2^n$ with $|w| = r \leq k$ ($|w|$ connoting $w$'s Hamming weight) and
+any $a \in F_2^n$. Define index $j \in [n]$ of $a$ to be ``important" if $w_j = 1$.
+Note, that there are $r$ ``important" bits. Then, if $a$ has an odd number of
+important bits equaling 1, $w \cdot a = 1$.
+So then, let 
+$
+	S' = \set{s \subseteq \texttt{important bit indices} : \texttt{where |s| is odd}}
+$. Then, note that 
+$$
+	|S'| = \binom{r}{1} + \binom{r}{3} + ... + \binom{r}{2\lfloor r/2 \rfloor} = 2^{r - 1}
+$$
+
+% In order for $w \cdot a = 1$, $w$ and $a$ must both have 1s in 
+% an odd number of indices. Define $S' = \set{a \cdot w = 1 : a \in F_2^n}$. Then $|S'|$
+% equals 
+% $$
+% 	2^{n-r} \cdot \mleft() = 2^{n-r} \cdot 2^{r-1} = 2^{n-1}
+% $$
+% because $n-r$ bits can vary freely for any $s \in S'$ without changing the dot product.
+
+% Then, because at most $k$ bits define whether $a \in F_2^n$ is in $S'$
+% and, ... TODO:
+
+
+% Then
+% Then,
+% $$
+% \Pr_{a \sim \F_2^n}\mleft[a \cdot w = 1\mright] = \frac{1}{2}
+% $$
+% because out of $2^n$ possible $a$, 
+% % Then, $w \cdot a = 1$ iff $|A \bigcap W|$ is odd.
+
+
+% % TODO: structure
+
+% % 1. Make a lemma for w * a = 1 for half of possible a in field (something to do with
+% % take element with w * a = 0, then you can choose even # of the relavent bits within w
+% % https://math.stackexchange.com/questions/459088/sum-k-0n-2-n-choose2k-sum-k-1n-2-n-choose2k-1-combinatori
+
+% % Then use lemma, but whether in 1 or 0 set depends on only k bits.
+% % only depend on
+
+% % 2. 
