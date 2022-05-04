@@ -1,8 +1,9 @@
-\begin{thebibliography}{Wat18}
+\begin{thebibliography}{ho}
 
-\bibitem[Wat18]{watrous2018theory}
-John Watrous.
-\newblock {\em The theory of quantum information}.
-\newblock Cambridge university press, 2018.
+\bibitem[ho]{MathOverflowFracPeriod}
+Glen~O (https://math.stackexchange.com/users/67842/glen o).
+\newblock Length of period of decimal expansion of a fraction.
+\newblock Mathematics Stack Exchange.
+\newblock URL:https://math.stackexchange.com/q/2611737 (version: 2018-01-19).
 
 \end{thebibliography}

@@ -68,31 +68,127 @@ Now say that the turtle's movement is determined by $k$ seed parameters drawn fr
 the same set. Then, for some state space $\mathcal{S}$,
 define $s_i^j \in \mathcal{S}$ to be some arbitrary
 state associated with timestamp $i$ for the $j$th seed parameter where $j \in [k]$.
-Next we will define a set of functions $SU_j: \mathcal{S} \rightarrow \mathcal{S}$
-(for $S$tate $U$pdater) such that $s_{i + 1}^j = SU_j(s_i^j, i)$. Note that for
+Also, define $\pmb{s}_i = (s_i^1, s_i^2, ..., s_i^k)$.
+Next we will define a set of functions $SU^j: \mathcal{S} \rightarrow \mathcal{S}$
+(for $S$tate $U$pdater) such that $s_{i + 1}^j = SU^j(s_i^j, i)$. Note that for
 $j, a \in [m]$ where $j \neq a$, $s_{i+1}^j$ is determined solely by $s_i^j$ and $i$ and not
 $s_i^a$.
 
-Now that we have our machinery built up, lets define $f^k: \mathcal{S} \rightarrow \R$
-and $Comb: \R^k \rightarrow \R^d$ such that
+Now that we have our machinery built up, lets define $Comb: \mathcal{S}^k \rightarrow \R^d$ such that
 $$
-  \Delta p_{i + 1} = Comb\left(f^1(s^1_{i + 1}), f^2(s^2_{i + 1}), ..., f^k(s^k_{i + 1})\right).
+  \Delta p_{i + 1} = Comb\left(s^1_{i + 1}, s^2_{i + 1}, ..., s^k_{i + 1}\right).
 $$
-In other words, $Comb$ takes in a real number determined by the state of each seed and
+In other words, $Comb$ takes in the state of each seed and
 returns an update to the position of the turtle.
 
-\subsection{Our case}
-We only consider the case where
+Finally, let us define
 $$
-  Comb(x_1, x_2, ..., x_k) = \left(\prod_{i=1}^k x_j ^ {\mathrm{incl}_1^j}, ..., \prod_{i=1}^k x_j ^ {\mathrm{incl}_D^j}\right)
+  \Delta P_{a, b} = \sum_{i = a}^{b} \Delta p_i.
 $$
-where $incl_d^j \in \set{0, 1}$ for $d \in [D]$ indicates whether to include a given
+In other words, $\Delta P_{a, b}$ is the change in position from timestep $a$ to $b$.
+
+\subsection{The problem}
+Say we are given, $Comb$, hh$SU^j$, $p_0$, and $s^j_0$ for all $j \in [k]$.
+Informally, the question is whether the turtle draws a ``closed" shape or not.\\
+More formally, is there some period $T$ such that 
+$$
+  p_{i + \ell T} = p_{i}
+$$
+for $i, \ell \in \N$.
+Then, note that if there exists a period $T$ such that 
+$\Delta P_{i, i + \ell T} = 0$ for all $i, \ell \in N$, 
+$p_{i + \ell T} = p_{i}$ and the turtle forms a closed shape.
+
+% TODO: ask closure question
+% TODO: show result that if $(s_{a}^1, ... ) = (s_{b}^1,...)$ then $b-a$ is a period for the state
+% and Delta p_a = p_b and is thus invariant under mod b-a. So, if Delta p_{b-a} \neq 0 
+% we have that the turtle will not move in a closed shape. If Delta p_{b-a} = 0, it will  
+
+\subsection{Specifying the task ahead of us}
+For our case, we consider $Comb, SU^j$ to all be memoryless (i.e.\ there output
+is uniquely determined by the current input). So, we can simplify the overall question.
+If, $\pmb{s}_i = \pmb{s}_{i + \ell T}$ for some $T \in \N$ and all $i \in \N$, then 
+$\Delta p_{i} = \Delta p_{i + \ell T}$. So then,
+$\Delta P_{i, i + \ell T} = \Delta P_{i, i + \ell' T}$ for all $\ell, \ell' \in \N$.
+Thus, $T$ is a period of the change in position. We can thus
+break down our problem into two parts:
+\begin{enumerate}
+  \item Finding the period, $T$, of the state $\pmb{s}$.
+  \item Checking whether $\Delta P_{i, i + T} = 0$.
+\end{enumerate}
+
+\subsection{Some more restrictions on our problem}
+We further restrict the problem by only considering the case where
+$$
+  Comb((., ., ., ., \theta^1), (., ., ., ., \theta^2), ..., (., ., ., ., \theta^k)) =
+    \left(\prod_{i=1}^k \cos(\theta_j) ^ {\mathrm{incl}_1^j}, ..., \prod_{i=1}^k \cos(\theta_j) ^ {\mathrm{incl}_D^j}\right)
+$$
+where $\mathrm{incl}_d^j \in \set{0, 1}$ for $d \in [D]$ indicates whether to include a given
 $x \in R$ determined by seed $j$ for position update in the $d$th dimension.
 
+We will also let $\mathcal{S} = N^5$ where for $(n, d, b, i, \theta) \in \mathcal{S}$,
+$n$ is the numerator of a rational in fraction form, $d$ is the denominator, 
+$b$ is the base (i.e\. base 10, base 12, etc.), $i$ is the current time step,
+and $\frac{2\theta}{b \pi}$ is an ``angle" associated with the state.
+Moreover, we will only consider
+$$
+  SU^j(n, b, d, i, \theta) = (n, b, d, i + 1, \theta + \mathrm{digit}(n, b, d, i) \mod b).
+$$
+
+where $\mathrm{digit}(n, b, d, i)$ gives us the $i$th digit of the decimal expansion of $\frac{n}{d}$
+in base $b$.
+
+Finally, for simplicity's sake, assume that $\theta = 0$ for all $(n, b, d, i, \theta) \in \pmb{s}_0$,
+$n < d$, and $\frac{n}{d}$'s decimal expansion is periodic after some $N \geq 0$ decimal places
+and does not terminate in base $b$.
+
+\subsubsection{Some intuition}
+While the restrictions may seem arbitrary, they aptly match our original problem statement.
+Take the three dimensional case with two seeds. The two seeds can be thought
+of as the fraction which generates the updates to two angles, $\theta, \alpha$.
+$\theta$ and $\alpha$ can then uniquely determine a direction in 3D space in which the 
+turtle is pointing. 
+So, at each time step $i + 1$, $\theta_{i + 1}$ equals to $\theta_i$, but rotated by
+some fraction of $2 \pi$ determined by the $i$th digit of the decimal expansion of one fraction and its base.
+% TODO: clear up.
+
+% TODO: put your own diagram in!!
 
 
 \section{Results}
-\cite{watrous2018theory}
+\subsection{Finding period $T$}
+\subsubsection{Finding the period of $\frac{n}{d}$}
+We will first aim to find period $T$ of the state $\pmb{s}$.
+For some $(n, b, d, i, \theta) \in \pmb{s}_0$, by \cite{MathOverflowFracPeriod},
+we have that the period of the decimal expansion of $\frac{n}{d}$
+can be determined by finding the smallest ${T^j}'$ such that
+$$
+b ^ {{T^j}'} \equiv 1 \mod d.
+$$
+See, appendix \ref{AppendixPeriod} for more detail.
+% TODO: poly time??? (appendix to the algorithm used...
+\subsubsection{Finding the digital root}
+Next, we introduce the idea of a digital root.
+TODO: introduce. Basically this is the amount you add with every ${T^j}'$.
+So, period is ${T^j}' \cdot DigRoot$.
+
+\subsubsection{Finding the period of $s^k$}
+
+\subsubsection{Finding the period of $\pmb{s}$}
+Simply lcm of all other periods
+
+
+
+% TODO: cite https://math.stackexchange.com/questions/377683/length-of-period-of-decimal-expansion-of-a-fraction
+% TODO: formula in poly time
+% TODO: hmmm... specify i > n_0 (to get rid of initial stuff...)
+
+% https://en.wikipedia.org/wiki/Digital_root#:~:text=The%20digital%20root%20(also%20repeated,single%2Ddigit%20number%20is%20reached.
+
+
+\subsection{$\Delta P_{i, i + T} = 0$?}
+% A bunch of sums and multiplies
+% \cite{watrous2018theory}
 
 \section{Conclusion}
 
@@ -102,8 +198,14 @@ $x \in R$ determined by seed $j$ for position update in the $d$th dimension.
 \section*{Acknowledgments}
 
 
+\appendix
+\section{Finding the period of $\frac{n}{d}$}
+\label{AppendixPeriod}
+aaaaa
+
 \bibliographystyle{alpha}
 \bibliography{bib/ref}
+
 
 
 \end{document}
