@@ -28,5 +28,4 @@ export type Angle = {
   iterator: IterableIterator<number>;
   base: number;
   usage: AngleUsageIndicator[];
-	distance
 };
