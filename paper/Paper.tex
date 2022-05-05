@@ -4,7 +4,6 @@
 \newcommand{\dofloor}[1]{\lfloor#1\rfloor}
 \newcommand{\doceil}[1]{\lceil#1\rceil}
 
-
 %%%%% Stuff you can change %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\myname}{Lev Stambler}
 %
@@ -162,17 +161,64 @@ We will first aim to find period $T$ of the state $\pmb{s}$.
 For some $(n, b, d, i, \theta) \in \pmb{s}_0$, by \cite{MathOverflowFracPeriod},
 we have that the period of the decimal expansion of $\frac{n}{d}$
 can be determined by finding the smallest ${T^j}'$ such that
-$$
+\begin{equation}
+\label{eq:nd-period}
 b ^ {{T^j}'} \equiv 1 \mod d.
-$$
+\end{equation}
 See, appendix \ref{AppendixPeriod} for more detail.
-% TODO: poly time??? (appendix to the algorithm used...
-\subsubsection{Finding the digital root}
-Next, we introduce the idea of a digital root.
-TODO: introduce. Basically this is the amount you add with every ${T^j}'$.
-So, period is ${T^j}' \cdot DigRoot$.
+More generally though, any nontrivial ${T^j}'$ satisfying equation \ref{eq:nd-period}
+will be a period of $\frac{n}{d}$.
 
-\subsubsection{Finding the period of $s^k$}
+\begin{remark}[Polytime]
+  TODO: remark about polytime
+\end{remark}
+
+\subsubsection{Digital sum}
+Next, we introduce the idea digitial sums.
+For some number $N \in \N$, $N$ can be represented in base $b$ via
+\begin{equation}
+  N = \sum_{i=0}^{m} d_i b^i
+\end{equation}
+where $m = \lceil \log_b N \rceil$ and, $\forall i \in [m]$, $d_i \in \Z_b$.
+Then, we define function $\mathrm{digSum}: \N \rightarrow \Z_b$
+to give the digital sum such that
+\begin{equation}
+  \mathrm{digSum}(N) = \sum_{i=0}^{m} d_i.
+\end{equation}
+
+Moreover, define function $\mathrm{digSumPeriodic}: \N^4 \rightarrow \Z_b$
+such that
+% TODO: define T within the func from another func
+\begin{equation}
+  \mathrm{digSumPeriodic}(n, d, b) = \sum_{i = i_0}^{i_0 + T} \mathrm{digit}(n, d, b, i)
+\end{equation}
+
+
+
+\begin{remark}[Finding the digit sum of a rational]
+  
+\end{remark}
+
+\subsubsection{Finding the period of $\theta^j$} % TODO: redifine things in terms of theta...
+For $(n^j, b^j, d^j, i^j, \theta_i^j) = s_i^j$,
+recall that $\theta_{i+1}^k = \theta_{i}^k + \mathrm{digit}(n, b, d, i) \mod b$.
+So, after period ${T^j}'$,
+\begin{align*}
+  \theta_{i + {T^j}'} &= \left(\theta_{i} + \sum_{\ell = i}^{{T^j}' + i} \mathrm{digit}(n, b, d, \ell)\right) \mod b\\
+  &= \left(\theta_{i} + \mathrm{digSumPeriodic}(n, b, d)\right) \mod b\\
+  &= \theta_{i} \mod b + \mathrm{digSumPeriodic}(n, b, d) \mod b.
+\end{align*}
+So, after $p$ periods of length ${T^j}'$ where $p \cdot \mathrm{digSumPeriodic}(n, b, d) \equiv 0 \mod b$,
+$$
+\theta_{i + p{T^j}'} = \theta_i.
+$$
+For simplicity, lets define
+$$
+  T^j = p{T^j}'
+$$
+where $T^j$ is the period of the state for seed $j$.
+% TODO: remove $i$ from the state and somehow have it be implicit.... 
+
 
 \subsubsection{Finding the period of $\pmb{s}$}
 Simply lcm of all other periods
