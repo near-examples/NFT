@@ -1,42 +1,26 @@
 <script lang="ts">
-  import Modal from "svelte-simple-modal";
-  import OptionsPopup from "./OptionsPopup.svelte";
   import {
-    Canvas,
-    Scene,
-    PerspectiveCamera,
-    DirectionalLight,
-    //BasicShadowMap,
-    //PCFShadowMap,
-    PCFSoftShadowMap,
-    //VSMShadowMap,
     AmbientLight,
-    BoxBufferGeometry,
-    PlaneBufferGeometry,
+    Canvas,
+    DirectionalLight,
+    Group,
+    HemisphereLight,
     Mesh,
-    MeshStandardMaterial,
-    WebGLRenderer,
     OrbitControls,
-    DoubleSide,
-    MathUtils,
-    Vector3,
-    BufferGeometry,
-    LineSegments,
-    LineBasicMaterial,
-    Line,
-    Object3D,
-    CubeCamera,
-  } from "svelthree";
+    PerspectiveCamera,
+  } from "threlte";
+
   import { lines, parameters, scene } from "./store";
   import { getContext, onMount } from "svelte";
   import Controls from "./Controls.svelte";
-  import OrthographicCamera from "svelthree/src/components/OrthographicCamera.svelte";
   import type { PosType } from "./interfaces";
   import { calcChangeInPosVec } from "./math/position";
 
   let screenWidth = window.screen.width;
   let screenHeight = window.screen.height;
   let aspect = screenWidth / screenHeight;
+
+  console.log("sdfadsflsdfjksf");
 
   const setCanvasDim = () => {
     screenWidth = window.screen.width;
@@ -49,59 +33,59 @@
   let pos: PosType = [0, 0, 0];
   let running = true;
 
-  let cubeGeometry = new BoxBufferGeometry(1, 1, 1, 1, 1, 1);
-  let cubeMaterial = new MeshStandardMaterial();
-  let lineMaterial = new LineBasicMaterial({ color: 0x0000ff });
+  // let cubeGeometry = new BoxBufferGeometry(1, 1, 1, 1, 1, 1);
+  // let cubeMaterial = new MeshStandardMaterial();
+  // let lineMaterial = new LineBasicMaterial({ color: 0x0000ff });
 
-  let scenecomp: Scene;
+  // let scenecomp: Scene;
 
-  const start = async (initSleep = true) => {
-    if (initSleep) await new Promise((res, rej) => setTimeout(res, 1000));
-    while (running) {
-      // TODO: get iterator and do movement
-      // TODO: remove control panel
-      const [deltaX, deltaY, deltaZ] = calcChangeInPosVec($parameters);
-      await new Promise((res, rej) => setTimeout(res, $parameters.sleepTimeMs));
+  // const start = async (initSleep = true) => {
+  //   if (initSleep) await new Promise((res, rej) => setTimeout(res, 1000));
+  //   while (running) {
+  //     // TODO: get iterator and do movement
+  //     // TODO: remove control panel
+  //     const [deltaX, deltaY, deltaZ] = calcChangeInPosVec($parameters);
+  //     await new Promise((res, rej) => setTimeout(res, $parameters.sleepTimeMs));
 
-      const newPos = [
-        pos[0] + deltaX,
-        pos[1] + deltaY,
-        pos[2] + deltaZ,
-      ] as PosType;
-      const points = [new Vector3(...pos), new Vector3(...newPos)];
-      const lineGeomertry = new BufferGeometry().setFromPoints(points);
-      const l = new Line(lineGeomertry, lineMaterial);
-      $scene.add(l);
-      $lines = [...$lines, l];
+  //     const newPos = [
+  //       pos[0] + deltaX,
+  //       pos[1] + deltaY,
+  //       pos[2] + deltaZ,
+  //     ] as PosType;
+  //     const points = [new Vector3(...pos), new Vector3(...newPos)];
+  //     const lineGeomertry = new BufferGeometry().setFromPoints(points);
+  //     const l = new Line(lineGeomertry, lineMaterial);
+  //     $scene.add(l);
+  //     $lines = [...$lines, l];
 
-      pos = newPos;
-    }
-    console.log("DONE");
-  };
-  parameters.subscribe((newParams) => {
-    running = false;
-    if ($scene) $scene.remove(...$lines);
-    pos = [0, 0, 0];
-    $lines = [];
-    pichRotateRad = 0;
-    YawRotateRad = 0;
-    setTimeout(() => {
-      running = true;
-      start();
-    }, 400);
-  });
+  //     pos = newPos;
+  //   }
+  //   console.log("DONE");
+  // };
+  // parameters.subscribe((newParams) => {
+  //   running = false;
+  //   if ($scene) $scene.remove(...$lines);
+  //   pos = [0, 0, 0];
+  //   $lines = [];
+  //   pichRotateRad = 0;
+  //   YawRotateRad = 0;
+  //   setTimeout(() => {
+  //     running = true;
+  //     start();
+  //   }, 400);
+  // });
 
-  onMount(() => {
-    scene.set(scenecomp.getScene() as Scene);
-  });
+  // onMount(() => {
+  //   scene.set(scenecomp.getScene() as Scene);
+  // });
 </script>
 
 <svelte:window on:resize={setCanvasDim} />
-<Modal>
+<main>
   <div class="options">
     <Controls />
   </div>
-  <Canvas
+  <!-- <Canvas
     let:sti
     style="width: 100%; height: 100%"
     w={screenWidth}
@@ -151,15 +135,15 @@
       enableShadowMap
       shadowMapType={PCFSoftShadowMap}
     />
-  </Canvas>
+  </Canvas> -->
+</main>
 
-  <style>
-    .options {
-      position: absolute;
-      z-index: 100;
-      top: 15px;
-      left: 15px;
-      padding: 1rem;
-    }
-  </style>
-</Modal>
+<style>
+  .options {
+    position: absolute;
+    z-index: 100;
+    top: 15px;
+    left: 15px;
+    padding: 1rem;
+  }
+</style>
