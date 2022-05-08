@@ -68,7 +68,7 @@
 	// testing random points
 	const recomputePoints = () => {
 		points = [];
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 1000; i++) {
 			let s = Math.random() * 2;
 			points.push(new Vector3().randomDirection().setLength(s));
 		}
@@ -84,21 +84,21 @@
 	</div>
 	<Canvas>
 		<PerspectiveCamera position={{ x: 10, y: 10, z: 10 }}>
-			<OrbitControls enableDamping autoRotate />
+			<OrbitControls enableDamping autoRotate autoRotateSpeed={0.5} />
 		</PerspectiveCamera>
 
 		<DirectionalLight shadow color={'#EDBD9C'} position={{ x: -15, y: 45, z: 20 }} />
 		<HemisphereLight skyColor={0x4c8eac} groundColor={0xac844c} intensity={0.6} />
 
 		<!-- spheres -->
-		<InstancedMesh castShadow geometry={sphereGeometry} material={normalMaterial}>
+		<InstancedMesh castShadow receiveShadow geometry={sphereGeometry} material={defaultMaterial}>
 			{#each points as p}
 				<Instance position={p} />
 			{/each}
 		</InstancedMesh>
 
 		<!-- cylinders -->
-		<InstancedMesh castShadow geometry={cylinderGeometry} material={normalMaterial}>
+		<InstancedMesh castShadow receiveShadow geometry={cylinderGeometry} material={defaultMaterial}>
 			{#each cylinders as c}
 				<Instance position={c.position} rotation={c.rotation} scale={c.scale} />
 			{/each}
