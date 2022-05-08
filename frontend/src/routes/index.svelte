@@ -6,16 +6,18 @@
 	// import { lines, parameters, scene } from '../store';
 
 	import {
-		Line,
 		MeshStandardMaterial,
 		LineBasicMaterial,
-		SphereBufferGeometry,
-		PlaneGeometry,
+		SphereGeometry,
 		CircleBufferGeometry,
+		CylinderGeometry,
 		BufferGeometry,
 		Color,
 		DoubleSide,
-		Vector3
+		Vector3,
+		Euler,
+		Quaternion,
+		MathUtils
 	} from 'three';
 	import {
 		Canvas,
@@ -30,32 +32,44 @@
 	const defaultColor = new Color('#ddd');
 	const hoverColor = new Color('red');
 	// const lineMaterial = new LineBasicMaterial({ color: hoverColor, side: DoubleSide });
-	const lineMaterial = new MeshStandardMaterial({ color: hoverColor, side: DoubleSide });
+	const defaultMaterial = new MeshStandardMaterial({ color: hoverColor, side: DoubleSide });
 
-	let delta = 1;
-	let path: Vector3[] = [
-		new Vector3(0, 0, 0),
-		new Vector3(1, 1, 1),
-		// new Vector3(0 + delta, 0 + delta, 0 + delta),
-		new Vector3(1 + delta, 1 + delta, 11 + delta)
+	let w1 = 0.01;
+	let w2 = w1 * 2;
+
+	let points = [new Vector3(1, 1, 0), new Vector3(-1, 2, 1)];
+
+	let cylinderpos = points[0].clone().add(points[1]).multiplyScalar(0.5);
+
+	let diff = points[0].clone().sub(points[1]);
+	let q = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), diff.normalize());
+	let rot = new Euler().setFromQuaternion(q);
+
+	console.log(q, rot);
+
+	// let rot = { x: 0, y: 0, z: 0 };
+	let length = points[1].clone().sub(points[0]).length();
+
+	let meshes = [
+		{
+			geometry: new SphereGeometry(w1),
+			material: new MeshStandardMaterial({ color: hoverColor, side: DoubleSide }),
+			position: points[0],
+			rotation: { x: 0, y: 0, z: 0 }
+		},
+		{
+			geometry: new CylinderGeometry(w1, w2, length),
+			material: new MeshStandardMaterial({ color: hoverColor, side: DoubleSide }),
+			position: cylinderpos,
+			rotation: rot
+		},
+		{
+			geometry: new SphereGeometry(w2),
+			material: new MeshStandardMaterial({ color: hoverColor, side: DoubleSide }),
+			position: points[1],
+			rotation: { x: 0, y: 0, z: 0 }
+		}
 	];
-	$: lineGeometry = new PlaneGeometry(0.1, 10);
-	// = new BufferGeometry().setFromPoints(path);
-	// $: line = new Line(lineGeometry, lineMaterial);
-
-	// FOR REFERENCE - delete later
-	// path.geometry.attributes.position.array[index++] = tmp.x;
-	// path.geometry.attributes.position.array[index++] = tmp.y;
-	// path.geometry.attributes.position.array[index++] = tmp.z;
-	// drawCount++;
-	// path.geometry.setDrawRange(0, drawCount);
-
-	// onMount(() => {
-	// 	// console.log(scene);
-	// 	// scene.add(line);
-	// });
-
-	let camera: any;
 </script>
 
 <div class="container">
@@ -63,8 +77,8 @@
 		<Controls />
 	</div>
 	<Canvas>
-		<PerspectiveCamera bind:camera position={{ x: 10, y: 10, z: 10 }}>
-			<OrbitControls enableDamping autoRotate />
+		<PerspectiveCamera position={{ x: 10, y: 10, z: 10 }}>
+			<OrbitControls enableDamping />
 		</PerspectiveCamera>
 
 		<!-- <FogExp2 color={'#dddddd'} density={0.05} /> -->
@@ -73,14 +87,15 @@
 
 		<HemisphereLight skyColor={0x4c8eac} groundColor={0xac844c} intensity={0.6} />
 
-		<Mesh
-			castShadow
-			position={{ y: 1 }}
-			rotation={{ x: 20, y: 20 }}
-			geometry={lineGeometry}
-			material={lineMaterial}
-			lookAt={camera}
-		/>
+		{#each meshes as m}
+			<Mesh
+				castShadow
+				position={m.position}
+				rotation={m.rotation}
+				geometry={m.geometry}
+				material={m.material}
+			/>
+		{/each}
 
 		<Mesh
 			receiveShadow
