@@ -1,47 +1,56 @@
 <script lang="ts">
+	import { getContext, onMount } from 'svelte';
 	import Controls from '../components/Controls.svelte';
+	import type { PosType } from '../interfaces';
+	import { calcChangeInPosVec } from '../math/position';
+	// import { lines, parameters, scene } from '../store';
 
-	import { onDestroy } from 'svelte';
-	import { spring } from 'svelte/motion';
 	import {
-		CircleBufferGeometry,
+		Line,
 		MeshStandardMaterial,
+		LineBasicMaterial,
 		SphereBufferGeometry,
+		CircleBufferGeometry,
+		BufferGeometry,
 		Color,
-		DoubleSide
+		DoubleSide,
+		Vector3
 	} from 'three';
 	import {
 		Canvas,
 		DirectionalLight,
+		FogExp2,
 		HemisphereLight,
 		Mesh,
 		OrbitControls,
 		PerspectiveCamera
 	} from 'threlte';
 
-	let posY = 0;
-	let handle: number;
-	const tick = () => {
-		posY = Math.sin(Date.now() / 1000) + 1;
-		// handle = window.requestAnimationFrame(tick);
-	};
-	tick();
-	onDestroy(() => {
-		if (handle) cancelAnimationFrame(handle);
-	});
-
 	const defaultColor = new Color('#ddd');
 	const hoverColor = new Color('red');
-	const sphereMaterial = new MeshStandardMaterial({ color: defaultColor });
-	const sphereScale = spring(1);
-	const onPointerEnter = () => {
-		sphereMaterial.color = hoverColor;
-		$sphereScale = 1.5;
-	};
-	const onPointerLeave = () => {
-		sphereMaterial.color = defaultColor;
-		$sphereScale = 1;
-	};
+	const lineMaterial = new LineBasicMaterial({ color: hoverColor, side: DoubleSide });
+
+	let delta = 1;
+	let path: Vector3[] = [
+		new Vector3(0, 0, 0),
+		new Vector3(1, 1, 1),
+		// new Vector3(0 + delta, 0 + delta, 0 + delta),
+		new Vector3(1 + delta, 1 + delta, 11 + delta)
+	];
+	$: lineGeometry = new BufferGeometry().setFromPoints(path);
+	// $: line = new Line(lineGeometry, lineMaterial);
+
+	// FOR REFERENCE - delete later
+	// path.geometry.attributes.position.array[index++] = tmp.x;
+	// path.geometry.attributes.position.array[index++] = tmp.y;
+	// path.geometry.attributes.position.array[index++] = tmp.z;
+	// drawCount++;
+	// path.geometry.setDrawRange(0, drawCount);
+
+	// onMount(() => {
+	// 	// console.log(scene);
+	// 	// scene.add(line);
+	// });
 </script>
 
 <div class="container">
@@ -50,23 +59,16 @@
 	</div>
 	<Canvas>
 		<PerspectiveCamera position={{ x: 10, y: 10, z: 10 }}>
-			<OrbitControls enableDamping />
+			<OrbitControls enableDamping autoRotate />
 		</PerspectiveCamera>
+
+		<!-- <FogExp2 color={'#dddddd'} density={0.05} /> -->
 
 		<DirectionalLight shadow color={'#EDBD9C'} position={{ x: -15, y: 45, z: 20 }} />
 
 		<HemisphereLight skyColor={0x4c8eac} groundColor={0xac844c} intensity={0.6} />
 
-		<Mesh
-			castShadow
-			interactive
-			on:pointerenter={onPointerEnter}
-			on:pointerleave={onPointerLeave}
-			position={{ y: posY }}
-			scale={$sphereScale}
-			geometry={new SphereBufferGeometry(1, 40, 40)}
-			material={sphereMaterial}
-		/>
+		<Mesh castShadow geometry={lineGeometry} material={lineMaterial} />
 
 		<Mesh
 			receiveShadow
