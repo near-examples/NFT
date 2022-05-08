@@ -29,47 +29,45 @@
 		PerspectiveCamera
 	} from 'threlte';
 
-	const defaultColor = new Color('#ddd');
-	const hoverColor = new Color('red');
-	// const lineMaterial = new LineBasicMaterial({ color: hoverColor, side: DoubleSide });
-	const defaultMaterial = new MeshStandardMaterial({ color: hoverColor, side: DoubleSide });
-
 	let w1 = 0.01;
 	let w2 = w1 * 2;
 
-	let points = [new Vector3(1, 1, 0), new Vector3(-1, 2, 1)];
+	const defaultMaterial = new MeshStandardMaterial({ color: 'red' });
+	const sphereGeometry = new SphereGeometry(w1);
 
-	let cylinderpos = points[0].clone().add(points[1]).multiplyScalar(0.5);
+	let points: Vector3[] = [];
 
-	let diff = points[0].clone().sub(points[1]);
-	let q = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), diff.normalize());
-	let rot = new Euler().setFromQuaternion(q);
+	for (let i = 0; i < 100; i++) {
+		let s = (0.5 - Math.random()) * 100;
+		let v = new Vector3().random().setLength(s);
+		console.log(s, v);
+		points.push(new Vector3().random());
+	}
 
-	console.log(q, rot);
+	const axis = new Vector3(0, 1, 0);
 
-	// let rot = { x: 0, y: 0, z: 0 };
-	let length = points[1].clone().sub(points[0]).length();
+	const calculateCylinder = (p1: Vector3, p2: Vector3) => {
+		let length = p2.clone().sub(p1).length();
 
-	let meshes = [
-		{
-			geometry: new SphereGeometry(w1),
-			material: new MeshStandardMaterial({ color: hoverColor, side: DoubleSide }),
-			position: points[0],
-			rotation: { x: 0, y: 0, z: 0 }
-		},
-		{
-			geometry: new CylinderGeometry(w1, w2, length),
-			material: new MeshStandardMaterial({ color: hoverColor, side: DoubleSide }),
-			position: cylinderpos,
+		let diff = p1.clone().sub(p2);
+		let q = new Quaternion().setFromUnitVectors(axis, diff.normalize());
+		let rot = new Euler().setFromQuaternion(q);
+
+		return {
+			geometry: new CylinderGeometry(w1, w1, length),
+			position: p1.clone().add(p2).multiplyScalar(0.5),
 			rotation: rot
-		},
-		{
-			geometry: new SphereGeometry(w2),
-			material: new MeshStandardMaterial({ color: hoverColor, side: DoubleSide }),
-			position: points[1],
-			rotation: { x: 0, y: 0, z: 0 }
-		}
-	];
+		};
+	};
+
+	let cylinders: any[] = [];
+
+	for (let i = 1; i < points.length; i++) {
+		let v1 = points[i - 1];
+		let v2 = points[i];
+
+		cylinders.push(calculateCylinder(v1, v2));
+	}
 </script>
 
 <div class="container">
@@ -87,13 +85,19 @@
 
 		<HemisphereLight skyColor={0x4c8eac} groundColor={0xac844c} intensity={0.6} />
 
-		{#each meshes as m}
+		<!-- spheres -->
+		{#each points as p}
+			<Mesh castShadow position={p} geometry={sphereGeometry} material={defaultMaterial} />
+		{/each}
+
+		<!-- cylinders -->
+		{#each cylinders as m}
 			<Mesh
 				castShadow
 				position={m.position}
 				rotation={m.rotation}
 				geometry={m.geometry}
-				material={m.material}
+				material={defaultMaterial}
 			/>
 		{/each}
 
