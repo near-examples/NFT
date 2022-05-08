@@ -20,7 +20,6 @@
 	import {
 		Canvas,
 		DirectionalLight,
-		FogExp2,
 		HemisphereLight,
 		Instance,
 		InstancedMesh,
@@ -38,19 +37,7 @@
 	const cylinderGeometry = new CylinderGeometry(width, width, 1);
 
 	let points: Vector3[] = [];
-
-	// testing random points
-	const recomputePoints = () => {
-		points = [];
-		for (let i = 0; i < 100; i++) {
-			let s = (0.5 - Math.random()) * 100;
-			let v = new Vector3().random().setLength(s);
-			points.push(new Vector3().random());
-		}
-		return points;
-	};
-
-	points = recomputePoints();
+	let cylinders: any[] = [];
 
 	const axis = new Vector3(0, 1, 0);
 
@@ -68,14 +55,27 @@
 		};
 	};
 
-	let cylinders: any[] = [];
+	const recomputeCylinders = () => {
+		cylinders = [];
+		for (let i = 1; i < points.length; i++) {
+			let v1 = points[i - 1];
+			let v2 = points[i];
 
-	for (let i = 1; i < points.length; i++) {
-		let v1 = points[i - 1];
-		let v2 = points[i];
+			cylinders.push(calculateCylinder(v1, v2));
+		}
+	};
 
-		cylinders.push(calculateCylinder(v1, v2));
-	}
+	// testing random points
+	const recomputePoints = () => {
+		points = [];
+		for (let i = 0; i < 100; i++) {
+			let s = Math.random() * 2;
+			points.push(new Vector3().randomDirection().setLength(s));
+		}
+		recomputeCylinders();
+	};
+
+	recomputePoints();
 </script>
 
 <div class="container">
@@ -84,13 +84,10 @@
 	</div>
 	<Canvas>
 		<PerspectiveCamera position={{ x: 10, y: 10, z: 10 }}>
-			<OrbitControls enableDamping />
+			<OrbitControls enableDamping autoRotate />
 		</PerspectiveCamera>
 
-		<!-- <FogExp2 color={'#dddddd'} density={0.05} /> -->
-
 		<DirectionalLight shadow color={'#EDBD9C'} position={{ x: -15, y: 45, z: 20 }} />
-
 		<HemisphereLight skyColor={0x4c8eac} groundColor={0xac844c} intensity={0.6} />
 
 		<!-- spheres -->
@@ -107,6 +104,7 @@
 			{/each}
 		</InstancedMesh>
 
+		<!-- base plane -->
 		<Mesh
 			receiveShadow
 			position={{ y: -1.5 }}
