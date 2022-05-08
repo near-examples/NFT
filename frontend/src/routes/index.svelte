@@ -6,43 +6,51 @@
 	// import { lines, parameters, scene } from '../store';
 
 	import {
-		MeshStandardMaterial,
-		LineBasicMaterial,
 		SphereGeometry,
 		CircleBufferGeometry,
 		CylinderGeometry,
-		BufferGeometry,
-		Color,
 		DoubleSide,
 		Vector3,
 		Euler,
 		Quaternion,
-		MathUtils
+		MeshStandardMaterial,
+		MeshLambertMaterial,
+		MeshNormalMaterial
 	} from 'three';
 	import {
 		Canvas,
 		DirectionalLight,
 		FogExp2,
 		HemisphereLight,
+		Instance,
+		InstancedMesh,
 		Mesh,
 		OrbitControls,
 		PerspectiveCamera
 	} from 'threlte';
 
-	let w1 = 0.01;
-	let w2 = w1 * 2;
+	let width = 0.02;
 
+	const normalMaterial = new MeshNormalMaterial();
+	const clearMaterial = new MeshLambertMaterial({ color: 'red' });
 	const defaultMaterial = new MeshStandardMaterial({ color: 'red' });
-	const sphereGeometry = new SphereGeometry(w1);
+	const sphereGeometry = new SphereGeometry(width);
+	const cylinderGeometry = new CylinderGeometry(width, width, 1);
 
 	let points: Vector3[] = [];
 
-	for (let i = 0; i < 100; i++) {
-		let s = (0.5 - Math.random()) * 100;
-		let v = new Vector3().random().setLength(s);
-		console.log(s, v);
-		points.push(new Vector3().random());
-	}
+	// testing random points
+	const recomputePoints = () => {
+		points = [];
+		for (let i = 0; i < 100; i++) {
+			let s = (0.5 - Math.random()) * 100;
+			let v = new Vector3().random().setLength(s);
+			points.push(new Vector3().random());
+		}
+		return points;
+	};
+
+	points = recomputePoints();
 
 	const axis = new Vector3(0, 1, 0);
 
@@ -54,8 +62,8 @@
 		let rot = new Euler().setFromQuaternion(q);
 
 		return {
-			geometry: new CylinderGeometry(w1, w1, length),
 			position: p1.clone().add(p2).multiplyScalar(0.5),
+			scale: { x: 1, y: length, z: 1 },
 			rotation: rot
 		};
 	};
@@ -86,20 +94,18 @@
 		<HemisphereLight skyColor={0x4c8eac} groundColor={0xac844c} intensity={0.6} />
 
 		<!-- spheres -->
-		{#each points as p}
-			<Mesh castShadow position={p} geometry={sphereGeometry} material={defaultMaterial} />
-		{/each}
+		<InstancedMesh castShadow geometry={sphereGeometry} material={normalMaterial}>
+			{#each points as p}
+				<Instance position={p} />
+			{/each}
+		</InstancedMesh>
 
 		<!-- cylinders -->
-		{#each cylinders as m}
-			<Mesh
-				castShadow
-				position={m.position}
-				rotation={m.rotation}
-				geometry={m.geometry}
-				material={defaultMaterial}
-			/>
-		{/each}
+		<InstancedMesh castShadow geometry={cylinderGeometry} material={normalMaterial}>
+			{#each cylinders as c}
+				<Instance position={c.position} rotation={c.rotation} scale={c.scale} />
+			{/each}
+		</InstancedMesh>
 
 		<Mesh
 			receiveShadow
@@ -107,6 +113,8 @@
 			rotation={{ x: -90 * (Math.PI / 180) }}
 			geometry={new CircleBufferGeometry(3, 72)}
 			material={new MeshStandardMaterial({ color: 'white', side: DoubleSide })}
+			interactive
+			on:click={recomputePoints}
 		/>
 	</Canvas>
 </div>
