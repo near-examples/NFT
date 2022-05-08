@@ -10,6 +10,7 @@
 		MeshStandardMaterial,
 		LineBasicMaterial,
 		SphereBufferGeometry,
+		PlaneGeometry,
 		CircleBufferGeometry,
 		BufferGeometry,
 		Color,
@@ -28,7 +29,8 @@
 
 	const defaultColor = new Color('#ddd');
 	const hoverColor = new Color('red');
-	const lineMaterial = new LineBasicMaterial({ color: hoverColor, side: DoubleSide });
+	// const lineMaterial = new LineBasicMaterial({ color: hoverColor, side: DoubleSide });
+	const lineMaterial = new MeshStandardMaterial({ color: hoverColor, side: DoubleSide });
 
 	let delta = 1;
 	let path: Vector3[] = [
@@ -37,7 +39,8 @@
 		// new Vector3(0 + delta, 0 + delta, 0 + delta),
 		new Vector3(1 + delta, 1 + delta, 11 + delta)
 	];
-	$: lineGeometry = new BufferGeometry().setFromPoints(path);
+	$: lineGeometry = new PlaneGeometry(0.1, 10);
+	// = new BufferGeometry().setFromPoints(path);
 	// $: line = new Line(lineGeometry, lineMaterial);
 
 	// FOR REFERENCE - delete later
@@ -51,6 +54,8 @@
 	// 	// console.log(scene);
 	// 	// scene.add(line);
 	// });
+
+	let camera: any;
 </script>
 
 <div class="container">
@@ -58,7 +63,7 @@
 		<Controls />
 	</div>
 	<Canvas>
-		<PerspectiveCamera position={{ x: 10, y: 10, z: 10 }}>
+		<PerspectiveCamera bind:camera position={{ x: 10, y: 10, z: 10 }}>
 			<OrbitControls enableDamping autoRotate />
 		</PerspectiveCamera>
 
@@ -68,7 +73,14 @@
 
 		<HemisphereLight skyColor={0x4c8eac} groundColor={0xac844c} intensity={0.6} />
 
-		<Mesh castShadow geometry={lineGeometry} material={lineMaterial} />
+		<Mesh
+			castShadow
+			position={{ y: 1 }}
+			rotation={{ x: 20, y: 20 }}
+			geometry={lineGeometry}
+			material={lineMaterial}
+			lookAt={camera}
+		/>
 
 		<Mesh
 			receiveShadow
