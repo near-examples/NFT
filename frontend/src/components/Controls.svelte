@@ -1,55 +1,24 @@
 <script lang="ts">
-	import { getContext } from 'svelte';
-	// import Camera from "svelthree/src/components/Camera.svelte";
-	// import OptionsPopup from "./OptionsPopup.svelte";
-
-	// const { open } = getContext("simple-modal");
-	// const showOptions = () => open(OptionsPopup, {});
-
-	// export let cameraPos = [0, 0, 0];
-	// let oldCameraPos = cameraPos;
-	// const updateCameraPos = (n: [number, number, number]) => {
-	//   oldCameraPos = cameraPos;
-	//   cameraPos = n;
-	// };
+	import { parameters } from '../store';
 </script>
 
-<button on:click={() => {}}> Controls </button>
-
-<div class="views">
+<div>
 	<button
 		on:click={() => {
 			console.log('top');
 		}}>Top</button
 	>
-	<button
-		on:click={() => {
-			console.log('lef');
-		}}>Left</button
-	>
-	<button
-		on:click={() => {
-			console.log('right');
-		}}>Right</button
-	>
-	<button
-		on:click={() => {
-			console.log('front');
-		}}>Front</button
-	>
-	<button
-		on:click={() => {
-			console.log('back');
-		}}>Back</button
-	>
-	<button
-		on:click={() => {
-			console.log('bootm');
-		}}>Bottom</button
-	>
-	<button
-		on:click={() => {
-			console.log('old');
-		}}>Old</button
-	>
+	<input type="range" />
 </div>
+
+<style>
+	div {
+		position: fixed;
+		top: 0;
+		left: 0;
+		display: grid;
+		width: 10px;
+		margin: 5px;
+		gap: 5px;
+	}
+</style>

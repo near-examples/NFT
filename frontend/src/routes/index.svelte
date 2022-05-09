@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { getContext, onMount } from 'svelte';
-	import Controls from '../components/Controls.svelte';
+	import { spring, tweened } from 'svelte/motion';
+	import { cubicOut } from 'svelte/easing';
+
+	import { parameters } from '../store';
 	import type { PosType } from '../interfaces';
 	import { calcChangeInPosVec } from '../math/position';
-	// import { lines, parameters, scene } from '../store';
+	import Controls from '../components/Controls.svelte';
 
 	import {
 		SphereGeometry,
@@ -28,7 +31,7 @@
 		PerspectiveCamera
 	} from 'threlte';
 
-	let width = 0.02;
+	let width = 1;
 
 	const normalMaterial = new MeshNormalMaterial();
 	const clearMaterial = new MeshLambertMaterial({ color: 'red' });
@@ -57,31 +60,55 @@
 
 	const recomputeCylinders = () => {
 		cylinders = [];
-		for (let i = 1; i < points.length; i++) {
-			let v1 = points[i - 1];
-			let v2 = points[i];
-
-			cylinders.push(calculateCylinder(v1, v2));
-		}
+		for (let i = 1; i < points.length; i++)
+			cylinders.push(calculateCylinder(points[i - 1], points[i]));
 	};
 
 	// testing random points
-	const recomputePoints = () => {
-		points = [];
-		for (let i = 0; i < 1000; i++) {
-			let s = Math.random() * 2;
-			points.push(new Vector3().randomDirection().setLength(s));
+	// const recomputePoints = () => {
+	// 	points = [];
+	// 	for (let i = 0; i < 1000; i++)
+	// 		points.push(new Vector3().randomDirection().setLength(Math.random() * 2));
+	// };
+
+	// recomputePoints();
+
+	let pichRotateRad: number = 0;
+	let tmpRotateRad: number = 0;
+	let YawRotateRad: number = 0;
+	let pos: PosType = [0, 0, 0];
+	let running = true;
+
+	const start = async (initSleep = true) => {
+		if (initSleep) await new Promise((res, rej) => setTimeout(res, 1000));
+		while (running) {
+			// TODO: get iterator and do movement
+			// TODO: remove control panel
+			const [deltaX, deltaY, deltaZ] = calcChangeInPosVec($parameters);
+			await new Promise((res, rej) => setTimeout(res, $parameters.sleepTimeMs));
+
+			const newPos = [pos[0] + deltaX, pos[1] + deltaY, pos[2] + deltaZ] as PosType;
+			points = [...points, new Vector3(...newPos)];
+			recomputeCylinders();
+			pos = newPos;
 		}
-		recomputeCylinders();
+		console.log('DONE');
 	};
 
-	recomputePoints();
+	parameters.subscribe((newParams) => {
+		running = false;
+		pos = [0, 0, 0];
+		pichRotateRad = 0;
+		YawRotateRad = 0;
+		setTimeout(() => {
+			running = true;
+			start();
+		}, 400);
+	});
 </script>
 
 <div class="container">
-	<div>
-		<Controls />
-	</div>
+	<Controls />
 	<Canvas>
 		<PerspectiveCamera position={{ x: 10, y: 10, z: 10 }}>
 			<OrbitControls enableDamping autoRotate autoRotateSpeed={0.5} />
@@ -112,13 +139,16 @@
 			geometry={new CircleBufferGeometry(3, 72)}
 			material={new MeshStandardMaterial({ color: 'white', side: DoubleSide })}
 			interactive
-			on:click={recomputePoints}
+			on:click={() => {
+				points = [];
+				pos = [0, 0, 0];
+			}}
 		/>
 	</Canvas>
 </div>
 
 <style>
-	div.container {
+	.container {
 		position: fixed;
 		top: 0;
 		left: 0;
