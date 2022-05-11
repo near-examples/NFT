@@ -31,13 +31,13 @@
 		PerspectiveCamera
 	} from 'threlte';
 
-	let width = 1;
+	let width = 0.1;
 
 	const normalMaterial = new MeshNormalMaterial();
 	const clearMaterial = new MeshLambertMaterial({ color: 'red' });
 	const defaultMaterial = new MeshStandardMaterial({ color: 'red' });
-	const sphereGeometry = new SphereGeometry(width);
-	const cylinderGeometry = new CylinderGeometry(width, width, 1);
+	const sphereGeometry = new SphereGeometry(1);
+	const cylinderGeometry = new CylinderGeometry(1, 1, 1);
 
 	let points: Vector3[] = [];
 	let cylinders: any[] = [];
@@ -53,7 +53,7 @@
 
 		return {
 			position: p1.clone().add(p2).multiplyScalar(0.5),
-			scale: { x: 1, y: length, z: 1 },
+			scale: { y: length },
 			rotation: rot
 		};
 	};
@@ -64,15 +64,6 @@
 			cylinders.push(calculateCylinder(points[i - 1], points[i]));
 	};
 
-	// testing random points
-	// const recomputePoints = () => {
-	// 	points = [];
-	// 	for (let i = 0; i < 1000; i++)
-	// 		points.push(new Vector3().randomDirection().setLength(Math.random() * 2));
-	// };
-
-	// recomputePoints();
-
 	let pichRotateRad: number = 0;
 	let tmpRotateRad: number = 0;
 	let YawRotateRad: number = 0;
@@ -82,8 +73,6 @@
 	const start = async (initSleep = true) => {
 		if (initSleep) await new Promise((res, rej) => setTimeout(res, 1000));
 		while (running) {
-			// TODO: get iterator and do movement
-			// TODO: remove control panel
 			const [deltaX, deltaY, deltaZ] = calcChangeInPosVec($parameters);
 			await new Promise((res, rej) => setTimeout(res, $parameters.sleepTimeMs));
 
@@ -120,14 +109,18 @@
 		<!-- spheres -->
 		<InstancedMesh castShadow receiveShadow geometry={sphereGeometry} material={defaultMaterial}>
 			{#each points as p}
-				<Instance position={p} />
+				<Instance position={p} scale={{ x: width, y: width, z: width }} />
 			{/each}
 		</InstancedMesh>
 
 		<!-- cylinders -->
 		<InstancedMesh castShadow receiveShadow geometry={cylinderGeometry} material={defaultMaterial}>
 			{#each cylinders as c}
-				<Instance position={c.position} rotation={c.rotation} scale={c.scale} />
+				<Instance
+					position={c.position}
+					rotation={c.rotation}
+					scale={{ x: width, y: c.scale.y, z: width }}
+				/>
 			{/each}
 		</InstancedMesh>
 

@@ -31,7 +31,7 @@ export const parameters: Writable<StoredParameters> = writable({
 		{
 			iterator: getRationalAngleIterator({
 				n: 7,
-				d: 11,
+				d: 213,
 				b: 4
 			}),
 			base: 4,
