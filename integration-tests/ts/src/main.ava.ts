@@ -1,4 +1,4 @@
-import { Worker, NearAccount, captureError, NEAR, BN } from 'near-workspaces';
+import { Worker, NearAccount, tGas, NEAR, BN } from 'near-workspaces';
 import anyTest, { TestFn } from 'ava';
 
 const test = anyTest as TestFn<{
@@ -10,19 +10,58 @@ test.beforeEach(async t => {
     const worker = await Worker.init();
     const root = worker.rootAccount;
     const nft = await root.createAndDeploy(
-        root.getSubAccount('fungible-token').accountId,
-        "../../res/fungible_token.wasm",
-        { initialBalance: NEAR.parse('3 N').toJSON() },
+        'non-fungible-token',
+        '../../res/non_fungible_token.wasm',
+        {
+            method: "new_default_meta",
+            args: { owner_id: root },
+        }
     );
-    const defi = await root.createAndDeploy(
-        root.getSubAccount('defi').accountId,
-        '../../res/defi.wasm',
-        { initialBalance: NEAR.parse('3 N').toJSON() },
+    await root.call(
+        nft,
+        "nft_mint",
+        {
+            token_id: "0",
+            receiver_id: root,
+            token_metadata: {
+                title: "Olympus Mons",
+                description: "The tallest mountain in the charted solar system",
+                media: null,
+                media_hash: null,
+                copies: 10000,
+                issued_at: null,
+                expires_at: null,
+                starts_at: null,
+                updated_at: null,
+                extra: null,
+                reference: null,
+                reference_hash: null,
+            }
+        },
+        { attachedDeposit: '7000000000000000000000' }
     );
-    const alice = await root.createSubAccount('ali', { initialBalance: NEAR.parse('1 N').toJSON() });
+
+    const alice = await root.createSubAccount('alice', { initialBalance: NEAR.parse('100 N').toJSON() });
+
+    const tokenReceiver = await root.createAndDeploy(
+        'token-receiver',
+        '../../res/token_receiver.wasm',
+        {
+            method: "new",
+            args: { non_fungible_token_account_id: nft },
+        }
+    );
+    const approvalReceiver = await root.createAndDeploy(
+        'approval-receiver',
+        '../../res/approval_receiver.wasm',
+        {
+            method: "new",
+            args: { non_fungible_token_account_id: nft },
+        }
+    );
 
     t.context.worker = worker;
-    t.context.accounts = { root, nft, alice };
+    t.context.accounts = { root, alice, nft, tokenReceiver, approvalReceiver };
 });
 
 test.afterEach(async t => {
@@ -33,7 +72,7 @@ test.afterEach(async t => {
 
 
 test('Simple approve', async test => {
-    const { root, nft, alice } = test.context.accounts;
+    const { root, alice, nft, tokenReceiver } = test.context.accounts;
     // root approves alice
     await root.call(
         nft,
