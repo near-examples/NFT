@@ -168,3 +168,32 @@ test('Simple approve', async test => {
             })
     );
 });
+
+test('Approved account transfers token', async test => {
+    const { root, alice, nft } = test.context.accounts;
+    await root.call(
+        nft,
+        'nft_approve',
+        {
+            token_id: '0',
+            account_id: alice,
+
+        },
+        { attachedDeposit: new BN('270000000000000000000'), gas: tGas('150') },
+    );
+
+    await alice.call(
+        nft,
+        'nft_transfer',
+        {
+            receiver_id: alice,
+            token_id: '0',
+            approval_id: 1,
+            memo: 'gotcha! bahahaha',
+        },
+        { attachedDeposit: '1', gas: tGas('150') }
+    );
+
+    const token: any = await nft.view('nft_token', { token_id: '0' });
+    test.is(token.owner_id, alice.accountId);
+});
