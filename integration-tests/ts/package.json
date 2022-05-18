@@ -1,0 +1,16 @@
+{
+  "name": "non-fungible-token-integration-tests-ts",
+  "version": "1.0.0",
+  "license": "(MIT AND Apache-2.0)",
+  "scripts": {
+    "test": "ava --verbose"
+  },
+  "devDependencies": {
+    "ava": "*",
+    "near-workspaces": "*",
+    "typescript": "*",
+    "ts-node": "*",
+    "@types/bn.js": "*"
+  },
+  "dependencies": {}
+}
