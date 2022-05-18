@@ -6,6 +6,7 @@ package-lock.json
 /.pnp
 .pnp.js
 **/out
+*.lock
 
 #keys
 **/neardev
