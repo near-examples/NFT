@@ -1,10 +1,10 @@
 use near_sdk::json_types::U128;
 use near_units::{parse_gas, parse_near};
 use serde_json::json;
+use std::collections::HashMap;
 use workspaces::prelude::*;
 use workspaces::result::CallExecutionDetails;
 use workspaces::{network::Sandbox, Account, Contract, Worker};
-use std::collections::HashMap;
 
 const NFT_WASM_FILEPATH: &str = "../../res/non_fungible_token.wasm";
 const TR_WASM_FILEPATH: &str = "../../res/token_receiver.wasm";
@@ -59,6 +59,7 @@ async fn main() -> anyhow::Result<()> {
     test_simple_approve(&owner, &alice, &nft_contract, &worker).await?;
     test_approval_simple_call(&owner, &nft_contract, &ar_contract, &worker).await?;
     test_approved_account_transfers_token(&owner, &alice, &nft_contract, &worker).await?;
+    test_revoke(&owner, &alice, &nft_contract, &tr_contract, &worker).await?;
     Ok(())
 }
 
@@ -136,7 +137,7 @@ async fn test_simple_approve(
 }
 
 async fn test_approval_simple_call(
-    owner:  &Account,
+    owner: &Account,
     nft_contract: &Contract,
     approval_receiver: &Contract,
     worker: &Worker<Sandbox>,
@@ -190,14 +191,13 @@ async fn test_approval_simple_call(
 }
 
 async fn test_approved_account_transfers_token(
-    owner:  &Account,
+    owner: &Account,
     user: &Account,
     nft_contract: &Contract,
     worker: &Worker<Sandbox>,
 ) -> anyhow::Result<()> {
     use serde_json::Value::String;
-    user
-        .call(&worker, nft_contract.id(), "nft_transfer")
+    user.call(&worker, nft_contract.id(), "nft_transfer")
         .args_json(json!({
             "receiver_id": user.id(),
             "token_id": '0',
@@ -207,8 +207,9 @@ async fn test_approved_account_transfers_token(
         .deposit(1)
         .transact()
         .await?;
-    println!("run nft transfer");
-    let token: serde_json::Value = nft_contract.call(&worker, "nft_token")
+
+    let token: serde_json::Value = nft_contract
+        .call(&worker, "nft_token")
         .args_json(json!({"token_id": "0"}))?
         .transact()
         .await?
@@ -219,14 +220,136 @@ async fn test_approved_account_transfers_token(
     Ok(())
 }
 
-async fn test_revoke() -> anyhow::Result<()> {Ok(())}
-async fn test_revoke_all() -> anyhow::Result<()> {Ok(())}
-async fn test_simple_transfer() -> anyhow::Result<()> {Ok(())}
-async fn test_transfer_call_fast_return_to_sender() -> anyhow::Result<()> {Ok(())}
-async fn test_transfer_call_slow_return_to_sender() -> anyhow::Result<()> {Ok(())}
-async fn test_transfer_call_fast_keep_with_sender() -> anyhow::Result<()> {Ok(())}
-async fn test_transfer_call_slow_keep_with_sender() -> anyhow::Result<()> {Ok(())}
-async fn test_transfer_call_receiver_panics() -> anyhow::Result<()> {Ok(())}
-async fn test_enum_total_supply() -> anyhow::Result<()> {Ok(())}
-async fn test_enum_nft_supply_for_owner() -> anyhow::Result<()> {Ok(())}
-async fn test_enum_nft_tokens_for_owner() -> anyhow::Result<()> {Ok(())}
+async fn test_revoke(
+    owner: &Account,
+    user: &Account,
+    nft_contract: &Contract,
+    token_receiver: &Contract,
+    worker: &Worker<Sandbox>,
+) -> anyhow::Result<()> {
+    owner
+        .call(&worker, nft_contract.id(), "nft_approve")
+        .args_json(json!({
+            "token_id": "1",
+            "account_id": user.id(),
+        }))?
+        .gas(parse_gas!("150 Tgas") as u64)
+        .deposit(parse_gas!("450000000000000000000"))
+        .transact()
+        .await?;
+
+    // root approves token_receiver
+    owner
+        .call(&worker, nft_contract.id(), "nft_approve")
+        .args_json(json!({
+            "token_id": "1",
+            "account_id": token_receiver.id(),
+        }))?
+        .gas(parse_gas!("150 Tgas") as u64)
+        .deposit(parse_gas!("450000000000000000000"))
+        .transact()
+        .await?;
+
+    // root revokes user
+    owner
+        .call(&worker, nft_contract.id(), "nft_revoke")
+        .args_json(json!({
+            "token_id": "1",
+            "account_id": user.id(),
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+
+    // assert user is revoked
+    let revoke_bool: bool = nft_contract
+        .call(&worker, "nft_is_approved")
+        .args_json(json!({
+            "token_id":  "1",
+            "approved_account_id": user.id()
+        }))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(revoke_bool, false);
+
+    // assert token receiver still approved
+    let revoke_bool: bool = nft_contract
+        .call(&worker, "nft_is_approved")
+        .args_json(json!({
+            "token_id":  "1",
+            "approved_account_id": token_receiver.id()
+        }))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(revoke_bool, true);
+
+    // root revokes token_receiver
+    owner
+        .call(&worker, nft_contract.id(), "nft_revoke")
+        .args_json(json!({
+            "token_id": "1",
+            "account_id": token_receiver.id(),
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+
+    // assert alice is still revoked
+    let revoke_bool: bool = nft_contract
+        .call(&worker, "nft_is_approved")
+        .args_json(json!({
+            "token_id":  "1",
+            "approved_account_id": user.id()
+        }))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(revoke_bool, false);
+
+    // and now so is token_receiver
+    let revoke_bool: bool = nft_contract
+        .call(&worker, "nft_is_approved")
+        .args_json(json!({
+            "token_id":  "1",
+            "approved_account_id": token_receiver.id()
+        }))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(revoke_bool, false);
+
+    println!("      Passed ✅ test_revoke");
+    Ok(())
+}
+async fn test_revoke_all() -> anyhow::Result<()> {
+    Ok(())
+}
+async fn test_simple_transfer() -> anyhow::Result<()> {
+    Ok(())
+}
+async fn test_transfer_call_fast_return_to_sender() -> anyhow::Result<()> {
+    Ok(())
+}
+async fn test_transfer_call_slow_return_to_sender() -> anyhow::Result<()> {
+    Ok(())
+}
+async fn test_transfer_call_fast_keep_with_sender() -> anyhow::Result<()> {
+    Ok(())
+}
+async fn test_transfer_call_slow_keep_with_sender() -> anyhow::Result<()> {
+    Ok(())
+}
+async fn test_transfer_call_receiver_panics() -> anyhow::Result<()> {
+    Ok(())
+}
+async fn test_enum_total_supply() -> anyhow::Result<()> {
+    Ok(())
+}
+async fn test_enum_nft_supply_for_owner() -> anyhow::Result<()> {
+    Ok(())
+}
+async fn test_enum_nft_tokens_for_owner() -> anyhow::Result<()> {
+    Ok(())
+}
