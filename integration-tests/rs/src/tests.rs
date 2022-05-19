@@ -59,3 +59,18 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+async fn test_simple_approve() -> anyhow::result::Result<()> {}
+async fn test_approval_simple_call() -> anyhow::result::Result<()> {}
+async fn test_approved_account_transfers_token() -> anyhow::result::Result<()> {}
+async fn test_revoke() -> anyhow::result::Result<()> {}
+async fn test_revoke_all() -> anyhow::result::Result<()> {}
+async fn test_simple_transfer() -> anyhow::result::Result<()> {}
+async fn test_transfer_call_fast_return_to_sender() -> anyhow::result::Result<()> {}
+async fn test_transfer_call_slow_return_to_sender() -> anyhow::result::Result<()> {}
+async fn test_transfer_call_fast_keep_with_sender() -> anyhow::result::Result<()> {}
+async fn test_transfer_call_slow_keep_with_sender() -> anyhow::result::Result<()> {}
+async fn test_transfer_call_receiver_panics() -> anyhow::result::Result<()> {}
+async fn test_enum_total_supply() -> anyhow::result::Result<()> {}
+async fn test_enum_nft_supply_for_owner() -> anyhow::result::Result<()> {}
+async fn test_enum_nft_tokens_for_owner() -> anyhow::result::Result<()> {}
