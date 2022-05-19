@@ -387,3 +387,21 @@ test('Transfer call fast keep with sender', async test => {
     const token: any = await nft.view('nft_token', { token_id: '0' });
     test.is(token.owner_id, tokenReceiver.accountId);
 });
+
+test('Transfer call slow keep with sender', async test => {
+    const { root, tokenReceiver, nft } = test.context.accounts;
+    await root.call(
+        nft,
+        'nft_transfer_call',
+        {
+            receiver_id: tokenReceiver,
+            token_id: '0',
+            approval_id: null,
+            memo: 'transfer & call',
+            msg: 'keep-it-later',
+        },
+        { attachedDeposit: '1', gas: tGas(150) },
+    );
+    const token: any = await nft.view('nft_token', { token_id: '0' });
+    test.is(token.owner_id, tokenReceiver.accountId);
+});
