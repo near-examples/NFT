@@ -55,22 +55,93 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     // begin tests
-    println!("#TODO Tests");
+    test_simple_approve(&owner, &alice, &nft_contract, &worker).await?;
 
     Ok(())
 }
 
-async fn test_simple_approve() -> anyhow::result::Result<()> {}
-async fn test_approval_simple_call() -> anyhow::result::Result<()> {}
-async fn test_approved_account_transfers_token() -> anyhow::result::Result<()> {}
-async fn test_revoke() -> anyhow::result::Result<()> {}
-async fn test_revoke_all() -> anyhow::result::Result<()> {}
-async fn test_simple_transfer() -> anyhow::result::Result<()> {}
-async fn test_transfer_call_fast_return_to_sender() -> anyhow::result::Result<()> {}
-async fn test_transfer_call_slow_return_to_sender() -> anyhow::result::Result<()> {}
-async fn test_transfer_call_fast_keep_with_sender() -> anyhow::result::Result<()> {}
-async fn test_transfer_call_slow_keep_with_sender() -> anyhow::result::Result<()> {}
-async fn test_transfer_call_receiver_panics() -> anyhow::result::Result<()> {}
-async fn test_enum_total_supply() -> anyhow::result::Result<()> {}
-async fn test_enum_nft_supply_for_owner() -> anyhow::result::Result<()> {}
-async fn test_enum_nft_tokens_for_owner() -> anyhow::result::Result<()> {}
+async fn test_simple_approve(
+    owner: &Account,
+    user: &Account,
+    nft_contract: &Contract,
+    worker: &Worker<Sandbox>,
+) -> anyhow::Result<()> {
+    owner
+        .call(&worker, nft_contract.id(), "nft_mint")
+        .args_json(json!({
+            "token_id": "0",
+            "receiver_id": owner.id(),
+            "token_metadata": {
+                "title": "Olympus Mons",
+                "description": "The tallest mountain in the charted solar system",
+                "copies": 10000,
+            }
+        }))?
+        .deposit(parse_gas!("5950000000000000000000"))
+        .transact()
+        .await?;
+
+    // root approves alice
+    owner
+        .call(&worker, nft_contract.id(), "nft_approve")
+        .args_json(json!({
+            "token_id":  "0",
+            "account_id": user.id(),
+        }))?
+        .deposit(parse_gas!("5950000000000000000000"))
+        .transact()
+        .await?;
+
+    let approval_no_id: bool = nft_contract
+        .call(&worker, "nft_is_approved")
+        .args_json(json!({
+            "token_id":  "0",
+            "approved_account_id": user.id()
+        }))?
+        .transact()
+        .await?
+        .json()?;
+
+    assert!(approval_no_id);
+
+    let approval: bool = nft_contract
+        .call(&worker, "nft_is_approved")
+        .args_json(json!({
+            "token_id":  "0",
+            "approved_account_id": user.id(),
+            "approval_id": 1
+        }))?
+        .transact()
+        .await?
+        .json()?;
+
+    assert!(approval);
+
+    let approval_wrong_id: bool = nft_contract
+        .call(&worker, "nft_is_approved")
+        .args_json(json!({
+            "token_id":  "0",
+            "approved_account_id": user.id(),
+            "approval_id": 2
+        }))?
+        .transact()
+        .await?
+        .json()?;
+
+    assert!(!approval_wrong_id);
+    println!("      Passed ✅ test_simple_approve");
+    Ok(())
+}
+async fn test_approval_simple_call() -> anyhow::Result<()> {Ok(())}
+async fn test_approved_account_transfers_token() -> anyhow::Result<()> {Ok(())}
+async fn test_revoke() -> anyhow::Result<()> {Ok(())}
+async fn test_revoke_all() -> anyhow::Result<()> {Ok(())}
+async fn test_simple_transfer() -> anyhow::Result<()> {Ok(())}
+async fn test_transfer_call_fast_return_to_sender() -> anyhow::Result<()> {Ok(())}
+async fn test_transfer_call_slow_return_to_sender() -> anyhow::Result<()> {Ok(())}
+async fn test_transfer_call_fast_keep_with_sender() -> anyhow::Result<()> {Ok(())}
+async fn test_transfer_call_slow_keep_with_sender() -> anyhow::Result<()> {Ok(())}
+async fn test_transfer_call_receiver_panics() -> anyhow::Result<()> {Ok(())}
+async fn test_enum_total_supply() -> anyhow::Result<()> {Ok(())}
+async fn test_enum_nft_supply_for_owner() -> anyhow::Result<()> {Ok(())}
+async fn test_enum_nft_tokens_for_owner() -> anyhow::Result<()> {Ok(())}
