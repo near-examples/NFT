@@ -81,9 +81,9 @@ test('Simple approve', async test => {
             token_id: '0',
             account_id: alice,
         },
-        { 
+        {
             attachedDeposit: new BN('270000000000000000000'), // need more deposit than the sim-tests, cause names are longer
-            gas: tGas('150') 
+            gas: tGas('150')
         },
     );
 
@@ -314,3 +314,23 @@ test('Revoke all', async test => {
         await nft.view('nft_is_approved', { token_id: '0', approved_account_id: tokenReceiver })
     );
 })
+
+test('Simple transfer', async test => {
+    const { root, alice, nft } = test.context.accounts;
+    let token: any = await nft.view('nft_token', { token_id: '0' });
+    test.is(token.owner_id, root.accountId);
+
+    const result = await root.callRaw(
+        nft,
+        'nft_transfer',
+        {
+            receiver_id: alice,
+            token_id: '0',
+            memo: "simple transfer",
+        },
+        { attachedDeposit: '1' },
+    );
+    test.assert(result.succeeded);
+    token = await nft.view('nft_token', { token_id: '0' });
+    test.is(token.owner_id, alice.accountId);
+});
