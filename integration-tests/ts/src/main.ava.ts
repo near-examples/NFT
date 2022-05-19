@@ -169,6 +169,35 @@ test('Simple approve', async test => {
     );
 });
 
+test('Approval with call', async test => {
+    const { root, nft, approvalReceiver } = test.context.accounts;
+    let outcome: string = await root.call(
+        nft,
+        'nft_approve',
+        {
+            token_id: '0',
+            account_id: approvalReceiver,
+            msg: 'return-now',
+        },
+        { attachedDeposit: new BN('390000000000000000000'), gas: tGas('150') },
+    );
+
+    test.is(outcome, 'cool');
+
+    const msg = 'hahaha';
+    outcome = await root.call(
+        nft,
+        'nft_approve',
+        {
+            token_id: '0',
+            account_id: approvalReceiver,
+            msg: msg,
+        },
+        { attachedDeposit: new BN('390000000000000000000'), gas: tGas('150') },
+    );
+    test.is(outcome, msg);
+});
+
 test('Approved account transfers token', async test => {
     const { root, alice, nft } = test.context.accounts;
     await root.call(
