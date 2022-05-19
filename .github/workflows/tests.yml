@@ -15,7 +15,7 @@ jobs:
           toolchain: stable
           target: wasm32-unknown-unknown
       - name: Build wasm files
-        run: cd scripts && ./build.sh 
+        run: cd scripts && chmod +x build.sh && ./build.sh 
       - name: Run unit tests
         env:
           IS_GITHUB_ACTION: true
