@@ -355,7 +355,7 @@ test('Transfer call fast return to sender', async test => {
 });
 
 test('Transfer call slow return to sender', async test => {
-    const  { root, tokenReceiver, nft } = test.context.accounts;
+    const { root, tokenReceiver, nft } = test.context.accounts;
     await root.call(
         nft,
         'nft_transfer_call',
@@ -428,7 +428,34 @@ test('Transfer call receiver panics', async test => {
 test('Enum total supply', async test => {
     const { root, alice, nft } = test.context.accounts;
     await mint_more(root, nft);
-  
+
     const total_supply = await nft_total_supply(nft, alice);
     test.deepEqual(total_supply, new BN(4));
-  });
+});
+
+test('Enum nft tokens', async test => {
+    const { root, nft } = test.context.accounts;
+    await mint_more(root, nft);
+
+    // No optional args should return all
+    let tokens: any[] = await nft.view('nft_tokens');
+    test.is(tokens.length, 4);
+
+    // Start at "1", with no limit arg
+    tokens = await nft.view('nft_tokens', { from_index: '1' });
+    test.is(tokens.length, 3);
+    test.is(tokens[0].token_id, '1');
+    test.is(tokens[1].token_id, '2');
+    test.is(tokens[2].token_id, '3');
+
+    // Start at "2", with limit 1
+    tokens = await nft.view('nft_tokens', { from_index: '2', limit: 1 });
+    test.is(tokens.length, 1);
+    test.is(tokens[0].token_id, '2');
+
+    // Don't specify from_index, but limit 2
+    tokens = await nft.view('nft_tokens', { limit: 2 });
+    test.is(tokens.length, 2);
+    test.is(tokens[0].token_id, '0');
+    test.is(tokens[1].token_id, '1');
+});
