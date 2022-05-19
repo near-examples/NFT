@@ -459,3 +459,18 @@ test('Enum nft tokens', async test => {
     test.is(tokens[0].token_id, '0');
     test.is(tokens[1].token_id, '1');
 });
+
+test('Enum nft supply for owner', async test => {
+    const { root, alice, nft } = test.context.accounts;
+    // Get number from account with no NFTs
+    let ownerNumTokens: BN = new BN(await nft.view('nft_supply_for_owner', { account_id: alice }));
+    test.deepEqual(ownerNumTokens, new BN(0));
+
+    ownerNumTokens = new BN(await nft.view('nft_supply_for_owner', { account_id: root }));
+    test.deepEqual(ownerNumTokens, new BN(1));
+
+    await mint_more(root, nft);
+
+    ownerNumTokens = new BN(await nft.view('nft_supply_for_owner', { account_id: root }));
+    test.deepEqual(ownerNumTokens, new BN(4));
+});
