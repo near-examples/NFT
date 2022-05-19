@@ -1,5 +1,6 @@
 import { Worker, NearAccount, tGas, NEAR, BN } from 'near-workspaces';
 import anyTest, { TestFn } from 'ava';
+import { mint_more, nft_total_supply } from './utils';
 
 const test = anyTest as TestFn<{
     worker: Worker;
@@ -423,3 +424,11 @@ test('Transfer call receiver panics', async test => {
     const token: any = await nft.view('nft_token', { token_id: '0' });
     test.is(token.owner_id, root.accountId);
 });
+
+test('Enum total supply', async test => {
+    const { root, alice, nft } = test.context.accounts;
+    await mint_more(root, nft);
+  
+    const total_supply = await nft_total_supply(nft, alice);
+    test.deepEqual(total_supply, new BN(4));
+  });
