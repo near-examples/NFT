@@ -4,6 +4,7 @@ use serde_json::json;
 use workspaces::prelude::*;
 use workspaces::result::CallExecutionDetails;
 use workspaces::{network::Sandbox, Account, Contract, Worker};
+use std::collections::HashMap;
 
 const NFT_WASM_FILEPATH: &str = "../../res/non_fungible_token.wasm";
 const TR_WASM_FILEPATH: &str = "../../res/token_receiver.wasm";
@@ -57,6 +58,7 @@ async fn main() -> anyhow::Result<()> {
     // begin tests
     test_simple_approve(&owner, &alice, &nft_contract, &worker).await?;
     test_approval_simple_call(&owner, &nft_contract, &ar_contract, &worker).await?;
+    test_approved_account_transfers_token(&owner, &alice, &nft_contract, &worker).await?;
     Ok(())
 }
 
@@ -187,7 +189,36 @@ async fn test_approval_simple_call(
     Ok(())
 }
 
-async fn test_approved_account_transfers_token() -> anyhow::Result<()> {Ok(())}
+async fn test_approved_account_transfers_token(
+    owner:  &Account,
+    user: &Account,
+    nft_contract: &Contract,
+    worker: &Worker<Sandbox>,
+) -> anyhow::Result<()> {
+    use serde_json::Value::String;
+    user
+        .call(&worker, nft_contract.id(), "nft_transfer")
+        .args_json(json!({
+            "receiver_id": user.id(),
+            "token_id": '0',
+            "approval_id": 1,
+            "memo": "message for test 3",
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+    println!("run nft transfer");
+    let token: serde_json::Value = nft_contract.call(&worker, "nft_token")
+        .args_json(json!({"token_id": "0"}))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(token.get("token_id"), Some(&String("0".to_string())));
+
+    println!("      Passed ✅ test_approved_account_transfers_token");
+    Ok(())
+}
+
 async fn test_revoke() -> anyhow::Result<()> {Ok(())}
 async fn test_revoke_all() -> anyhow::Result<()> {Ok(())}
 async fn test_simple_transfer() -> anyhow::Result<()> {Ok(())}
