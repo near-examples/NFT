@@ -56,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
 
     // begin tests
     test_simple_approve(&owner, &alice, &nft_contract, &worker).await?;
-
+    test_approval_simple_call(&owner, &nft_contract, &ar_contract, &worker).await?;
     Ok(())
 }
 
@@ -132,7 +132,61 @@ async fn test_simple_approve(
     println!("      Passed ✅ test_simple_approve");
     Ok(())
 }
-async fn test_approval_simple_call() -> anyhow::Result<()> {Ok(())}
+
+async fn test_approval_simple_call(
+    owner:  &Account,
+    nft_contract: &Contract,
+    approval_receiver: &Contract,
+    worker: &Worker<Sandbox>,
+) -> anyhow::Result<()> {
+    owner
+        .call(&worker, nft_contract.id(), "nft_mint")
+        .args_json(json!({
+            "token_id": "1",
+            "receiver_id": owner.id(),
+            "token_metadata": {
+                "title": "Olympus Mons 2",
+                "description": "The tallest mountain in the charted solar system",
+                "copies": 1,
+            }
+        }))?
+        .deposit(parse_gas!("5950000000000000000000"))
+        .transact()
+        .await?;
+
+    let outcome: String = owner
+        .call(&worker, nft_contract.id(), "nft_approve")
+        .args_json(json!({
+            "token_id": "1",
+            "account_id": approval_receiver.id(),
+            "msg": "return-now"
+        }))?
+        .gas(parse_gas!("150 Tgas") as u64)
+        .deposit(parse_gas!("450000000000000000000"))
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!("cool", outcome);
+
+    let msg = "test message";
+    let outcome: String = owner
+        .call(&worker, nft_contract.id(), "nft_approve")
+        .args_json(json!({
+            "token_id": "1",
+            "account_id": approval_receiver.id(),
+            "msg": msg.clone(),
+        }))?
+        .gas(parse_gas!("150 Tgas") as u64)
+        .deposit(parse_gas!("450000000000000000000"))
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(msg, outcome);
+
+    println!("      Passed ✅ test_approval_simple_call");
+    Ok(())
+}
+
 async fn test_approved_account_transfers_token() -> anyhow::Result<()> {Ok(())}
 async fn test_revoke() -> anyhow::Result<()> {Ok(())}
 async fn test_revoke_all() -> anyhow::Result<()> {Ok(())}
