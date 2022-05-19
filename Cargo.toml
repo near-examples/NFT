@@ -30,3 +30,6 @@ members = [
   "test-approval-receiver",
   "test-token-receiver",
 ]
+exclude  = [
+  "integration-tests"
+]

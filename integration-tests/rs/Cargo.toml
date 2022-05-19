@@ -15,7 +15,7 @@ serde_json = { version = "1.0", features = ["arbitrary_precision"] }
 tokio = { version = "1.18.1", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
-workspaces = "0.3.0"
+workspaces = "0.2.1"
 pkg-config = "0.3.1"
 
 [[example]]
