@@ -60,6 +60,7 @@ async fn main() -> anyhow::Result<()> {
     test_approval_simple_call(&owner, &nft_contract, &ar_contract, &worker).await?;
     test_approved_account_transfers_token(&owner, &alice, &nft_contract, &worker).await?;
     test_revoke(&owner, &alice, &nft_contract, &tr_contract, &worker).await?;
+    test_revoke_all(&owner, &alice, &nft_contract, &tr_contract, &worker).await?;
     Ok(())
 }
 
@@ -323,7 +324,60 @@ async fn test_revoke(
     println!("      Passed ✅ test_revoke");
     Ok(())
 }
-async fn test_revoke_all() -> anyhow::Result<()> {
+
+async fn test_revoke_all(
+    owner: &Account,
+    user: &Account,
+    nft_contract: &Contract,
+    token_receiver: &Contract,
+    worker: &Worker<Sandbox>,
+) -> anyhow::Result<()> {
+    // root approves alice
+    owner.call(&worker, nft_contract.id(), "nft_approve")
+        .args_json(json!({
+            "token_id": "1",
+            "account_id": user.id(),
+        }))?
+        .gas(parse_gas!("150 Tgas") as u64)
+        .deposit(parse_gas!("450000000000000000000"))
+        .transact()
+        .await?;
+
+    // root approves token_receiver
+    owner.call(&worker, nft_contract.id(), "nft_approve")
+        .args_json(json!({
+            "token_id": "1",
+            "account_id": token_receiver.id(),
+        }))?
+        .gas(parse_gas!("150 Tgas") as u64)
+        .deposit(parse_gas!("450000000000000000000"))
+        .transact()
+        .await?;
+    
+    // assert everyone is revoked
+    let revoke_bool: bool = nft_contract
+        .call(&worker, "nft_is_approved")
+        .args_json(json!({
+            "token_id":  "1",
+            "approved_account_id": user.id()
+        }))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(revoke_bool, true);
+
+    let revoke_bool: bool = nft_contract
+        .call(&worker, "nft_is_approved")
+        .args_json(json!({
+            "token_id":  "1",
+            "approved_account_id": token_receiver.id()
+        }))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(revoke_bool, true);
+
+    println!("      Passed ✅ test_revoke_all");
     Ok(())
 }
 async fn test_simple_transfer() -> anyhow::Result<()> {
