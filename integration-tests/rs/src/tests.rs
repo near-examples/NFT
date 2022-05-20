@@ -65,7 +65,8 @@ async fn main() -> anyhow::Result<()> {
     test_transfer_call_slow_keep_with_sender(&owner, &tr_contract, &nft_contract, &worker).await?;
     test_transfer_call_receiver_panics(&owner, &tr_contract, &nft_contract, &worker).await?;
     test_enum_total_supply(&owner, &alice, &nft_contract, &worker).await?;
-    test_enum_nft_tokens(&owner, &nft_contract, &worker).await?;
+    test_enum_nft_tokens(&nft_contract, &worker).await?;
+    test_enum_nft_supply_for_owner(&owner, &alice, &nft_contract, &worker).await?;
     Ok(())
 }
 
@@ -641,7 +642,6 @@ async fn test_enum_total_supply(
 }
 
 async fn test_enum_nft_tokens(
-    owner: &Account,
     nft_contract: &Contract,
     worker: &Worker<Sandbox>,
 ) -> anyhow::Result<()> {
@@ -658,6 +658,38 @@ async fn test_enum_nft_tokens(
     Ok(())
 }
 
-async fn test_enum_nft_tokens_for_owner() -> anyhow::Result<()> {
+async fn test_enum_nft_supply_for_owner(
+    owner: &Account,
+    user: &Account,
+    nft_contract: &Contract,
+    worker: &Worker<Sandbox>,
+) -> anyhow::Result<()> {
+    let owner_tokens: String = nft_contract
+        .call(&worker, "nft_supply_for_owner")
+        .args_json(json!({"account_id": owner.id()}))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(owner_tokens, "1");
+
+    let user_tokens: String = nft_contract
+        .call(&worker, "nft_supply_for_owner")
+        .args_json(json!({"account_id": user.id()}))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(user_tokens, "2");
+
+    println!("      Passed ✅ test_enum_nft_supply_for_owner");
+    Ok(())
+}
+
+async fn test_enum_nft_tokens_for_owner(
+    owner: &Account,
+    nft_contract: &Contract,
+    worker: &Worker<Sandbox>,
+) -> anyhow::Result<()> {
+
+    println!("      Passed ✅ test_enum_nft_tokens_for_owner");
     Ok(())
 }
