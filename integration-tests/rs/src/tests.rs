@@ -597,6 +597,7 @@ async fn test_transfer_call_receiver_panics(
             }
         }))?
         .deposit(parse_gas!("6050000000000000000000"))
+        .gas(parse_gas!("150 Tgas") as u64)
         .transact()
         .await?;
     
@@ -696,7 +697,7 @@ async fn test_enum_nft_tokens_for_owner(
         .transact()
         .await?
         .json()?;
-    assert_eq!(tokens.len(), 1);
+    assert_eq!(tokens.len(), 2);
 
     let tokens: Vec<serde_json::Value> = nft_contract.call(&worker, "nft_tokens_for_owner")
         .args_json(json!({
@@ -705,7 +706,7 @@ async fn test_enum_nft_tokens_for_owner(
         .transact()
         .await?
         .json()?;
-    assert_eq!(tokens.len(), 2);
+    assert_eq!(tokens.len(), 1);
     println!("      Passed ✅ test_enum_nft_tokens_for_owner");
     Ok(())
 }
