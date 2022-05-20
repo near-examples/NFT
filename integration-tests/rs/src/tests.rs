@@ -61,6 +61,7 @@ async fn main() -> anyhow::Result<()> {
     test_approved_account_transfers_token(&owner, &alice, &nft_contract, &worker).await?;
     test_revoke(&owner, &alice, &nft_contract, &tr_contract, &worker).await?;
     test_revoke_all(&owner, &alice, &nft_contract, &tr_contract, &worker).await?;
+    test_simple_transfer(&owner, &alice, &nft_contract, &worker).await?;
     Ok(())
 }
 
@@ -380,7 +381,40 @@ async fn test_revoke_all(
     println!("      Passed ✅ test_revoke_all");
     Ok(())
 }
-async fn test_simple_transfer() -> anyhow::Result<()> {
+
+async fn test_simple_transfer(
+    owner: &Account,
+    user: &Account,
+    nft_contract: &Contract,
+    worker: &Worker<Sandbox>,
+) -> anyhow::Result<()> {
+    use serde_json::Value::String;
+    let token: serde_json::Value = nft_contract
+        .call(&worker, "nft_token")
+        .args_json(json!({"token_id": "1"}))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(token.get("owner_id"), Some(&String(owner.id().to_string())));
+
+    owner.call(&worker, nft_contract.id(), "nft_transfer")
+        .args_json(json!({
+            "token_id": "1",
+            "receiver_id": user.id(),
+        }))?
+        .deposit(1)
+        .transact()
+        .await?;
+
+    let token: serde_json::Value = nft_contract
+        .call(&worker, "nft_token")
+        .args_json(json!({"token_id": "1"}))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(token.get("owner_id"), Some(&String(user.id().to_string())));
+
+    println!("      Passed ✅ test_simple_transfer");
     Ok(())
 }
 async fn test_transfer_call_fast_return_to_sender() -> anyhow::Result<()> {
