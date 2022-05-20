@@ -63,6 +63,8 @@ async fn main() -> anyhow::Result<()> {
     test_revoke_all(&owner, &alice, &nft_contract, &tr_contract, &worker).await?;
     test_simple_transfer(&owner, &alice, &nft_contract, &worker).await?;
     test_transfer_call_fast_return_to_sender(&owner, &tr_contract, &nft_contract, &worker).await?;
+    test_transfer_call_slow_return_to_sender(&owner, &tr_contract, &nft_contract, &worker).await?;
+    test_transfer_call_fast_keep_with_sender(&owner, &tr_contract, &nft_contract, &worker).await?;
     Ok(())
 }
 
@@ -495,9 +497,38 @@ async fn test_transfer_call_slow_return_to_sender(
     println!("      Passed ✅ test_transfer_call_slow_return_to_sender");
     Ok(())
 }
-async fn test_transfer_call_fast_keep_with_sender() -> anyhow::Result<()> {
+
+async fn test_transfer_call_fast_keep_with_sender(
+    owner: &Account,
+    token_receiver: &Contract,
+    nft_contract: &Contract,
+    worker: &Worker<Sandbox>,
+) -> anyhow::Result<()> {
+    use serde_json::Value::String;
+    owner.call(&worker, nft_contract.id(), "nft_transfer_call")
+        .args_json(json!({
+            "token_id": "2",
+            "receiver_id": token_receiver.id(),
+            "memo": "transfer & call",
+            "msg": "keep-it-now",
+        }))?
+        .deposit(1)
+        .gas(parse_gas!("150 Tgas") as u64)
+        .transact()
+        .await?;
+
+    let token: serde_json::Value = nft_contract
+        .call(&worker, "nft_token")
+        .args_json(json!({"token_id": "2"}))?
+        .transact()
+        .await?
+        .json()?;
+    assert_eq!(token.get("owner_id"), Some(&String(token_receiver.id().to_string())));
+
+    println!("      Passed ✅ test_transfer_call_fast_keep_with_sender");
     Ok(())
 }
+
 async fn test_transfer_call_slow_keep_with_sender() -> anyhow::Result<()> {
     Ok(())
 }
