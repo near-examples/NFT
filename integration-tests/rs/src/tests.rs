@@ -65,6 +65,7 @@ async fn main() -> anyhow::Result<()> {
     test_transfer_call_slow_keep_with_sender(&owner, &tr_contract, &nft_contract, &worker).await?;
     test_transfer_call_receiver_panics(&owner, &tr_contract, &nft_contract, &worker).await?;
     test_enum_total_supply(&owner, &alice, &nft_contract, &worker).await?;
+    test_enum_nft_tokens(&owner, &nft_contract, &worker).await?;
     Ok(())
 }
 
@@ -638,9 +639,25 @@ async fn test_enum_total_supply(
     println!("      Passed ✅ test_enum_total_supply");
     Ok(())
 }
-async fn test_enum_nft_supply_for_owner() -> anyhow::Result<()> {
+
+async fn test_enum_nft_tokens(
+    owner: &Account,
+    nft_contract: &Contract,
+    worker: &Worker<Sandbox>,
+) -> anyhow::Result<()> {
+    let tokens: Vec<serde_json::Value> = nft_contract
+        .call(&worker, "nft_tokens")
+        .args_json(json!({}))?
+        .transact()
+        .await?
+        .json()?;
+
+    assert_eq!(tokens.len(), 5);
+
+    println!("      Passed ✅ test_enum_nft_tokens");
     Ok(())
 }
+
 async fn test_enum_nft_tokens_for_owner() -> anyhow::Result<()> {
     Ok(())
 }
