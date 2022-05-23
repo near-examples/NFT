@@ -6,11 +6,11 @@
     "test": "ava --verbose"
   },
   "devDependencies": {
-    "ava": "*",
-    "near-workspaces": "*",
-    "typescript": "*",
-    "ts-node": "*",
-    "@types/bn.js": "*"
+    "ava": "^4.2.0",
+    "near-workspaces": "^2.0.0",
+    "typescript": "^4.6.4",
+    "ts-node": "^10.8.0",
+    "@types/bn.js": "^5.1.0"
   },
   "dependencies": {}
 }
