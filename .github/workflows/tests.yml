@@ -12,16 +12,20 @@ jobs:
     steps:
       - name: Checkout branch
         uses: actions/checkout@v2
+      - name: Install Node
+        uses: actions/setup-node@v2
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
       - name: Build wasm files
-        run: cd scripts && chmod +x build.sh && ./build.sh 
+        run: source scripts/flags.sh && cargo build --all --target wasm32-unknown-unknown --release && cp target/wasm32-unknown-unknown/release/*.wasm ./res/
       - name: Run unit tests
         env:
           IS_GITHUB_ACTION: true
-        run: cd scripts && chmod +x unit_tests.sh && ./unit_tests.sh
-      - name: Run integration tests
-        run: cd scripts && chmod +x integration_tests.sh && ./integration_tests.sh
+        run: cd nft && cargo test -- --nocapture --color=always
+      - name: Run Rust integration tests
+        run: cd integration-tests/rs && cargo run --example integration-tests
+      - name: Run TypeScript integration tests
+        run: cd integration-tests/ts && yarn && yarn test 
