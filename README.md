@@ -25,15 +25,31 @@ Building this contract
 ======================
 Run the following, and we'll build our rust project up via cargo. This will generate our WASM binaries into our `res/` directory. This is the smart contract we'll be deploying onto the NEAR blockchain later.
 ```bash
-./build.sh
+./scripts/build.sh
 ```
 
 Testing this contract
 =====================
 We have some tests that you can run. For example, the following will run our simple tests to verify that our contract code is working.
+
+*Unit Tests*
 ```bash
+cd nft
 cargo test -- --nocapture
 ```
+
+*Integration Tests*
+*Rust*
+```bash
+cd integration-tests/rs
+cargo run --example integration-tests
+```
+*TypeScript*
+```bash
+cd integration-tests/ts
+yarn && yarn test 
+```
+
 The more complex simulation tests aren't run with this command, but we can find them in `tests/sim`.
 
 Using this contract

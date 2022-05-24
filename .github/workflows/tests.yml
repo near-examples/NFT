@@ -7,17 +7,25 @@ jobs:
   tests:
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Install Node
+        uses: actions/setup-node@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: wasm32-unknown-unknown
-      - name: Install modules
-        run: yarn
-      - name: Run tests
+      - name: Build wasm files
+        run: source scripts/flags.sh && cargo build --all --target wasm32-unknown-unknown --release && cp target/wasm32-unknown-unknown/release/*.wasm ./res/
+      - name: Run unit tests
         env:
           IS_GITHUB_ACTION: true
-        run: cargo build --all --target wasm32-unknown-unknown --release
+        run: cd nft && cargo test -- --nocapture --color=always
+      - name: Run Rust integration tests
+        run: cd integration-tests/rs && cargo run --example integration-tests
+      - name: Run TypeScript integration tests
+        run: cd integration-tests/ts && yarn && yarn test 
