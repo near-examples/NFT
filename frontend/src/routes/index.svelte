@@ -35,7 +35,7 @@
 
 	// 10000 step clear preview
 	const MAX_STEPS = 1000000;
-	const MAX_PREVIEW_STEPS = 10000;
+	const MAX_PREVIEW_STEPS = 1000;
 
 	const normalMaterial = new MeshNormalMaterial();
 	const clearMaterial = new MeshLambertMaterial({ color: 'red' });
@@ -72,20 +72,30 @@
 		cylinders = [...cylinders, new_cylinder];
 	};
 
-	let preview_points: Vector3[] = [];
+	let preview_points: Vector3[] = [new Vector3()];
 	let preview_cylinders: any[] = [];
+	const recomputePreviewCylinders = () => {
+		let new_cylinder = calculateCylinder(
+			preview_points[preview_points.length - 2],
+			preview_points[preview_points.length - 1]
+		);
+		preview_cylinders = [...preview_cylinders, new_cylinder];
+	};
 
 	const generatePreview = () => {
+		let turtle = [0, 0, 0] as PosType;
 		let steps = 0;
 		while (steps < MAX_PREVIEW_STEPS) {
 			const [deltaX, deltaY, deltaZ] = calcChangeInPosVec($parameters);
-			const newPos = [pos[0] + deltaX, pos[1] + deltaY, pos[2] + deltaZ] as PosType;
-			points = [...points, new Vector3(...newPos)];
-			recomputeCylinders();
-			pos = newPos;
+			const newPos = [turtle[0] + deltaX, turtle[1] + deltaY, turtle[2] + deltaZ] as PosType;
+			preview_points = [...preview_points, new Vector3(...newPos)];
+			recomputePreviewCylinders();
+			turtle = newPos;
 		}
 		console.log('DONE');
 	};
+
+	generatePreview();
 
 	let pichRotateRad: number = 0;
 	let tmpRotateRad: number = 0;
@@ -114,7 +124,7 @@
 		YawRotateRad = 0;
 		setTimeout(() => {
 			running = true;
-			start();
+			// start();
 		}, 400);
 	});
 </script>
