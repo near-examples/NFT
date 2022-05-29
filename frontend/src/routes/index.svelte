@@ -33,13 +33,17 @@
 
 	let width = 0.1;
 
+	// 10000 step clear preview
+	const MAX_STEPS = 1000000;
+	const MAX_PREVIEW_STEPS = 10000;
+
 	const normalMaterial = new MeshNormalMaterial();
 	const clearMaterial = new MeshLambertMaterial({ color: 'red' });
 	const defaultMaterial = new MeshStandardMaterial({ color: 'red' });
 	const sphereGeometry = new SphereGeometry(1);
 	const cylinderGeometry = new CylinderGeometry(1, 1, 1);
 
-	let points: Vector3[] = [];
+	let points: Vector3[] = [new Vector3()];
 	let cylinders: any[] = [];
 
 	const axis = new Vector3(0, 1, 0);
@@ -58,10 +62,29 @@
 		};
 	};
 
+	// TODO: revisit
 	const recomputeCylinders = () => {
-		cylinders = [];
-		for (let i = 1; i < points.length; i++)
-			cylinders.push(calculateCylinder(points[i - 1], points[i]));
+		// cylinders = [];
+		// for (let i = 1; i < points.length; i++)
+		// 	cylinders.push(calculateCylinder(points[i - 1], points[i]));
+
+		let new_cylinder = calculateCylinder(points[points.length - 2], points[points.length - 1]);
+		cylinders = [...cylinders, new_cylinder];
+	};
+
+	let preview_points: Vector3[] = [];
+	let preview_cylinders: any[] = [];
+
+	const generatePreview = () => {
+		let steps = 0;
+		while (steps < MAX_PREVIEW_STEPS) {
+			const [deltaX, deltaY, deltaZ] = calcChangeInPosVec($parameters);
+			const newPos = [pos[0] + deltaX, pos[1] + deltaY, pos[2] + deltaZ] as PosType;
+			points = [...points, new Vector3(...newPos)];
+			recomputeCylinders();
+			pos = newPos;
+		}
+		console.log('DONE');
 	};
 
 	let pichRotateRad: number = 0;

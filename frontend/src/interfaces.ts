@@ -1,7 +1,7 @@
 export type PosType = [number, number, number];
 
-type Dimension = "X" | "Y" | "Z";
-export type AngleFN = "cos" | "sin";
+export type Dimension = 'X' | 'Y' | 'Z';
+export type AngleFN = 'cos' | 'sin';
 
 /**
  * @param n - numerator (natural number (including 0))
@@ -9,14 +9,14 @@ export type AngleFN = "cos" | "sin";
  * @param b - base (natural number (not including 0 or 1))
  */
 export type Rational = {
-  n: number;
-  d: number;
-  b: number;
+	n: number;
+	d: number;
+	b: number;
 };
 
 export type AngleUsageIndicator = {
-  dimension: Dimension;
-  angleFn: AngleFN;
+	dimension: Dimension;
+	angleFn: AngleFN;
 };
 
 /**
@@ -25,7 +25,7 @@ export type AngleUsageIndicator = {
  * @param usage - indicates which dimensions to use the angle in and how
  */
 export type Angle = {
-  iterator: IterableIterator<number>;
-  base: number;
-  usage: AngleUsageIndicator[];
+	iterator: IterableIterator<number>;
+	base: number;
+	usage: AngleUsageIndicator[];
 };
