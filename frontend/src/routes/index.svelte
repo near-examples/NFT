@@ -35,13 +35,12 @@
 
 	let width = 0.1;
 
-	// 10000 step clear preview
 	const MAX_STEPS = 1000000;
-	const MAX_PREVIEW_STEPS = 1000;
+	const MAX_PREVIEW_STEPS = 200;
 
 	const normalMaterial = new MeshNormalMaterial();
 	const clearMaterial = new MeshLambertMaterial({
-		color: 'gray',
+		color: 'black',
 		transparent: true,
 		opacity: 0.15
 	});
@@ -68,12 +67,7 @@
 		};
 	};
 
-	// TODO: revisit
 	const recomputeCylinders = () => {
-		// cylinders = [];
-		// for (let i = 1; i < points.length; i++)
-		// 	cylinders.push(calculateCylinder(points[i - 1], points[i]));
-
 		let new_cylinder = calculateCylinder(points[points.length - 2], points[points.length - 1]);
 		cylinders = [...cylinders, new_cylinder];
 	};
@@ -89,16 +83,17 @@
 	};
 
 	const generatePreview = async () => {
-		let turtle = [0, 0, 0] as PosType;
+		let curPos = [0, 0, 0] as PosType;
 		let steps = 0;
 		while (steps < MAX_PREVIEW_STEPS) {
 			const [deltaX, deltaY, deltaZ] = calcChangeInPosVec($parameters);
 			await new Promise((res, rej) => setTimeout(res, $parameters.sleepTimeMs));
 
-			const newPos = [turtle[0] + deltaX, turtle[1] + deltaY, turtle[2] + deltaZ] as PosType;
+			const newPos = [curPos[0] + deltaX, curPos[1] + deltaY, curPos[2] + deltaZ] as PosType;
 			preview_points = [...preview_points, new Vector3(...newPos)];
 			recomputePreviewCylinders();
-			turtle = newPos;
+			curPos = newPos;
+			steps += 1;
 		}
 		console.log('DONE');
 	};
@@ -110,8 +105,10 @@
 	let running = true;
 
 	const start = async (initSleep = true) => {
-		if (initSleep) await new Promise((res, rej) => setTimeout(res, 1000));
-		while (running) {
+		// if (initSleep) await new Promise((res, rej) => setTimeout(res, 1000));
+
+		let steps = 0;
+		while (running && steps < MAX_STEPS) {
 			const [deltaX, deltaY, deltaZ] = calcChangeInPosVec($parameters);
 			await new Promise((res, rej) => setTimeout(res, $parameters.sleepTimeMs));
 
@@ -119,6 +116,7 @@
 			points = [...points, new Vector3(...newPos)];
 			recomputeCylinders();
 			pos = newPos;
+			steps += 1;
 		}
 		console.log('DONE');
 	};
@@ -128,6 +126,7 @@
 		pos = [0, 0, 0];
 		pichRotateRad = 0;
 		YawRotateRad = 0;
+
 		setTimeout(() => {
 			running = true;
 			start();
@@ -137,15 +136,16 @@
 </script>
 
 <div class="container">
+	<input bind:value={width} type="range" min=".1" max="10" step=".1" />
 	<Controls />
 	<Canvas>
-		<OrthographicCamera position={{ x: 10, y: 10, z: 10 }}>
+		<!-- <OrthographicCamera position={{ x: 10, y: 10, z: 10 }}>
 			<OrbitControls enableDamping autoRotate autoRotateSpeed={0.5} />
-		</OrthographicCamera>
-		<!-- 		
-		<PerspectiveCamera position={{ x: 10, y: 10, z: 10 }}>
+		</OrthographicCamera> -->
+
+		<PerspectiveCamera far={100000000} position={{ x: 10, y: 10, z: 10 }}>
 			<OrbitControls enableDamping autoRotate autoRotateSpeed={0.5} />
-		</PerspectiveCamera> -->
+		</PerspectiveCamera>
 
 		<DirectionalLight shadow color={'#EDBD9C'} position={{ x: -15, y: 45, z: 20 }} />
 		<HemisphereLight skyColor={0x4c8eac} groundColor={0xac844c} intensity={0.6} />
@@ -206,7 +206,10 @@
 			material={new MeshStandardMaterial({ color: 'white', side: DoubleSide })}
 			interactive
 			on:click={() => {
-				points = [];
+				points = [new Vector3()];
+				cylinders = [];
+				preview_points = [new Vector3()];
+				preview_cylinders = [];
 				pos = [0, 0, 0];
 			}}
 		/>
