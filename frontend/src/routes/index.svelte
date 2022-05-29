@@ -23,11 +23,13 @@
 	import {
 		Canvas,
 		DirectionalLight,
+		Group,
 		HemisphereLight,
 		Instance,
 		InstancedMesh,
 		Mesh,
 		OrbitControls,
+		OrthographicCamera,
 		PerspectiveCamera
 	} from 'threlte';
 
@@ -38,7 +40,11 @@
 	const MAX_PREVIEW_STEPS = 1000;
 
 	const normalMaterial = new MeshNormalMaterial();
-	const clearMaterial = new MeshLambertMaterial({ color: 'red' });
+	const clearMaterial = new MeshLambertMaterial({
+		color: 'gray',
+		transparent: true,
+		opacity: 0.15
+	});
 	const defaultMaterial = new MeshStandardMaterial({ color: 'red' });
 	const sphereGeometry = new SphereGeometry(1);
 	const cylinderGeometry = new CylinderGeometry(1, 1, 1);
@@ -82,11 +88,13 @@
 		preview_cylinders = [...preview_cylinders, new_cylinder];
 	};
 
-	const generatePreview = () => {
+	const generatePreview = async () => {
 		let turtle = [0, 0, 0] as PosType;
 		let steps = 0;
 		while (steps < MAX_PREVIEW_STEPS) {
 			const [deltaX, deltaY, deltaZ] = calcChangeInPosVec($parameters);
+			await new Promise((res, rej) => setTimeout(res, $parameters.sleepTimeMs));
+
 			const newPos = [turtle[0] + deltaX, turtle[1] + deltaY, turtle[2] + deltaZ] as PosType;
 			preview_points = [...preview_points, new Vector3(...newPos)];
 			recomputePreviewCylinders();
@@ -94,8 +102,6 @@
 		}
 		console.log('DONE');
 	};
-
-	generatePreview();
 
 	let pichRotateRad: number = 0;
 	let tmpRotateRad: number = 0;
@@ -124,7 +130,8 @@
 		YawRotateRad = 0;
 		setTimeout(() => {
 			running = true;
-			// start();
+			start();
+			generatePreview();
 		}, 400);
 	});
 </script>
@@ -132,30 +139,63 @@
 <div class="container">
 	<Controls />
 	<Canvas>
+		<OrthographicCamera position={{ x: 10, y: 10, z: 10 }}>
+			<OrbitControls enableDamping autoRotate autoRotateSpeed={0.5} />
+		</OrthographicCamera>
+		<!-- 		
 		<PerspectiveCamera position={{ x: 10, y: 10, z: 10 }}>
 			<OrbitControls enableDamping autoRotate autoRotateSpeed={0.5} />
-		</PerspectiveCamera>
+		</PerspectiveCamera> -->
 
 		<DirectionalLight shadow color={'#EDBD9C'} position={{ x: -15, y: 45, z: 20 }} />
 		<HemisphereLight skyColor={0x4c8eac} groundColor={0xac844c} intensity={0.6} />
 
-		<!-- spheres -->
-		<InstancedMesh castShadow receiveShadow geometry={sphereGeometry} material={defaultMaterial}>
-			{#each points as p}
-				<Instance position={p} scale={{ x: width, y: width, z: width }} />
-			{/each}
-		</InstancedMesh>
+		<!-- Preview -->
+		<Group>
+			<!-- spheres -->
+			<InstancedMesh castShadow receiveShadow geometry={sphereGeometry} material={clearMaterial}>
+				{#each preview_points as p}
+					<Instance position={p} scale={{ x: width, y: width, z: width }} />
+				{/each}
+			</InstancedMesh>
 
-		<!-- cylinders -->
-		<InstancedMesh castShadow receiveShadow geometry={cylinderGeometry} material={defaultMaterial}>
-			{#each cylinders as c}
-				<Instance
-					position={c.position}
-					rotation={c.rotation}
-					scale={{ x: width, y: c.scale.y, z: width }}
-				/>
-			{/each}
-		</InstancedMesh>
+			<!-- cylinders -->
+			<InstancedMesh castShadow receiveShadow geometry={cylinderGeometry} material={clearMaterial}>
+				{#each preview_cylinders as c}
+					<Instance
+						position={c.position}
+						rotation={c.rotation}
+						scale={{ x: width, y: c.scale.y, z: width }}
+					/>
+				{/each}
+			</InstancedMesh>
+		</Group>
+
+		<!-- MAIN TURTLE RENDERING -->
+		<Group>
+			<!-- spheres -->
+			<InstancedMesh castShadow receiveShadow geometry={sphereGeometry} material={defaultMaterial}>
+				{#each points as p}
+					<Instance position={p} scale={{ x: width, y: width, z: width }} />
+				{/each}
+			</InstancedMesh>
+
+			<!-- cylinders -->
+			<InstancedMesh
+				castShadow
+				receiveShadow
+				geometry={cylinderGeometry}
+				material={defaultMaterial}
+			>
+				{#each cylinders as c}
+					<Instance
+						position={c.position}
+						rotation={c.rotation}
+						scale={{ x: width, y: c.scale.y, z: width }}
+					/>
+				{/each}
+			</InstancedMesh>
+		</Group>
 
 		<!-- base plane -->
 		<Mesh
