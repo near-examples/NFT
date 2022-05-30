@@ -4,7 +4,7 @@ Non-fungible Token (NFT)
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/near-examples/NFT)
 
 
-This repository includes an example implementation of a [non-fungible token] contract which uses [near-contract-standards] and [simulation] tests.
+This repository includes an example implementation of a [non-fungible token] contract which uses [near-contract-standards] and workspaces-js and -rs tests.
 
   [non-fungible token]: https://nomicon.io/Standards/NonFungibleToken/README.html
   [near-contract-standards]: https://github.com/near/near-sdk-rs/tree/master/near-contract-standards
