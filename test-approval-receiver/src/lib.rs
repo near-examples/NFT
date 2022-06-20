@@ -4,19 +4,10 @@ A stub contract that implements nft_on_approve for simulation testing nft_approv
 use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
 use near_contract_standards::non_fungible_token::TokenId;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::json_types::ValidAccountId;
 use near_sdk::{
-    env, ext_contract, log, near_bindgen, setup_alloc, AccountId, Balance, Gas, PanicOnDefault,
+    env, ext_contract, log, near_bindgen, AccountId, PanicOnDefault,
     PromiseOrValue,
 };
-
-setup_alloc!();
-
-const BASE_GAS: Gas = 5_000_000_000_000;
-const PROMISE_CALL: Gas = 5_000_000_000_000;
-const GAS_FOR_NFT_ON_APPROVE: Gas = BASE_GAS + PROMISE_CALL;
-
-const NO_DEPOSIT: Balance = 0;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -30,15 +21,10 @@ pub trait ValueReturnTrait {
     fn ok_go(&self, msg: String) -> PromiseOrValue<String>;
 }
 
-// Have to repeat the same trait for our own implementation.
-trait ValueReturnTrait {
-    fn ok_go(&self, msg: String) -> PromiseOrValue<String>;
-}
-
 #[near_bindgen]
 impl ApprovalReceiver {
     #[init]
-    pub fn new(non_fungible_token_account_id: ValidAccountId) -> Self {
+    pub fn new(non_fungible_token_account_id: AccountId) -> Self {
         Self { non_fungible_token_account_id: non_fungible_token_account_id.into() }
     }
 }
@@ -74,10 +60,9 @@ impl NonFungibleTokenApprovalReceiver for ApprovalReceiver {
         match msg.as_str() {
             "return-now" => PromiseOrValue::Value("cool".to_string()),
             _ => {
-                let prepaid_gas = env::prepaid_gas();
-                let account_id = env::current_account_id();
-                ext_self::ok_go(msg, &account_id, NO_DEPOSIT, prepaid_gas - GAS_FOR_NFT_ON_APPROVE)
-                    .into()
+                // Call ok_go with no attached deposit and all unspent GAS (weight of 1)
+                Self::ext(env::current_account_id())
+                    .ok_go(msg).into()
             }
         }
     }
