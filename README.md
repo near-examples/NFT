@@ -52,8 +52,6 @@ cd integration-tests/ts
 yarn && yarn test 
 ```
 
-The more complex simulation tests aren't run with this command, but we can find them in `tests/sim`.
-
 Using this contract
 ===================
 
