@@ -1,3 +1,14 @@
+import {
+	Material,
+	MeshLambertMaterial,
+	MeshNormalMaterial,
+	MeshStandardMaterial,
+	Vector3
+} from 'three';
+
+export const MAX_STEPS = 1000000;
+export const MAX_PREVIEW_STEPS = 200;
+
 export type PosType = [number, number, number];
 
 export type Dimension = 'X' | 'Y' | 'Z';
@@ -28,4 +39,28 @@ export type Angle = {
 	iterator: IterableIterator<number>;
 	base: number;
 	usage: AngleUsageIndicator[];
+};
+
+export type TurtlePath = {
+	points: Vector3[];
+	cylinders: {
+		position: any;
+		rotation: any;
+		scale?: any;
+	}[];
+	mat: Material;
+};
+
+const normalMaterial = new MeshNormalMaterial();
+const clearMaterial = new MeshLambertMaterial({
+	color: 'black',
+	transparent: true,
+	opacity: 0.15
+});
+const defaultMaterial = new MeshStandardMaterial({ color: 'red' });
+
+export const defaultPath: TurtlePath = {
+	points: [new Vector3()],
+	cylinders: [],
+	mat: defaultMaterial
 };

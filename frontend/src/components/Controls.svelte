@@ -3,6 +3,14 @@
 
 	import { parameters } from '../store';
 
+	// TODO: connect to store
+	// group into edit controls + view controls
+	// + mechanism to toggle
+	// change decimal preview to preview list of digits
+	//  or not
+
+	// link to paper icon
+
 	let play = false;
 	const toggle = () => {
 		play = !play;
@@ -43,42 +51,6 @@
 		<input bind:value={yaw_base} type="number" step="1" min="2" />
 	</label>
 
-	<div class="button-group">
-		<button
-			class={yaw_fn == 'sin' ? 'selected' : ''}
-			on:click={() => {
-				yaw_fn = 'sin';
-			}}>sin</button
-		>
-		<button
-			class={yaw_fn == 'cos' ? 'selected' : ''}
-			on:click={() => {
-				yaw_fn = 'cos';
-			}}>cos</button
-		>
-	</div>
-
-	<div class="button-group">
-		<button
-			class={yaw_dim == 'X' ? 'selected' : ''}
-			on:click={() => {
-				yaw_dim = 'X';
-			}}>X</button
-		>
-		<button
-			class={yaw_dim == 'Y' ? 'selected' : ''}
-			on:click={() => {
-				yaw_dim = 'Y';
-			}}>Y</button
-		>
-		<button
-			class={yaw_dim == 'Z' ? 'selected' : ''}
-			on:click={() => {
-				yaw_dim = 'Z';
-			}}>Z</button
-		>
-	</div>
-
 	<p>{yaw_num / yaw_den}</p>
 
 	<h4>Pitch</h4>
@@ -95,22 +67,7 @@
 		<input bind:value={pitch_base} type="number" step="1" min="2" />
 	</label>
 
-	<div class="button-group">
-		<button
-			class={pitch_fn == 'sin' ? 'selected' : ''}
-			on:click={() => {
-				pitch_fn = 'sin';
-			}}>sin</button
-		>
-		<button
-			class={pitch_fn == 'cos' ? 'selected' : ''}
-			on:click={() => {
-				pitch_fn = 'cos';
-			}}>cos</button
-		>
-	</div>
-
-	<div class="button-group">
+	<!-- <div class="button-group">
 		<button
 			class={pitch_dim == 'X' ? 'selected' : ''}
 			on:click={() => {
@@ -129,7 +86,7 @@
 				pitch_dim = 'Z';
 			}}>Z</button
 		>
-	</div>
+	</div> -->
 
 	<p>{pitch_num / pitch_den}</p>
 </section>

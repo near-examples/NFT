@@ -10,24 +10,6 @@ export type StoredParameters = {
 
 export const parameters: Writable<StoredParameters> = writable({
 	angles: [
-		// {
-		//   iterator: getRationalAngleIterator({
-		//     n: 14,
-		//     d: 613,
-		//     b: 4,
-		//   }),
-		//   base: 4,
-		//   usage: [
-		//     {
-		//       dimension: "X",
-		//       angleFn: "sin",
-		//     },
-		//     {
-		//       dimension: "Y",
-		//       angleFn: "cos",
-		//     },
-		//   ],
-		// },
 		{
 			iterator: getRationalAngleIterator({
 				n: 7,
