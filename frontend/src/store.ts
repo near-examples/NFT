@@ -1,10 +1,16 @@
 import { writable, type Writable } from 'svelte/store';
 import type { Angle } from './interfaces';
-import { getRationalAngleIterator, getRationalDistanceIterator } from './math/rationals';
+import {
+	getRationalAngleIterator,
+	getRationalDistanceIterator,
+	precomputeRationalAngles,
+	precomputeRationalDistances
+} from './math/rationals';
 
 export type StoredParameters = {
 	angles: Angle[];
 	distance: IterableIterator<number>;
+	distance_preview: number[];
 	sleepTimeMs: number;
 };
 
@@ -12,6 +18,11 @@ export const parameters: Writable<StoredParameters> = writable({
 	angles: [
 		{
 			iterator: getRationalAngleIterator({
+				n: 7,
+				d: 213,
+				b: 4
+			}),
+			preview: precomputeRationalAngles({
 				n: 7,
 				d: 213,
 				b: 4
@@ -39,6 +50,12 @@ export const parameters: Writable<StoredParameters> = writable({
 				d: 11,
 				b: 9
 			}),
+			preview: precomputeRationalAngles({
+				n: 21,
+				d: 11,
+				b: 9
+			}),
+
 			base: 9,
 			usage: [
 				{
@@ -53,6 +70,11 @@ export const parameters: Writable<StoredParameters> = writable({
 		}
 	] as Angle[],
 	distance: getRationalDistanceIterator({
+		n: 8,
+		d: 9,
+		b: 10
+	}),
+	distance_preview: precomputeRationalDistances({
 		n: 8,
 		d: 9,
 		b: 10

@@ -37,6 +37,7 @@ export type AngleUsageIndicator = {
  */
 export type Angle = {
 	iterator: IterableIterator<number>;
+	preview: number[];
 	base: number;
 	usage: AngleUsageIndicator[];
 };
@@ -49,6 +50,7 @@ export type TurtlePath = {
 		scale?: any;
 	}[];
 	mat: Material;
+	width: number;
 };
 
 const normalMaterial = new MeshNormalMaterial();
@@ -62,5 +64,13 @@ const defaultMaterial = new MeshStandardMaterial({ color: 'red' });
 export const defaultPath: TurtlePath = {
 	points: [new Vector3()],
 	cylinders: [],
-	mat: defaultMaterial
+	mat: defaultMaterial,
+	width: 0.1
+};
+
+export const previewPath: TurtlePath = {
+	points: [new Vector3()],
+	cylinders: [],
+	mat: clearMaterial,
+	width: 0.5
 };

@@ -1,4 +1,4 @@
-import { type AngleFN, type PosType, MAX_PREVIEW_STEPS } from '../interfaces';
+import { MAX_PREVIEW_STEPS, type AngleFN, type PosType } from '../interfaces';
 import type { StoredParameters } from '../store';
 import { Vector3 } from 'three';
 
@@ -34,52 +34,19 @@ export const calcChangeInPosVec = (params: StoredParameters, preview = false): P
 	return [deltaX, deltaY, deltaZ];
 };
 
-/**
- * Deep copy function for TypeScript.
- * @param T Generic type of target/copied value.
- * @param target Target value to be copied.
- * @see Source project, ts-deepcopy https://github.com/ykdr2017/ts-deepcopy
- * @see Code pen https://codepen.io/erikvullings/pen/ejyBYg
- */
-export const deepCopy = <T>(target: T): T => {
-	if (target === null) {
-		return target;
-	}
-	if (target instanceof Date) {
-		return new Date(target.getTime()) as any;
-	}
-	if (target instanceof Array) {
-		const cp = [] as any[];
-		(target as any[]).forEach((v) => {
-			cp.push(v);
-		});
-		return cp.map((n: any) => deepCopy<any>(n)) as any;
-	}
-	if (typeof target === 'object' && target !== {}) {
-		const cp = { ...(target as { [key: string]: any }) } as { [key: string]: any };
-		Object.keys(cp).forEach((k) => {
-			cp[k] = deepCopy<any>(cp[k]);
-		});
-		return cp as T;
-	}
-	return target;
-};
-
 // copies the stored parameters
 // precomputes a path of MAX_PREVIEW_STEPS length
 export const generatePreviewPoints = (params: StoredParameters): Vector3[] => {
-	let params_cpy: StoredParameters = deepCopy(params);
-	console.log(params);
-	console.log(params_cpy);
-	let previewPath: Vector3[] = [];
+	let pos = new Vector3();
+	let previewPoints: Vector3[] = [pos];
 
 	for (let i = 0; i < MAX_PREVIEW_STEPS; i++) {
-		const moveAmount = params_cpy.distance.next().value;
+		const moveAmount = params.distance_preview[i];
 		let deltaX = moveAmount;
 		let deltaY = moveAmount;
 		let deltaZ = moveAmount;
-		params_cpy.angles.forEach((angle) => {
-			const amount = angle.iterator.next().value;
+		params.angles.forEach((angle) => {
+			const amount = angle.preview[i];
 			angle.usage.forEach((u) => {
 				let multiplier = angleAmountToChangeVal(amount, angle.base, u.angleFn);
 				if (u.dimension === 'X') {
@@ -92,9 +59,10 @@ export const generatePreviewPoints = (params: StoredParameters): Vector3[] => {
 			});
 		});
 
-		let pos = [deltaX, deltaY, deltaZ];
-		previewPath = [...previewPath, new Vector3(...pos)];
+		let newPos = new Vector3(deltaX, deltaY, deltaZ);
+		previewPoints = [...previewPoints, newPos.add(pos)];
+		pos = newPos;
 	}
 
-	return previewPath;
+	return previewPoints;
 };

@@ -2,13 +2,13 @@
 	import { parameters } from '../store';
 	import {
 		defaultPath,
-		MAX_PREVIEW_STEPS,
 		MAX_STEPS,
+		previewPath,
 		type PosType,
 		type TurtlePath
 	} from '../interfaces';
 	import { calcChangeInPosVec, generatePreviewPoints } from '../math/position';
-	import { recomputeCylinders } from '../turtle_utils';
+	import { computeCylinders, recomputeCylinders } from '../turtle_utils';
 
 	import Controls from '../components/Controls.svelte';
 	// Aesthetic TODO:
@@ -39,21 +39,21 @@
 		PerspectiveCamera
 	} from 'threlte';
 
-	let width = 0.1;
-
 	const sphereGeometry = new SphereGeometry(1);
 	const cylinderGeometry = new CylinderGeometry(1, 1, 1);
 
 	let path: TurtlePath = defaultPath;
-	let preview: TurtlePath = defaultPath;
+	let preview: TurtlePath = previewPath;
 	preview.points = generatePreviewPoints($parameters);
-	recomputeCylinders(preview);
+	computeCylinders(preview);
+
+	let turtles = [path, preview];
 
 	let pos: PosType = [0, 0, 0];
 	let running = true;
 
 	const start = async (initSleep = true) => {
-		// if (initSleep) await new Promise((res, rej) => setTimeout(res, 1000));
+		if (initSleep) await new Promise((res, rej) => setTimeout(res, 1000));
 
 		let steps = 0;
 		while (running && steps < MAX_STEPS) {
@@ -79,13 +79,13 @@
 		}, 400);
 	});
 
-	function reset(arg0: string, reset: any) {
+	const reset = () => {
 		throw new Error('Function not implemented.');
-	}
+	};
 </script>
 
 <div class="container">
-	<input bind:value={width} type="range" min=".1" max="10" step=".1" />
+	<!-- <input bind:value={width} type="range" min=".1" max="10" step=".1" /> -->
 	<Controls />
 	<Canvas>
 		<OrthographicCamera far={100000000} position={{ x: 10, y: 10, z: 10 }}>
@@ -95,12 +95,12 @@
 		<DirectionalLight shadow color={'#EDBD9C'} position={{ x: -15, y: 45, z: 20 }} />
 		<HemisphereLight skyColor={0x4c8eac} groundColor={0xac844c} intensity={0.6} />
 
-		{#each [path, preview] as turtle}
+		{#each turtles as turtle}
 			<Group>
 				<!-- spheres -->
 				<InstancedMesh castShadow receiveShadow geometry={sphereGeometry} material={turtle.mat}>
 					{#each turtle.points as p}
-						<Instance position={p} scale={{ x: width, y: width, z: width }} />
+						<Instance position={p} scale={{ x: turtle.width, y: turtle.width, z: turtle.width }} />
 					{/each}
 				</InstancedMesh>
 
@@ -110,7 +110,7 @@
 						<Instance
 							position={c.position}
 							rotation={c.rotation}
-							scale={{ x: width, y: c.scale.y, z: width }}
+							scale={{ x: turtle.width, y: c.scale.y, z: turtle.width }}
 						/>
 					{/each}
 				</InstancedMesh>
