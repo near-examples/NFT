@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type { AngleFN, Dimension } from 'src/interfaces';
+	import type { OrthographicView } from 'src/interfaces';
 
-	import { parameters } from '../store';
+	import { default_angle_1, default_angle_2, default_distance, parameters } from '../store';
+	import RationalButtonGroup from './RationalButtonGroup.svelte';
 
 	// TODO: connect to store
 	// group into edit controls + view controls
@@ -10,36 +11,27 @@
 	// link to paper icon
 
 	// TODO
-	let play = false;
 	const toggle = () => {
-		play = !play;
+		// $parameters.
 	};
 
 	// TODO
 	const reset = () => {};
 
 	// TODO
-	const updateView = (type: string) => {};
+	const updateView = (view: OrthographicView) => {};
 
 	// TODO
 	const updateStore = (field: string) => {};
 
-	let yaw_num = 7;
-	let yaw_den = 213;
-	let yaw_base = 4;
-	let yaw_fn: AngleFN = 'sin';
-	let yaw_dim: Dimension = 'X';
-
-	let pitch_num = 0;
-	let pitch_den = 1;
-	let pitch_base = 4;
-	let pitch_fn: AngleFN = 'sin';
-	let pitch_dim: Dimension = 'X';
+	let yaw = default_angle_1;
+	let pitch = default_angle_2;
+	let distance = default_distance;
 </script>
 
 <section>
 	<button on:click={reset}>Reset</button>
-	<button on:click={toggle}>{play ? 'Play' : 'Pause'}</button>
+	<button on:click={toggle}>{true ? 'Play' : 'Pause'}</button>
 
 	<div class="button-group">
 		<button on:click={() => updateView('TOP')}>{'TOP'}</button>
@@ -54,71 +46,11 @@
 		<button on:click={() => updateView('RIGHT')}>{'RIGHT'}</button>
 	</div>
 
-	<h4>Yaw</h4>
-	<label>
-		num:
-		<input
-			bind:value={yaw_num}
-			on:change={() => updateStore('asfds')}
-			type="number"
-			step="1"
-			min="0"
-			max={yaw_den}
-		/>
-	</label>
-	<label>
-		den:
-		<input
-			bind:value={yaw_den}
-			on:change={() => updateStore('asfds')}
-			type="number"
-			step="1"
-			min="1"
-		/>
-	</label>
-	<label>
-		base:
-		<input
-			bind:value={yaw_base}
-			on:change={() => updateStore('asfds')}
-			type="number"
-			step="1"
-			min="2"
-		/>
-	</label>
+	<RationalButtonGroup name="Yaw" rational={yaw} />
 
-	<h4>Pitch</h4>
-	<label>
-		num:
-		<input
-			bind:value={pitch_num}
-			on:change={() => updateStore('asfds')}
-			type="number"
-			step="1"
-			min="0"
-			max={pitch_den}
-		/>
-	</label>
-	<label>
-		den:
-		<input
-			bind:value={pitch_den}
-			on:change={() => updateStore('asfds')}
-			type="number"
-			step="1"
-			min="1"
-		/>
-	</label>
-	<label>
-		base:
-		<input
-			bind:value={pitch_base}
-			on:change={() => updateStore('asfds')}
-			type="number"
-			step="1"
-			min="2"
-		/>
-	</label>
+	<RationalButtonGroup name="Pitch" rational={pitch} />
+
+	<RationalButtonGroup name="Distance" rational={distance} />
 
 	<!-- <div class="button-group">
 		<button
@@ -143,21 +75,6 @@
 </section>
 
 <style>
-	h4,
-	p {
-		margin-bottom: 0;
-	}
-
-	label {
-		display: grid;
-		grid-template-columns: 50px 100px;
-	}
-
-	input {
-		border: none;
-		background-color: aliceblue;
-	}
-
 	button {
 		border: none;
 		margin: none;

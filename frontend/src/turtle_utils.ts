@@ -1,5 +1,5 @@
 import { Euler, Quaternion, Vector3 } from 'three';
-import type { TurtlePath } from './interfaces';
+import type { Bounds, TurtlePath } from './interfaces';
 
 const axis = new Vector3(0, 1, 0);
 
@@ -31,6 +31,24 @@ export const recomputeCylinders = (path: TurtlePath) => {
 		path.points[path.points.length - 2],
 		path.points[path.points.length - 1]
 	);
-	path.cylinders = [...path.cylinders, new_cylinder];
-	// return [...path.cylinders, new_cylinder];
+	// path.cylinders = [...path.cylinders, new_cylinder];
+	return [...path.cylinders, new_cylinder];
+};
+
+export const updateBounds = (v: Vector3, b: Bounds): Bounds => {
+	b.minX = Math.min(v.x, b.minX);
+	b.maxX = Math.max(v.x, b.maxX);
+	b.minY = Math.min(v.y, b.minY);
+	b.maxY = Math.max(v.y, b.maxY);
+	b.minZ = Math.min(v.z, b.minZ);
+	b.maxZ = Math.max(v.z, b.maxZ);
+	return b;
+};
+
+export const getCentroid = (b: Bounds): Vector3 => {
+	let v = new Vector3();
+	v.x = (b.minX + b.maxX) / 2;
+	v.y = (b.minY + b.maxY) / 2;
+	v.z = (b.minZ + b.maxZ) / 2;
+	return v;
 };

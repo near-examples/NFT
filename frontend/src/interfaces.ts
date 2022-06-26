@@ -14,6 +14,35 @@ export type PosType = [number, number, number];
 export type Dimension = 'X' | 'Y' | 'Z';
 export type AngleFN = 'cos' | 'sin';
 
+export type OrthographicView = 'TOP' | 'BOTTOM' | 'FRONT' | 'BACK' | 'LEFT' | 'RIGHT';
+
+export const orthographicViews = {
+	TOP: { x: 0, y: 1, z: 0 },
+	BOTTOM: { x: 0, y: -1, z: 0 },
+	FRONT: { x: 1, y: 0, z: 0 },
+	BACK: { x: -1, y: 0, z: 0 },
+	LEFT: { x: 0, y: 0, z: 1 },
+	RIGHT: { x: 0, y: 0, z: -1 }
+};
+
+export type Bounds = {
+	minX: number;
+	maxX: number;
+	minY: number;
+	maxY: number;
+	minZ: number;
+	maxZ: number;
+};
+
+export const defaultBounds: Bounds = {
+	minX: 0,
+	maxX: 0,
+	minY: 0,
+	maxY: 0,
+	minZ: 0,
+	maxZ: 0
+};
+
 /**
  * @param n - numerator (natural number (including 0))
  * @param d - denominator (natural number (not including 0))
