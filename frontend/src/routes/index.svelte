@@ -11,8 +11,6 @@
 	import { computeCylinders, recomputeCylinders } from '../turtle_utils';
 
 	import Controls from '../components/Controls.svelte';
-	// Aesthetic TODO:
-	//
 
 	// Functional TODO:
 	// orthographic views (top, bottom, left, right)
@@ -88,7 +86,11 @@
 	<!-- <input bind:value={width} type="range" min=".1" max="10" step=".1" /> -->
 	<Controls />
 	<Canvas>
-		<OrthographicCamera far={100000000} position={{ x: 10, y: 10, z: 10 }}>
+		<OrthographicCamera
+			far={1000000000000}
+			position={{ x: 0, y: 10, z: 0 }}
+			lookAt={{ x: 0, y: 0, z: 0 }}
+		>
 			<OrbitControls enableDamping autoRotate autoRotateSpeed={0.5} />
 		</OrthographicCamera>
 
@@ -117,15 +119,11 @@
 			</Group>
 		{/each}
 
-		<!-- base plane -->
+		<!-- origin -->
 		<Mesh
-			receiveShadow
-			position={{ y: -1.5 }}
-			rotation={{ x: -90 * (Math.PI / 180) }}
-			geometry={new CircleBufferGeometry(3, 72)}
-			material={new MeshStandardMaterial({ color: 'white', side: DoubleSide })}
-			interactive
-			on:click={reset}
+			geometry={sphereGeometry}
+			scale={2}
+			material={new MeshStandardMaterial({ color: 'white' })}
 		/>
 	</Canvas>
 </div>

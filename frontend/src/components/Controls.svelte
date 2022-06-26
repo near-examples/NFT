@@ -6,15 +6,23 @@
 	// TODO: connect to store
 	// group into edit controls + view controls
 	// + mechanism to toggle
-	// change decimal preview to preview list of digits
-	//  or not
 
 	// link to paper icon
 
+	// TODO
 	let play = false;
 	const toggle = () => {
 		play = !play;
 	};
+
+	// TODO
+	const reset = () => {};
+
+	// TODO
+	const updateView = (type: string) => {};
+
+	// TODO
+	const updateStore = (field: string) => {};
 
 	let yaw_num = 7;
 	let yaw_den = 213;
@@ -30,41 +38,86 @@
 </script>
 
 <section>
-	<button
-		on:click={() => {
-			console.log('Reset');
-		}}>Reset</button
-	>
+	<button on:click={reset}>Reset</button>
 	<button on:click={toggle}>{play ? 'Play' : 'Pause'}</button>
+
+	<div class="button-group">
+		<button on:click={() => updateView('TOP')}>{'TOP'}</button>
+		<button on:click={() => updateView('BOTTOM')}>{'BOTTOM'}</button>
+	</div>
+	<div class="button-group">
+		<button on:click={() => updateView('FRONT')}>{'FRONT'}</button>
+		<button on:click={() => updateView('BACK')}>{'BACK'}</button>
+	</div>
+	<div class="button-group">
+		<button on:click={() => updateView('LEFT')}>{'LEFT'}</button>
+		<button on:click={() => updateView('RIGHT')}>{'RIGHT'}</button>
+	</div>
 
 	<h4>Yaw</h4>
 	<label>
 		num:
-		<input bind:value={yaw_num} type="number" step="1" min="0" max={yaw_den} />
+		<input
+			bind:value={yaw_num}
+			on:change={() => updateStore('asfds')}
+			type="number"
+			step="1"
+			min="0"
+			max={yaw_den}
+		/>
 	</label>
 	<label>
 		den:
-		<input bind:value={yaw_den} type="number" step="1" min="1" />
+		<input
+			bind:value={yaw_den}
+			on:change={() => updateStore('asfds')}
+			type="number"
+			step="1"
+			min="1"
+		/>
 	</label>
 	<label>
 		base:
-		<input bind:value={yaw_base} type="number" step="1" min="2" />
+		<input
+			bind:value={yaw_base}
+			on:change={() => updateStore('asfds')}
+			type="number"
+			step="1"
+			min="2"
+		/>
 	</label>
-
-	<p>{yaw_num / yaw_den}</p>
 
 	<h4>Pitch</h4>
 	<label>
 		num:
-		<input bind:value={pitch_num} type="number" step="1" min="0" max={pitch_den} />
+		<input
+			bind:value={pitch_num}
+			on:change={() => updateStore('asfds')}
+			type="number"
+			step="1"
+			min="0"
+			max={pitch_den}
+		/>
 	</label>
 	<label>
 		den:
-		<input bind:value={pitch_den} type="number" step="1" min="1" />
+		<input
+			bind:value={pitch_den}
+			on:change={() => updateStore('asfds')}
+			type="number"
+			step="1"
+			min="1"
+		/>
 	</label>
 	<label>
 		base:
-		<input bind:value={pitch_base} type="number" step="1" min="2" />
+		<input
+			bind:value={pitch_base}
+			on:change={() => updateStore('asfds')}
+			type="number"
+			step="1"
+			min="2"
+		/>
 	</label>
 
 	<!-- <div class="button-group">
@@ -87,8 +140,6 @@
 			}}>Z</button
 		>
 	</div> -->
-
-	<p>{pitch_num / pitch_den}</p>
 </section>
 
 <style>
@@ -118,6 +169,7 @@
 
 	.button-group {
 		display: grid;
+		gap: 5px;
 		grid-template-columns: repeat(auto-fit, minmax(10px, 1fr));
 	}
 
