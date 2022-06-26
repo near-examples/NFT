@@ -12,18 +12,16 @@ export type StoredParameters = {
 	distance: IterableIterator<number>;
 	distance_preview: number[];
 	sleepTimeMs: number;
+	running: boolean;
 };
 
 export const default_angle_1: Rational = { n: 7, d: 213, b: 4 };
 export const default_angle_2: Rational = { n: 21, d: 11, b: 9 };
 export const default_distance: Rational = { n: 8, d: 9, b: 10 };
 
-export const generateParams = (
-	a1: Rational,
-	a2: Rational,
-	d: Rational
-): Writable<StoredParameters> => {
-	return writable({
+export const generateParams = (a1: Rational, a2: Rational, d: Rational): any => {
+	return {
+		running: false,
 		angles: [
 			{
 				iterator: getRationalAngleIterator({
@@ -89,11 +87,9 @@ export const generateParams = (
 			b: d.b
 		}),
 		sleepTimeMs: 10
-	});
+	};
 };
 
-export const parameters: Writable<StoredParameters> = generateParams(
-	default_angle_1,
-	default_angle_2,
-	default_distance
+export let parameters: Writable<StoredParameters> = writable(
+	generateParams(default_angle_1, default_angle_2, default_distance)
 );

@@ -1,8 +1,17 @@
 <script lang="ts">
 	import type { OrthographicView } from 'src/interfaces';
+	import { createEventDispatcher } from 'svelte';
 
-	import { default_angle_1, default_angle_2, default_distance, parameters } from '../store';
+	import {
+		default_angle_1,
+		default_angle_2,
+		default_distance,
+		generateParams,
+		parameters
+	} from '../store';
 	import RationalButtonGroup from './RationalButtonGroup.svelte';
+
+	const dispatch = createEventDispatcher();
 
 	// TODO: connect to store
 	// group into edit controls + view controls
@@ -10,19 +19,17 @@
 
 	// link to paper icon
 
-	// TODO
 	const toggle = () => {
-		// $parameters.
+		$parameters.running = !$parameters.running;
 	};
 
-	// TODO
-	const reset = () => {};
+	const updateParams = () => {
+		$parameters = generateParams(yaw, pitch, distance);
+		dispatch('paramchange', {});
+	};
 
-	// TODO
+	// REVISIT
 	const updateView = (view: OrthographicView) => {};
-
-	// TODO
-	const updateStore = (field: string) => {};
 
 	let yaw = default_angle_1;
 	let pitch = default_angle_2;
@@ -30,10 +37,10 @@
 </script>
 
 <section>
-	<button on:click={reset}>Reset</button>
-	<button on:click={toggle}>{true ? 'Play' : 'Pause'}</button>
+	<button on:click={updateParams}>Reset</button>
+	<button on:click={toggle}>{$parameters.running ? 'Pause' : 'Play'}</button>
 
-	<div class="button-group">
+	<!-- <div class="button-group">
 		<button on:click={() => updateView('TOP')}>{'TOP'}</button>
 		<button on:click={() => updateView('BOTTOM')}>{'BOTTOM'}</button>
 	</div>
@@ -44,34 +51,11 @@
 	<div class="button-group">
 		<button on:click={() => updateView('LEFT')}>{'LEFT'}</button>
 		<button on:click={() => updateView('RIGHT')}>{'RIGHT'}</button>
-	</div>
-
-	<RationalButtonGroup name="Yaw" rational={yaw} />
-
-	<RationalButtonGroup name="Pitch" rational={pitch} />
-
-	<RationalButtonGroup name="Distance" rational={distance} />
-
-	<!-- <div class="button-group">
-		<button
-			class={pitch_dim == 'X' ? 'selected' : ''}
-			on:click={() => {
-				pitch_dim = 'X';
-			}}>X</button
-		>
-		<button
-			class={pitch_dim == 'Y' ? 'selected' : ''}
-			on:click={() => {
-				pitch_dim = 'Y';
-			}}>Y</button
-		>
-		<button
-			class={pitch_dim == 'Z' ? 'selected' : ''}
-			on:click={() => {
-				pitch_dim = 'Z';
-			}}>Z</button
-		>
 	</div> -->
+
+	<RationalButtonGroup name="Yaw" bind:rational={yaw} on:paramchange={updateParams} />
+	<RationalButtonGroup name="Pitch" bind:rational={pitch} on:paramchange={updateParams} />
+	<RationalButtonGroup name="Distance" bind:rational={distance} on:paramchange={updateParams} />
 </section>
 
 <style>

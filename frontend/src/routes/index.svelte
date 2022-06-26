@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { parameters } from '../store';
+	import { generateParams, parameters } from '../store';
 	import {
 		defaultBounds,
 		defaultPath,
@@ -7,6 +7,7 @@
 		previewPath,
 		type Bounds,
 		type PosType,
+		type Rational,
 		type TurtlePath
 	} from '../interfaces';
 	import { calcChangeInPosVec, generatePreviewPoints } from '../math/position';
@@ -16,11 +17,9 @@
 
 	// Functional TODO:
 	// orthographic views (top, bottom, left, right)
-	// averaged center of mass lookAt target
 
 	import {
 		SphereGeometry,
-		CircleBufferGeometry,
 		CylinderGeometry,
 		DoubleSide,
 		Vector3,
@@ -35,8 +34,7 @@
 		InstancedMesh,
 		Mesh,
 		OrbitControls,
-		OrthographicCamera,
-		PerspectiveCamera
+		OrthographicCamera
 	} from 'threlte';
 
 	const sphereGeometry = new SphereGeometry(1);
@@ -51,13 +49,9 @@
 	let bounds: Bounds = defaultBounds;
 
 	let pos: PosType = [0, 0, 0];
-	let running = true;
-
-	const start = async (initSleep = true) => {
-		// if (initSleep) await new Promise((res, rej) => setTimeout(res, 1000));
-
-		let steps = 0;
-		while (running && steps < MAX_STEPS) {
+	let steps = 0;
+	const start = async () => {
+		while ($parameters.running && steps < MAX_STEPS) {
 			const [deltaX, deltaY, deltaZ] = calcChangeInPosVec($parameters);
 			await new Promise((res, rej) => setTimeout(res, $parameters.sleepTimeMs));
 
@@ -73,23 +67,34 @@
 	};
 
 	parameters.subscribe((newParams) => {
-		running = false;
-		pos = [0, 0, 0];
-
 		setTimeout(() => {
-			running = true;
 			start();
 		}, 400);
 	});
 
-	// TODO
+	// called to reset entire state
+	// called on parameter update from Controls.svelte
 	const reset = () => {
-		throw new Error('Function not implemented.');
+		console.log('reset called');
+		path = defaultPath;
+		preview = previewPath;
+		preview.points = generatePreviewPoints($parameters);
+		computeCylinders(preview);
+
+		cameraPos = { x: 1, y: 1, z: 1 };
+		bounds = defaultBounds;
+
+		pos = [0, 0, 0];
+		steps = 0;
+
+		setTimeout(() => {
+			start();
+		}, 400);
 	};
 </script>
 
 <div class="container">
-	<Controls />
+	<Controls on:paramchange={(e) => reset()} />
 	<Canvas>
 		<OrthographicCamera far={1000000000000} position={cameraPos}>
 			<OrbitControls enableDamping autoRotate autoRotateSpeed={0.5} target={getCentroid(bounds)} />

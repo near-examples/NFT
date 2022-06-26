@@ -86,7 +86,7 @@ const normalMaterial = new MeshNormalMaterial();
 const clearMaterial = new MeshLambertMaterial({
 	color: 'black',
 	transparent: true,
-	opacity: 0.15
+	opacity: 0.1
 });
 const defaultMaterial = new MeshStandardMaterial({ color: 'red' });
 
@@ -94,6 +94,7 @@ export const defaultPath: TurtlePath = {
 	points: [new Vector3()],
 	cylinders: [],
 	mat: defaultMaterial,
+	// mat: normalMaterial,
 	width: 0.1
 };
 
