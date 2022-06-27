@@ -27,5 +27,6 @@ jobs:
         run: cd nft && cargo test -- --nocapture --color=always
       - name: Run Rust integration tests
         run: cd integration-tests/rs && cargo run --example integration-tests
-      - name: Run TypeScript integration tests
-        run: cd integration-tests/ts && yarn && yarn test 
+      # TODO: uncomment when workspaces-js v2.1.0 is released
+      # - name: Run TypeScript integration tests
+      #   run: cd integration-tests/ts && yarn && yarn test 
