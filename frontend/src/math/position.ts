@@ -1,4 +1,10 @@
-import { MAX_PREVIEW_STEPS, type AngleFN, type PosType } from '../interfaces';
+import {
+	defaultPath,
+	MAX_PREVIEW_STEPS,
+	type AngleFN,
+	type PosType,
+	type TurtlePath
+} from '../interfaces';
 import type { StoredParameters } from '../store';
 import { Vector3 } from 'three';
 
@@ -65,4 +71,8 @@ export const generatePreviewPoints = (params: StoredParameters): Vector3[] => {
 	}
 
 	return previewPoints;
+};
+
+export const resetPath = (params: StoredParameters): Vector3[] => {
+	return [new Vector3()];
 };

@@ -14,17 +14,6 @@ export type PosType = [number, number, number];
 export type Dimension = 'X' | 'Y' | 'Z';
 export type AngleFN = 'cos' | 'sin';
 
-export type OrthographicView = 'TOP' | 'BOTTOM' | 'FRONT' | 'BACK' | 'LEFT' | 'RIGHT';
-
-export const orthographicViews = {
-	TOP: { x: 0, y: 1, z: 0 },
-	BOTTOM: { x: 0, y: -1, z: 0 },
-	FRONT: { x: 1, y: 0, z: 0 },
-	BACK: { x: -1, y: 0, z: 0 },
-	LEFT: { x: 0, y: 0, z: 1 },
-	RIGHT: { x: 0, y: 0, z: -1 }
-};
-
 export type Bounds = {
 	minX: number;
 	maxX: number;
@@ -84,23 +73,23 @@ export type TurtlePath = {
 
 const normalMaterial = new MeshNormalMaterial();
 const clearMaterial = new MeshLambertMaterial({
-	color: 'black',
-	transparent: true,
-	opacity: 0.1
+	color: 'black'
+	// transparent: true,
+	// opacity: 0.1
 });
 const defaultMaterial = new MeshStandardMaterial({ color: 'red' });
 
 export const defaultPath: TurtlePath = {
 	points: [new Vector3()],
 	cylinders: [],
-	mat: defaultMaterial,
-	// mat: normalMaterial,
-	width: 0.1
+	// mat: defaultMaterial,
+	mat: normalMaterial,
+	width: 0.5
 };
 
 export const previewPath: TurtlePath = {
 	points: [new Vector3()],
 	cylinders: [],
 	mat: clearMaterial,
-	width: 0.5
+	width: 0.1
 };

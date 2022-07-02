@@ -19,14 +19,18 @@ const calculateCylinder = (p1: Vector3, p2: Vector3) => {
 
 // computes all cylinders
 export const computeCylinders = (path: TurtlePath) => {
+	let cylinders: any[] = [];
 	for (let i = 1; i < path.points.length; i++) {
 		let new_cylinder = calculateCylinder(path.points[i - 1], path.points[i]);
-		path.cylinders = [...path.cylinders, new_cylinder];
+		cylinders = [...cylinders, new_cylinder];
 	}
+	return cylinders;
 };
 
 // only computes cylinder for last point
 export const recomputeCylinders = (path: TurtlePath) => {
+	if (path.points.length == 1) return [];
+
 	let new_cylinder = calculateCylinder(
 		path.points[path.points.length - 2],
 		path.points[path.points.length - 1]
