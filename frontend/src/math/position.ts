@@ -1,7 +1,9 @@
 import {
+	defaultBounds,
 	defaultPath,
 	MAX_PREVIEW_STEPS,
 	type AngleFN,
+	type Bounds,
 	type PosType,
 	type TurtlePath
 } from '../interfaces';

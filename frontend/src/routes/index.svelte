@@ -5,7 +5,6 @@
 		defaultPath,
 		MAX_STEPS,
 		previewPath,
-		type Bounds,
 		type PosType,
 		type TurtlePath
 	} from '../interfaces';
@@ -46,7 +45,6 @@
 	//////////////// Three js scene stuff
 
 	let cameraPos: Position = { x: 1, y: 1, z: 1 };
-	let bounds: Bounds = defaultBounds;
 	let pos: PosType = [0, 0, 0];
 	let steps: number = 0;
 
@@ -57,7 +55,7 @@
 			const newPos = [pos[0] + deltaX, pos[1] + deltaY, pos[2] + deltaZ] as PosType;
 			path.points = [...path.points, new Vector3(...newPos)];
 			path.cylinders = recomputeCylinders(path);
-			bounds = updateBounds(new Vector3(...newPos), bounds);
+			path.bounds = updateBounds(new Vector3(...newPos), path.bounds);
 
 			pos = newPos;
 			steps += 1;
@@ -80,9 +78,16 @@
 	// called on parameter update from Controls.svelte
 	const reset = () => {
 		clearInterval(timer_id);
-		bounds = defaultBounds;
 		pos = [0, 0, 0];
 		steps = 0;
+		path.bounds = {
+			minX: 0,
+			maxX: 0,
+			minY: 0,
+			maxY: 0,
+			minZ: 0,
+			maxZ: 0
+		};
 	};
 </script>
 
@@ -90,7 +95,12 @@
 	<Controls on:paramchange={reset} />
 	<Canvas>
 		<OrthographicCamera far={1000000000000} position={cameraPos}>
-			<OrbitControls enableDamping autoRotate autoRotateSpeed={0.5} target={getCentroid(bounds)} />
+			<OrbitControls
+				enableDamping
+				autoRotate
+				autoRotateSpeed={0.5}
+				target={getCentroid(path.bounds)}
+			/>
 		</OrthographicCamera>
 
 		<DirectionalLight shadow color={'#EDBD9C'} position={{ x: -15, y: 45, z: 20 }} />

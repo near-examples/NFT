@@ -69,6 +69,7 @@ export type TurtlePath = {
 	}[];
 	mat: Material;
 	width: number;
+	bounds: Bounds;
 };
 
 const normalMaterial = new MeshNormalMaterial();
@@ -84,12 +85,14 @@ export const defaultPath: TurtlePath = {
 	cylinders: [],
 	// mat: defaultMaterial,
 	mat: normalMaterial,
-	width: 0.5
+	width: 0.5,
+	bounds: defaultBounds
 };
 
 export const previewPath: TurtlePath = {
 	points: [new Vector3()],
 	cylinders: [],
 	mat: clearMaterial,
-	width: 0.1
+	width: 0.1,
+	bounds: defaultBounds
 };

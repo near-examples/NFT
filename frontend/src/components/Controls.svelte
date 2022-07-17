@@ -14,8 +14,12 @@
 	const dispatch = createEventDispatcher();
 
 	// link to paper icon
-	const toggle = () => {
+	const toggleRunning = () => {
 		$controlParams.running = !$controlParams.running;
+	};
+
+	const togglePreview = () => {
+		$controlParams.displayPreview = !$controlParams.displayPreview;
 	};
 
 	const updateParams = () => {
@@ -31,9 +35,13 @@
 
 <section>
 	<button on:click={updateParams}>Reset</button>
-	<button on:click={toggle}>{$controlParams.running ? 'Pause' : 'Play'}</button>
+	<button on:click={toggleRunning}>{$controlParams.running ? 'Pause' : 'Play'}</button>
+	<button on:click={togglePreview}
+		>{$controlParams.displayPreview ? 'show preview' : 'hide preview'}</button
+	>
 	<input type="range" bind:value={$controlParams.pathWidth} min="0.01" max="10" step=".01" />
 
+	<!-- TODO: control this from URL param -->
 	{#if $controlParams.allowControls}
 		<RationalButtonGroup name="Yaw" bind:rational={yaw} on:paramchange={updateParams} />
 		<RationalButtonGroup name="Pitch" bind:rational={pitch} on:paramchange={updateParams} />
