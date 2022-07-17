@@ -6,7 +6,7 @@
 	export let turtle: TurtlePath;
 
 	const sphereGeometry = new SphereGeometry(1);
-	const cylinderGeometry = new CylinderGeometry(1, 1, 1, 10, 1, true);
+	const cylinderGeometry = new CylinderGeometry(1, 1, 1, 20, 1, true);
 </script>
 
 <Group>

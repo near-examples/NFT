@@ -6,25 +6,21 @@
 		default_angle_2,
 		default_distance,
 		generateParams,
-		parameters
+		parameters,
+		controlParams
 	} from '../store';
 	import RationalButtonGroup from './RationalButtonGroup.svelte';
 
 	const dispatch = createEventDispatcher();
 
-	// TODO: connect to store
-	// group into edit controls + view controls
-	// + mechanism to toggle
-
 	// link to paper icon
-
 	const toggle = () => {
-		$parameters.running = !$parameters.running;
+		$controlParams.running = !$controlParams.running;
 	};
 
 	const updateParams = () => {
 		$parameters = generateParams(yaw, pitch, distance);
-		console.log($parameters);
+		$controlParams.running = false;
 		dispatch('paramchange', {});
 	};
 
@@ -35,11 +31,14 @@
 
 <section>
 	<button on:click={updateParams}>Reset</button>
-	<button on:click={toggle}>{$parameters.running ? 'Pause' : 'Play'}</button>
+	<button on:click={toggle}>{$controlParams.running ? 'Pause' : 'Play'}</button>
+	<input type="range" bind:value={$controlParams.pathWidth} min="0.01" max="10" step=".01" />
 
-	<RationalButtonGroup name="Yaw" bind:rational={yaw} on:paramchange={updateParams} />
-	<RationalButtonGroup name="Pitch" bind:rational={pitch} on:paramchange={updateParams} />
-	<!-- <RationalButtonGroup name="Distance" bind:rational={distance} on:paramchange={updateParams} /> -->
+	{#if $controlParams.allowControls}
+		<RationalButtonGroup name="Yaw" bind:rational={yaw} on:paramchange={updateParams} />
+		<RationalButtonGroup name="Pitch" bind:rational={pitch} on:paramchange={updateParams} />
+		<!-- <RationalButtonGroup name="Distance" bind:rational={distance} on:paramchange={updateParams} /> -->
+	{/if}
 </section>
 
 <style>
