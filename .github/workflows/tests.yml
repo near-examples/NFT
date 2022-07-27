@@ -7,7 +7,7 @@ jobs:
   tests:
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest]  # mac-os currently in progress
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout branch
@@ -27,6 +27,5 @@ jobs:
         run: cd nft && cargo test -- --nocapture --color=always
       - name: Run Rust integration tests
         run: cd integration-tests/rs && cargo run --example integration-tests
-      # TODO: uncomment when workspaces-js v2.1.0 is released
-      # - name: Run TypeScript integration tests
-      #   run: cd integration-tests/ts && yarn && yarn test 
+      - name: Run TypeScript integration tests
+        run: cd integration-tests/ts && yarn && yarn test 

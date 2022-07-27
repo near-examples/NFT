@@ -10,13 +10,13 @@ const test = anyTest as TestFn<{
 test.beforeEach(async t => {
     const worker = await Worker.init();
     const root = worker.rootAccount;
-    const nft = await root.createAndDeploy(
-        'non-fungible-token',
+    const nft = await root.devDeploy(
         '../../res/non_fungible_token.wasm',
         {
+            initialBalance: NEAR.parse('100 N').toJSON(),
             method: "new_default_meta",
-            args: { owner_id: root },
-        }
+            args: { owner_id: root }
+        },
     );
     await root.call(
         nft,
@@ -44,18 +44,19 @@ test.beforeEach(async t => {
 
     const alice = await root.createSubAccount('alice', { initialBalance: NEAR.parse('100 N').toJSON() });
 
-    const tokenReceiver = await root.createAndDeploy(
-        'token-receiver',
+    const tokenReceiver = await root.devDeploy(
         '../../res/token_receiver.wasm',
         {
+            initialBalance: NEAR.parse('100 N').toJSON(),
             method: "new",
             args: { non_fungible_token_account_id: nft },
         }
     );
-    const approvalReceiver = await root.createAndDeploy(
-        'approval-receiver',
+
+    const approvalReceiver = await root.devDeploy(
         '../../res/approval_receiver.wasm',
         {
+            initialBalance: NEAR.parse('100 N').toJSON(),
             method: "new",
             args: { non_fungible_token_account_id: nft },
         }
