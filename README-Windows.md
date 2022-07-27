@@ -67,7 +67,7 @@ We'll be able to view our metadata right after:
 
 Then, let's mint our first token. This will create a NFT based on Olympus Mons where only one copy exists:
 
-    near call %ID% nft_mint "{\"token_id\": \"0\", \"receiver_id\": \""%ID%"\", \"token_metadata\": { \"title\": \"Olympus Mons\", \"description\": \"Tallest mountain in charted solar system\", \"copies\": 1}}' --accountId %ID% --deposit 0.1
+    near call %ID% nft_mint "{\"token_id\": \"0\", \"receiver_id\": \""%ID%"\", \"token_metadata\": { \"title\": \"Olympus Mons\", \"description\": \"Tallest mountain in charted solar system\", \"copies\": 1}}" --accountId %ID% --deposit 0.1
 
 Transferring our NFT
 ====================
@@ -78,7 +78,7 @@ Let's set up an account to transfer our freshly minted token to. This account wi
 
 Checking Alice's account for tokens:
 
-    near view %ID% nft_tokens_for_owner "{\"account_id": \""alice.%ID%"\"}"
+    near view %ID% nft_tokens_for_owner "{\"account_id\": \""alice.%ID%"\"}"
 
 Then we'll transfer over the NFT into Alice's account. Exactly 1 yoctoNEAR of deposit should be attached:
 
