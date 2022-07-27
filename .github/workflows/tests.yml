@@ -7,7 +7,7 @@ jobs:
   tests:
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest]  # mac-os currently in progress
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout branch
