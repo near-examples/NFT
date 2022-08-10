@@ -1,0 +1,27 @@
+name: Readme CI
+on:
+  repository_dispatch:
+    types: [tests-report]
+  push:
+jobs:
+  readme-ci:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest] # mac-os lags out
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Install Node
+        uses: actions/setup-node@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+      - name: Install NEAR CLI
+        run: npm install near-cli -g
+      - name: Building this contract
+        run: bash ./scripts/build.sh
+      - name: Run Readme Quick Deploy Commands
+        run: bash .github/scripts/readme-quick-deploy.sh
