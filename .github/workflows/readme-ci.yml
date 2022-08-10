@@ -7,7 +7,7 @@ jobs:
   readme-ci:
     strategy:
       matrix:
-        platform: [ubuntu-latest, mac-os-latest]
+        platform: [ubuntu-latest] # mac-os lags out
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout branch
