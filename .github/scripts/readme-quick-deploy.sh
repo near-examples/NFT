@@ -56,8 +56,7 @@ fi
 
 echo ==== Check Sub Account for Tokens ====
 TEXT=$(near view $CONTRACT_NAME nft_tokens_for_owner '{"account_id": "'alice.$CONTRACT_NAME'"}')
-echo $TEXT
-if [[ ! "$TEXT" =~ .*" []".* ]]; then
+if [[ ! "$TEXT" =~ .*"[]".* ]]; then
     echo -e "\033[0;31m FAIL \033[0m"
     exit 1 
 else 
