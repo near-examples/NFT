@@ -1,0 +1,47 @@
+name: Readme CI
+on:
+  repository_dispatch:
+    types: [tests-report]
+  push:
+jobs:
+  readme-ci:
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, mac-os-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v2
+      - name: Install Node
+        uses: actions/setup-node@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-unknown-unknown
+      - name: Install NEAR CLI
+        run: npm install near-cli -g
+      - name: Building this contract
+        run: bash ./scripts/build.sh
+      - name: Quickest deploy
+        run: printf 'y\n' | near dev-deploy --wasmFile res/non_fungible_token.wasm
+      - name: Set dev account env variable
+        run: source neardev/dev-account.env
+      - name: Echo contract name
+        run: echo $CONTRACT_NAME
+      - name: Initialize contract using the new method
+        run: |
+          near call $CONTRACT_NAME new_default_meta '{"owner_id": "'$CONTRACT_NAME'"}' --accountId $CONTRACT_NAME
+      - name: View contract metadata
+        run: near view $CONTRACT_NAME nft_metadata
+      - name: Mint NFT
+        run: |
+          near call $CONTRACT_NAME nft_mint '{"token_id": "0", "receiver_id": "'$ID'", "token_metadata": { "title": "Olympus Mons", "description": "Tallest mountain in charted solar system", "media": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Olympus_Mons_alt.jpg/1024px-Olympus_Mons_alt.jpg", "copies": 1}}' --accountId $CONTRACT_NAME --deposit 0.1
+      - name: Transfer NFT
+        run: near create-account alice.$CONTRACT_NAME --masterAccount $CONTRACT_NAME --initialBalance 10
+      - name: Check account for tokens
+        run: |
+          near view $CONTRACT_NAME nft_tokens_for_owner '{"account_id": "'alice.$CONTRACT_NAME'"}'
+      - name: Transfer NFT
+        run: |
+          near call $CONTRACT_NAME nft_transfer '{"token_id": "0", "receiver_id": "alice.'$CONTRACT_NAME'", "memo": "transfer ownership"}' --accountId $CONTRACT_NAME --depositYocto 1
