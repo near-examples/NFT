@@ -24,4 +24,4 @@ jobs:
       - name: Building this contract
         run: bash ./scripts/build.sh
       - name: Run Readme Quick Deploy Commands
-        run: bash ../scripts/readme-quick-deploy.sh
+        run: bash .github/scripts/readme-quick-deploy.sh
