@@ -37,7 +37,7 @@ else
 fi
 
 echo ==== Mint NFT ==== 
-TEXT=$(near call $CONTRACT_NAME nft_mint '{"token_id": "0", "receiver_id": "'$ID'", "token_metadata": { "title": "Olympus Mons", "description": "Tallest mountain in charted solar system", "media": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Olympus_Mons_alt.jpg/1024px-Olympus_Mons_alt.jpg", "copies": 1}}' --accountId $CONTRACT_NAME --deposit 0.1)
+TEXT=$(near call $CONTRACT_NAME nft_mint '{"token_id": "0", "receiver_id": "'$CONTRACT_NAME'", "token_metadata": { "title": "Olympus Mons", "description": "Tallest mountain in charted solar system", "media": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Olympus_Mons_alt.jpg/1024px-Olympus_Mons_alt.jpg", "copies": 1}}' --accountId $CONTRACT_NAME --deposit 0.1)
 echo $TEXT # TODO: improve precision and remove
 if [[ ! "$TEXT" =~ .*"ransaction".* ]]; then
     echo -e "\033[0;31m FAIL \033[0m"
@@ -49,7 +49,7 @@ fi
 echo ==== Create Sub Account ====
 TEXT=$(near create-account alice.$CONTRACT_NAME --masterAccount $CONTRACT_NAME --initialBalance 10)
 echo $TEXT # TODO: improve precision and remove
-if [[ ! "$TEXT" =~ .*"alice.$CONTRACT_NAME".* ]]; then
+if [[ ! "$TEXT" =~ .*"Account alice.$CONTRACT_NAME for network".* ]]; then
     echo -e "\033[0;31m FAIL \033[0m"
     exit 1 
 else 
@@ -59,7 +59,7 @@ fi
 echo ==== Check Sub Account for Tokens ====
 TEXT=$(near view $CONTRACT_NAME nft_tokens_for_owner '{"account_id": "'alice.$CONTRACT_NAME'"}')
 echo $TEXT # TODO: improve precision and remove
-if [[ ! "$TEXT" =~ .*"Olympus Mons".* ]]; then
+if [[ ! "$TEXT" =~ .*"[]".* ]]; then
     echo -e "\033[0;31m FAIL \033[0m"
     exit 1 
 else 
