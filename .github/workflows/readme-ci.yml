@@ -25,6 +25,8 @@ jobs:
         run: bash ./scripts/build.sh
       - name: Quickest deploy
         run: printf 'y\n' | near dev-deploy --wasmFile res/non_fungible_token.wasm
+      - name: Print directories and files
+        run: ls -la
       - name: Set dev account env variable
         run: source neardev/dev-account.env
       - name: Echo contract name
@@ -33,7 +35,7 @@ jobs:
         run: |
           near call $CONTRACT_NAME new_default_meta '{"owner_id": "'$CONTRACT_NAME'"}' --accountId $CONTRACT_NAME
       - name: View contract metadata
-        run: near view $CONTRACT_NAME nft_metadata '{}'
+        run: near view $CONTRACT_NAME nft_metadata
       - name: Mint NFT
         run: |
           near call $CONTRACT_NAME nft_mint '{"token_id": "0", "receiver_id": "'$ID'", "token_metadata": { "title": "Olympus Mons", "description": "Tallest mountain in charted solar system", "media": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Olympus_Mons_alt.jpg/1024px-Olympus_Mons_alt.jpg", "copies": 1}}' --accountId $CONTRACT_NAME --deposit 0.1
