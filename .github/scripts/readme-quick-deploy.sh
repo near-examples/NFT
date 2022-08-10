@@ -6,7 +6,6 @@ if [[ ! "$TEXT" =~ .*"Done deploying to".* ]]; then
     exit 1 
 else 
     echo -e "\033[0;32m SUCCESS \033[0m"
-    exit 0 
 fi
 
 echo ==== Set dev account env variable ====
@@ -19,7 +18,6 @@ if [[ ! "$TEXT" =~ .*"dev-".* ]]; then
     exit 1 
 else 
     echo -e "\033[0;32m SUCCESS \033[0m"
-    exit 0 
 fi
 
 echo ==== Initialize contract using the new method ====
@@ -29,7 +27,6 @@ if [[ ! "$TEXT" =~ .*"new_default_meta".* ]]; then # TODO: improve precision
     exit 1 
 else 
     echo -e "\033[0;32m SUCCESS \033[0m"
-    exit 0 
 fi
 
 echo ==== View contract metadata ====
@@ -39,7 +36,6 @@ if [[ ! "$TEXT" =~ .*"Olympus Mons".* ]]; then
     exit 1 
 else 
     echo -e "\033[0;32m SUCCESS \033[0m"
-    exit 0 
 fi
 
 echo ==== Mint NFT ==== 
@@ -49,7 +45,6 @@ if [[ ! "$TEXT" =~ .*"ransaction".* ]]; then # TODO: improve precision
     exit 1 
 else 
     echo -e "\033[0;32m SUCCESS \033[0m"
-    exit 0 
 fi
 
 echo ==== Create Sub Account ====
@@ -59,7 +54,6 @@ if [[ ! "$TEXT" =~ .*"alice.$CONTRACT_NAME".* ]]; then # TODO: improve precision
     exit 1 
 else 
     echo -e "\033[0;32m SUCCESS \033[0m"
-    exit 0 
 fi
 
 echo ==== Check Sub Account for Tokens ====
@@ -69,7 +63,6 @@ if [[ ! "$TEXT" =~ .*"Olympus Mons".* ]]; then # TODO: improve precision
     exit 1 
 else 
     echo -e "\033[0;32m SUCCESS \033[0m"
-    exit 0 
 fi
 
 echo ==== Transfer NFT ====
@@ -79,5 +72,4 @@ if [[ ! "$TEXT" =~ .*"ransaction".* ]]; then # TODO: improve precision
     exit 1 
 else 
     echo -e "\033[0;32m SUCCESS \033[0m"
-    exit 0 
 fi
