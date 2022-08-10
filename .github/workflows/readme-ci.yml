@@ -26,7 +26,7 @@ jobs:
       - name: Quickest deploy
         run: printf 'y\n' | near dev-deploy --wasmFile res/non_fungible_token.wasm
       - name: Print directories and files
-        run: ls -la
+        run: ls -la && la -la neardev && cat neardev/dev-account.env
       - name: Set dev account env variable
         run: source neardev/dev-account.env
       - name: Echo contract name
