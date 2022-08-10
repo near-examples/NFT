@@ -11,7 +11,6 @@ fi
 echo ==== Set dev account env variable ====
 source neardev/dev-account.env
 TEXT=$(echo $CONTRACT_NAME)
-echo $TEXT # TODO: remove
 if [[ ! "$TEXT" =~ .*"dev-".* ]]; then 
     echo -e "\033[0;31m FAIL \033[0m"
     exit 1 
@@ -21,8 +20,7 @@ fi
 
 echo ==== Initialize contract using the new method ====
 TEXT=$(near call $CONTRACT_NAME new_default_meta '{"owner_id": "'$CONTRACT_NAME'"}' --accountId $CONTRACT_NAME)
-echo $TEXT # TODO: improve precision and remove
-if [[ ! "$TEXT" =~ .*"new_default_meta".* ]]; then 
+if [[ ! "$TEXT" =~ .*"To see the transaction in the transaction explorer".* ]]; then 
     echo -e "\033[0;31m FAIL \033[0m"
     exit 1 
 else 
@@ -31,8 +29,7 @@ fi
 
 echo ==== View contract metadata ====
 TEXT=$(near view $CONTRACT_NAME nft_metadata)
-echo $TEXT # TODO: improve precision and remove
-if [[ ! "$TEXT" =~ .*"Olympus Mons".* ]]; then 
+if [[ ! "$TEXT" =~ .*"Example NEAR non-fungible token".* ]]; then 
     echo -e "\033[0;31m FAIL \033[0m"
     exit 1 
 else 
