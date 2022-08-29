@@ -9,11 +9,9 @@ overflow-checks = true
 
 [workspace]
 # remember to include a member for each contract
-members = [
-  "nft",
-  "test-approval-receiver",
-  "test-token-receiver",
-]
-exclude  = [
-  "integration-tests"
-]
+members = ["nft", "test-approval-receiver", "test-token-receiver"]
+exclude = ["integration-tests"]
+
+[patch.crates-io]
+near-sdk = { git = "https://github.com/near/near-sdk-rs", branch = "austin/nft_jschema" }
+near-contract-standards = { git = "https://github.com/near/near-sdk-rs", branch = "austin/nft_jschema" }
