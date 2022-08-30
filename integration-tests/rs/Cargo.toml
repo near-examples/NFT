@@ -5,7 +5,7 @@ publish = false
 edition = "2018"
 
 [dev-dependencies]
-near-sdk = "4.0.0"
+near-sdk = "4.1.0-pre.3"
 anyhow = "1.0"
 borsh = "0.9"
 maplit = "1.0"

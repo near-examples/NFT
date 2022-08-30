@@ -8,5 +8,5 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-near-sdk = { version = "4.1.0-pre.2", features = ["abi"] }
-near-contract-standards = { version = "4.1.0-pre.2", features = ["abi"] }
+near-sdk = { version = "4.1.0-pre.3", features = ["abi"] }
+near-contract-standards = { version = "4.1.0-pre.3", features = ["abi"] }

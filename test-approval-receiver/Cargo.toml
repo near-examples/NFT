@@ -8,5 +8,5 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-near-sdk = "4.1.0-pre.2"
-near-contract-standards = "4.1.0-pre.2"
+near-sdk = "4.1.0-pre.3"
+near-contract-standards = "4.1.0-pre.3"
