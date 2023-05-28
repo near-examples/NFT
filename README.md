@@ -5,7 +5,6 @@ Non-fungible Token (NFT)
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/near-examples/NFT)
 
-
 This repository includes an example implementation of a [non-fungible token] contract which uses [near-contract-standards] and workspaces-js and -rs tests.
 
   [non-fungible token]: https://nomicon.io/Standards/NonFungibleToken/README.html
@@ -46,6 +45,7 @@ cargo test -- --nocapture
 cd integration-tests/rs
 cargo run --example integration-tests
 ```
+
 *TypeScript*
 ```bash
 cd integration-tests/ts
@@ -131,7 +131,7 @@ Transferring our NFT
 Let's set up an account to transfer our freshly minted token to. This account will be a sub-account of the NEAR account we logged in with originally via `near login`.
 
     near create-account alice.$ID --masterAccount $ID --initialBalance 10
-
+    
 Checking Alice's account for tokens:
 
     near view $ID nft_tokens_for_owner '{"account_id": "'alice.$ID'"}'
