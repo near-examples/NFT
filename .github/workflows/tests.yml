@@ -13,7 +13,9 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v2
       - name: Install Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -28,4 +30,4 @@ jobs:
       - name: Run Rust integration tests
         run: cd integration-tests/rs && cargo run --example integration-tests
       - name: Run TypeScript integration tests
-        run: cd integration-tests/ts && yarn && yarn test 
+        run: cd integration-tests/ts && npm i && npm run test 
