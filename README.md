@@ -10,8 +10,12 @@ This repository includes an example implementation of a [non-fungible token] con
   [non-fungible token]: https://nomicon.io/Standards/NonFungibleToken/README.html
   [near-contract-standards]: https://github.com/near/near-sdk-rs/tree/master/near-contract-standards
   [simulation]: https://github.com/near/near-sdk-rs/tree/master/near-sdk-sim
+
+---
+
 Prerequisites
 =============
+
 If you're using Gitpod, you can skip this step.
 
   * Make sure Rust is installed per the prerequisites in [`near-sdk-rs`](https://github.com/near/near-sdk-rs).
@@ -148,7 +152,3 @@ Notes
 * The maximum balance value is limited by U128 (2**128 - 1).
 * JSON calls should pass U128 as a base-10 string. E.g. "100".
 * This does not include escrow functionality, as ft_transfer_call provides a superior approach. An escrow system can, of course, be added as a separate contract or additional functionality within this contract.
-
-AssemblyScript
-==============
-Currently, AssemblyScript is not supported for this example. An old version can be found in the [NEP4 example](https://github.com/near-examples/NFT/releases/tag/nep4-example), but this is not recommended as it is out of date and does not follow the standards the NEAR SDK has set currently.
