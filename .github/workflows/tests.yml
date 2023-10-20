@@ -20,7 +20,7 @@ jobs:
           toolchain: stable
           target: wasm32-unknown-unknown
       - name: Build wasm files
-        run: source scripts/flags.sh && cargo build --all --target wasm32-unknown-unknown --release && cp target/wasm32-unknown-unknown/release/*.wasm ./res/
+        run: source scripts/flags.sh && rustup target add wasm32-unknown-unknown && cargo build --all --target wasm32-unknown-unknown --release && cp target/wasm32-unknown-unknown/release/*.wasm ./res/
       - name: Run unit tests
         env:
           IS_GITHUB_ACTION: true
