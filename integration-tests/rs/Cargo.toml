@@ -21,3 +21,8 @@ pkg-config = "0.3.1"
 [[example]]
 name = "integration-tests"
 path = "src/tests.rs"
+
+# This can be removed when near-sdk is updated
+# Unfortuantely, this crate was yanked by the author and this is needed
+[patch.crates-io]
+parity-secp256k1 = { git = 'https://github.com/paritytech/rust-secp256k1.git' }
