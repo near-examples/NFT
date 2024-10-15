@@ -1,16 +1,16 @@
-use near_units::{parse_gas, parse_near};
 use serde_json::json;
-use workspaces::prelude::*;
-use workspaces::{network::Sandbox, Account, Contract, Worker};
+use near_workspaces::{Account, Contract, types::NearToken};
 
 const NFT_WASM_FILEPATH: &str = "../../res/non_fungible_token.wasm";
 const TR_WASM_FILEPATH: &str = "../../res/token_receiver.wasm";
 const AR_WASM_FILEPATH: &str = "../../res/approval_receiver.wasm";
 
+const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // initiate environemnt
-    let worker = workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox().await?;
 
     // deploy contracts
     let nft_wasm = std::fs::read(NFT_WASM_FILEPATH)?;
@@ -24,27 +24,27 @@ async fn main() -> anyhow::Result<()> {
     let owner = worker.root_account().unwrap();
     let alice = owner
         .create_subaccount("alice")
-        .initial_balance(parse_near!("30 N"))
+        .initial_balance(NearToken::from_near(30))
         .transact()
         .await?
         .into_result()?;
 
     // Initialize contracts
-    nft_contract
+    let _ = nft_contract
         .call("new_default_meta")
         .args_json(serde_json::json!({
             "owner_id": owner.id()
         }))
         .transact()
         .await?;
-    tr_contract
+    let _ = tr_contract
         .call("new")
         .args_json(serde_json::json!({
             "non_fungible_token_account_id": nft_contract.id()
         }))
         .transact()
         .await?;
-    ar_contract
+    let _ = ar_contract
         .call("new")
         .args_json(serde_json::json!({
             "non_fungible_token_account_id": nft_contract.id()
@@ -76,7 +76,7 @@ async fn test_simple_approve(
     user: &Account,
     nft_contract: &Contract
 ) -> anyhow::Result<()> {
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_mint")
         .args_json(json!({
             "token_id": "0",
@@ -87,18 +87,18 @@ async fn test_simple_approve(
                 "copies": 10000,
             }
         }))
-        .deposit(parse_gas!("5950000000000000000000"))
+        .deposit(NearToken::from_yoctonear(5950000000000000000000))
         .transact()
         .await;
 
     // root approves alice
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_approve")
         .args_json(json!({
             "token_id":  "0",
             "account_id": user.id(),
         }))
-        .deposit(parse_gas!("5950000000000000000000"))
+        .deposit(NearToken::from_yoctonear(5950000000000000000000))
         .transact()
         .await;
 
@@ -148,7 +148,7 @@ async fn test_approval_simple_call(
     nft_contract: &Contract,
     approval_receiver: &Contract
 ) -> anyhow::Result<()> {
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_mint")
         .args_json(json!({
             "token_id": "1",
@@ -159,7 +159,7 @@ async fn test_approval_simple_call(
                 "copies": 1,
             }
         }))
-        .deposit(parse_gas!("5950000000000000000000"))
+        .deposit(NearToken::from_yoctonear(5950000000000000000000))
         .transact()
         .await;
 
@@ -170,8 +170,8 @@ async fn test_approval_simple_call(
             "account_id": approval_receiver.id(),
             "msg": "return-now"
         }))
-        .gas(parse_gas!("150 Tgas") as u64)
-        .deposit(parse_gas!("450000000000000000000"))
+        .max_gas()
+        .deposit(NearToken::from_yoctonear(450000000000000000000))
         .transact()
         .await?
         .json()?;
@@ -183,10 +183,10 @@ async fn test_approval_simple_call(
         .args_json(json!({
             "token_id": "1",
             "account_id": approval_receiver.id(),
-            "msg": msg.clone(),
+            "msg": msg,
         }))
-        .gas(parse_gas!("150 Tgas") as u64)
-        .deposit(parse_gas!("450000000000000000000"))
+        .max_gas()
+        .deposit(NearToken::from_yoctonear(450000000000000000000))
         .transact()
         .await?
         .json()?;
@@ -202,7 +202,7 @@ async fn test_approved_account_transfers_token(
     nft_contract: &Contract
 ) -> anyhow::Result<()> {
     use serde_json::Value::String;
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_transfer")
         .args_json(json!({
             "receiver_id": user.id(),
@@ -210,7 +210,7 @@ async fn test_approved_account_transfers_token(
             "approval_id": 1,
             "memo": "message for test 3",
         }))
-        .deposit(1)
+        .deposit(NearToken::from_yoctonear(1))
         .transact()
         .await;
 
@@ -232,37 +232,37 @@ async fn test_revoke(
     nft_contract: &Contract,
     token_receiver: &Contract
 ) -> anyhow::Result<()> {
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_approve")
         .args_json(json!({
             "token_id": "1",
             "account_id": user.id(),
         }))
-        .gas(parse_gas!("150 Tgas") as u64)
-        .deposit(parse_gas!("450000000000000000000"))
+        .max_gas()
+        .deposit(NearToken::from_yoctonear(450000000000000000000))
         .transact()
         .await;
 
     // root approves token_receiver
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_approve")
         .args_json(json!({
             "token_id": "1",
             "account_id": token_receiver.id(),
         }))
-        .gas(parse_gas!("150 Tgas") as u64)
-        .deposit(parse_gas!("450000000000000000000"))
+        .max_gas()
+        .deposit(NearToken::from_yoctonear(450000000000000000000))
         .transact()
         .await;
 
     // root revokes user
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_revoke")
         .args_json(json!({
             "token_id": "1",
             "account_id": user.id(),
         }))
-        .deposit(1)
+        .deposit(ONE_YOCTO)
         .transact()
         .await;
 
@@ -291,13 +291,13 @@ async fn test_revoke(
     assert_eq!(revoke_bool, true);
 
     // root revokes token_receiver
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_revoke")
         .args_json(json!({
             "token_id": "1",
             "account_id": token_receiver.id(),
         }))
-        .deposit(1)
+        .deposit(NearToken::from_yoctonear(1))
         .transact()
         .await;
 
@@ -336,26 +336,26 @@ async fn test_revoke_all(
     token_receiver: &Contract
 ) -> anyhow::Result<()> {
     // root approves alice
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_approve")
         .args_json(json!({
             "token_id": "1",
             "account_id": user.id(),
         }))
-        .gas(parse_gas!("150 Tgas") as u64)
-        .deposit(parse_gas!("450000000000000000000"))
+        .max_gas()
+        .deposit(NearToken::from_yoctonear(450000000000000000000))
         .transact()
         .await;
 
     // root approves token_receiver
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_approve")
         .args_json(json!({
             "token_id": "1",
             "account_id": token_receiver.id(),
         }))
-        .gas(parse_gas!("150 Tgas") as u64)
-        .deposit(parse_gas!("450000000000000000000"))
+        .max_gas()
+        .deposit(NearToken::from_yoctonear(450000000000000000000))
         .transact()
         .await;
 
@@ -400,13 +400,13 @@ async fn test_simple_transfer(
         .json()?;
     assert_eq!(token.get("owner_id"), Some(&String(owner.id().to_string())));
 
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_transfer")
         .args_json(json!({
             "token_id": "1",
             "receiver_id": user.id(),
         }))
-        .deposit(1)
+        .deposit(ONE_YOCTO)
         .transact()
         .await;
 
@@ -428,7 +428,7 @@ async fn test_transfer_call_fast_return_to_sender(
     nft_contract: &Contract
 ) -> anyhow::Result<()> {
     use serde_json::Value::String;
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_mint")
         .args_json(json!({
             "token_id": "2",
@@ -439,11 +439,11 @@ async fn test_transfer_call_fast_return_to_sender(
                 "copies": 1,
             }
         }))
-        .deposit(parse_gas!("6050000000000000000000"))
+        .deposit(NearToken::from_yoctonear(6050000000000000000000))
         .transact()
         .await;
 
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_transfer_call")
         .args_json(json!({
             "token_id": "2",
@@ -451,8 +451,8 @@ async fn test_transfer_call_fast_return_to_sender(
             "memo": "transfer & call",
             "msg": "return-it-now",
         }))
-        .deposit(1)
-        .gas(parse_gas!("150 Tgas") as u64)
+        .max_gas()
+        .deposit(ONE_YOCTO)
         .transact()
         .await;
 
@@ -474,7 +474,7 @@ async fn test_transfer_call_slow_return_to_sender(
     nft_contract: &Contract
 ) -> anyhow::Result<()> {
     use serde_json::Value::String;
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_transfer_call")
         .args_json(json!({
             "token_id": "2",
@@ -482,8 +482,8 @@ async fn test_transfer_call_slow_return_to_sender(
             "memo": "transfer & call",
             "msg": "return-it-later",
         }))
-        .deposit(1)
-        .gas(parse_gas!("150 Tgas") as u64)
+        .max_gas()
+        .deposit(ONE_YOCTO)
         .transact()
         .await;
 
@@ -505,7 +505,7 @@ async fn test_transfer_call_fast_keep_with_sender(
     nft_contract: &Contract
 ) -> anyhow::Result<()> {
     use serde_json::Value::String;
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_transfer_call")
         .args_json(json!({
             "token_id": "2",
@@ -513,8 +513,8 @@ async fn test_transfer_call_fast_keep_with_sender(
             "memo": "transfer & call",
             "msg": "keep-it-now",
         }))
-        .deposit(1)
-        .gas(parse_gas!("150 Tgas") as u64)
+        .max_gas()
+        .deposit(ONE_YOCTO)
         .transact()
         .await;
 
@@ -539,7 +539,7 @@ async fn test_transfer_call_slow_keep_with_sender(
     nft_contract: &Contract
 ) -> anyhow::Result<()> {
     use serde_json::Value::String;
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_mint")
         .args_json(json!({
             "token_id": "3",
@@ -550,11 +550,11 @@ async fn test_transfer_call_slow_keep_with_sender(
                 "copies": 1,
             }
         }))
-        .deposit(parse_gas!("6050000000000000000000"))
+        .deposit(NearToken::from_yoctonear(6050000000000000000000))
         .transact()
         .await;
 
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_transfer_call")
         .args_json(json!({
             "token_id": "3",
@@ -562,8 +562,8 @@ async fn test_transfer_call_slow_keep_with_sender(
             "memo": "transfer & call",
             "msg": "keep-it-later",
         }))
-        .deposit(1)
-        .gas(parse_gas!("150 Tgas") as u64)
+        .max_gas()
+        .deposit(ONE_YOCTO)
         .transact()
         .await;
 
@@ -588,7 +588,7 @@ async fn test_transfer_call_receiver_panics(
     nft_contract: &Contract
 ) -> anyhow::Result<()> {
     use serde_json::Value::String;
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_mint")
         .args_json(json!({
             "token_id": "4",
@@ -599,12 +599,12 @@ async fn test_transfer_call_receiver_panics(
                 "copies": 1,
             }
         }))
-        .deposit(parse_gas!("6050000000000000000000"))
-        .gas(parse_gas!("150 Tgas") as u64)
+        .max_gas()
+        .deposit(NearToken::from_yoctonear(6050000000000000000000))
         .transact()
         .await;
 
-    owner
+    let _ = owner
         .call(nft_contract.id(), "nft_transfer_call")
         .args_json(json!({
             "token_id": "4",
@@ -612,8 +612,8 @@ async fn test_transfer_call_receiver_panics(
             "memo": "transfer & call",
             "msg": "incorrect message",
         }))
-        .deposit(1)
-        .gas(parse_gas!("150 Tgas") as u64)
+        .max_gas()
+        .deposit(ONE_YOCTO)
         .transact()
         .await;
 
