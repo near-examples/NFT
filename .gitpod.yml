@@ -1,7 +1,0 @@
-image:
-  file: .gitpod.Dockerfile
-# List the start up tasks. You can start them in parallel in multiple terminals. See https://www.gitpod.io/docs/config-start-tasks/
-tasks:
-  - before: nvm use default && npm install near-cli -g --no-optional
-    init: yarn && brew install tree
-    command: clear && echo Explore non-fungible tokens on NEAR Protocol

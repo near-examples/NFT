@@ -1,7 +1,7 @@
 Non-fungible Token (NFT) Example 👋 
+
 [![](https://img.shields.io/badge/⋈%20Examples-Basics-green)](https://docs.near.org/tutorials/welcome)
 [![](https://img.shields.io/badge/Contract-Rust-red)](contract-rs)
-![example workflow](https://github.com/near-examples/NFT/actions/workflows/tests-rs.yml/badge.svg)
 
 This repository contains an example implementation of a [non-fungible token] contract in Rust which uses [near-contract-standards] and workspaces-rs tests.
 
