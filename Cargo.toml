@@ -1,24 +1,18 @@
-[profile.release]
-codegen-units = 1
-# Tell `rustc` to optimize for small code size.
-opt-level = "z"
-lto = true
-debug = false
-panic = "abort"
-overflow-checks = true
+[package]
+name = "non-fungible-token"
+version = "1.1.0"
+authors = ["Near Inc <hello@near.org>"]
+edition = "2018"
 
-[workspace]
-# remember to include a member for each contract
-members = [
-  "nft",
-  "test-approval-receiver",
-  "test-token-receiver",
-]
-exclude  = [
-  "integration-tests"
-]
+[lib]
+crate-type = ["cdylib", "rlib"]
 
-# This can be removed when near-sdk is updated
-# Unfortuantely, this crate was yanked by the author and this is needed
-[patch.crates-io]
-parity-secp256k1 = { git = 'https://github.com/paritytech/rust-secp256k1.git' }
+[dependencies]
+near-sdk = "5.5.0"
+near-contract-standards = "5.5.0"
+
+[dev-dependencies] 
+near-sdk = { version = "5.5.0", features = ["unit-testing"] }
+near-workspaces = { version = "0.14.1", features = ["unstable"] }
+anyhow = "1.0"
+tokio = { version = "1.41.0", features = ["full"] }

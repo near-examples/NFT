@@ -1,27 +1,25 @@
 /*!
-A stub contract that implements nft_on_approve for simulation testing nft_approve.
+A stub contract that implements nft_on_approve for e2e testing nft_approve.
 */
 use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
 use near_contract_standards::non_fungible_token::TokenId;
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{
-    env, ext_contract, log, near_bindgen, AccountId, PanicOnDefault,
-    PromiseOrValue,
-};
+use near_sdk::{env, log, near, require, AccountId, Gas, PanicOnDefault, PromiseOrValue};
 
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+/// It is estimated that we need to attach 5 TGas for the code execution and 5 TGas for cross-contract call
+const GAS_FOR_NFT_ON_APPROVE: Gas = Gas::from_tgas(10);
+
+#[near(contract_state)]
+#[derive(PanicOnDefault)]
 pub struct ApprovalReceiver {
     non_fungible_token_account_id: AccountId,
 }
 
-// Defining cross-contract interface. This allows to create a new promise.
-#[ext_contract(ext_self)]
+// Have to repeat the same trait for our own implementation.
 pub trait ValueReturnTrait {
     fn ok_go(&self, msg: String) -> PromiseOrValue<String>;
 }
 
-#[near_bindgen]
+#[near]
 impl ApprovalReceiver {
     #[init]
     pub fn new(non_fungible_token_account_id: AccountId) -> Self {
@@ -29,7 +27,7 @@ impl ApprovalReceiver {
     }
 }
 
-#[near_bindgen]
+#[near]
 impl NonFungibleTokenApprovalReceiver for ApprovalReceiver {
     /// Could do anything useful to the approval-receiving contract, such as store the given
     /// approval_id for use later when calling the NFT contract. Can also return whatever it wants,
@@ -45,9 +43,8 @@ impl NonFungibleTokenApprovalReceiver for ApprovalReceiver {
         msg: String,
     ) -> PromiseOrValue<String> {
         // Verifying that we were called by non-fungible token contract that we expect.
-        assert_eq!(
-            &env::predecessor_account_id(),
-            &self.non_fungible_token_account_id,
+        require!(
+            env::predecessor_account_id() == self.non_fungible_token_account_id,
             "Only supports the one non-fungible token contract"
         );
         log!(
@@ -60,15 +57,18 @@ impl NonFungibleTokenApprovalReceiver for ApprovalReceiver {
         match msg.as_str() {
             "return-now" => PromiseOrValue::Value("cool".to_string()),
             _ => {
-                // Call ok_go with no attached deposit and all unspent GAS (weight of 1)
-                Self::ext(env::current_account_id())
-                    .ok_go(msg).into()
+                let prepaid_gas = env::prepaid_gas();
+                let account_id = env::current_account_id();
+                Self::ext(account_id)
+                    .with_static_gas(prepaid_gas.saturating_sub(GAS_FOR_NFT_ON_APPROVE))
+                    .ok_go(msg)
+                    .into()
             }
         }
     }
 }
 
-#[near_bindgen]
+#[near]
 impl ValueReturnTrait for ApprovalReceiver {
     fn ok_go(&self, msg: String) -> PromiseOrValue<String> {
         log!("in ok_go, msg={}", msg);

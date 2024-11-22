@@ -1,0 +1,15 @@
+[package]
+name = "token-receiver"
+version = "0.0.1"
+authors = ["Near Inc <hello@nearprotocol.com>"]
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+near-sdk = "5.5.0"
+near-contract-standards = "5.5.0"
+
+[dev-dependencies]
+near-sdk = { version = "5.5.0", features = ["unit-testing"] }
