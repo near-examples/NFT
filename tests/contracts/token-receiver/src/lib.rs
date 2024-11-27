@@ -3,32 +3,21 @@ A stub contract that implements nft_on_transfer for simulation testing nft_trans
 */
 use near_contract_standards::non_fungible_token::core::NonFungibleTokenReceiver;
 use near_contract_standards::non_fungible_token::TokenId;
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{
-    env, ext_contract, log, near_bindgen, AccountId, PanicOnDefault,
-    PromiseOrValue,
-};
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
-pub struct TokenReceiver {
-    non_fungible_token_account_id: AccountId,
-}
+use near_sdk::{env, log, near, require, AccountId, Gas, PromiseOrValue};
 
-// Defining cross-contract interface. This allows to create a new promise.
-#[ext_contract(ext_self)]
+/// It is estimated that we need to attach 5 TGas for the code execution and 5 TGas for cross-contract call
+const GAS_FOR_NFT_ON_TRANSFER: Gas = Gas::from_tgas(10);
+
+#[near(contract_state)]
+#[derive(Default)]
+pub struct TokenReceiver {}
+
+// Have to repeat the same trait for our own implementation.
 pub trait ValueReturnTrait {
     fn ok_go(&self, return_it: bool) -> PromiseOrValue<bool>;
 }
 
-#[near_bindgen]
-impl TokenReceiver {
-    #[init]
-    pub fn new(non_fungible_token_account_id: AccountId) -> Self {
-        Self { non_fungible_token_account_id: non_fungible_token_account_id.into() }
-    }
-}
-
-#[near_bindgen]
+#[near]
 impl NonFungibleTokenReceiver for TokenReceiver {
     /// Returns true if token should be returned to `sender_id`
     /// Four supported `msg`s:
@@ -45,11 +34,6 @@ impl NonFungibleTokenReceiver for TokenReceiver {
         msg: String,
     ) -> PromiseOrValue<bool> {
         // Verifying that we were called by non-fungible token contract that we expect.
-        assert_eq!(
-            &env::predecessor_account_id(),
-            &self.non_fungible_token_account_id,
-            "Only supports the one non-fungible token contract"
-        );
         log!(
             "in nft_on_transfer; sender_id={}, previous_owner_id={}, token_id={}, msg={}",
             &sender_id,
@@ -60,22 +44,28 @@ impl NonFungibleTokenReceiver for TokenReceiver {
         match msg.as_str() {
             "return-it-now" => PromiseOrValue::Value(true),
             "return-it-later" => {
-                // Call ok_go with no attached deposit and all unspent GAS (weight of 1)
-                Self::ext(env::current_account_id())
-                    .ok_go(true).into()
+                let prepaid_gas = env::prepaid_gas();
+                let account_id = env::current_account_id();
+                Self::ext(account_id)
+                    .with_static_gas(prepaid_gas.saturating_sub(GAS_FOR_NFT_ON_TRANSFER))
+                    .ok_go(true)
+                    .into()
             }
             "keep-it-now" => PromiseOrValue::Value(false),
             "keep-it-later" => {
-                // Call ok_go with no attached deposit and all unspent GAS (weight of 1)
-                Self::ext(env::current_account_id())
-                    .ok_go(false).into()
+                let prepaid_gas = env::prepaid_gas();
+                let account_id = env::current_account_id();
+                Self::ext(account_id)
+                    .with_static_gas(prepaid_gas.saturating_sub(GAS_FOR_NFT_ON_TRANSFER))
+                    .ok_go(false)
+                    .into()
             }
             _ => env::panic_str("unsupported msg"),
         }
     }
 }
 
-#[near_bindgen]
+#[near]
 impl ValueReturnTrait for TokenReceiver {
     fn ok_go(&self, return_it: bool) -> PromiseOrValue<bool> {
         log!("in ok_go, return_it={}", return_it);
