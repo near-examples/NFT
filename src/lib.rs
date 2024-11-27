@@ -93,8 +93,6 @@ impl Contract {
     /// in this call. `self.tokens.mint` will also require it to be Some, since
     /// `StorageKey::TokenMetadata` was provided at initialization.
     ///
-    /// `self.tokens.mint` will enforce `predecessor_account_id` to equal the `owner_id` given in
-    /// initialization call to `new`.
     #[payable]
     pub fn nft_mint(
         &mut self,

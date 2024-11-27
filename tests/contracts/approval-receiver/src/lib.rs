@@ -3,28 +3,18 @@ A stub contract that implements nft_on_approve for e2e testing nft_approve.
 */
 use near_contract_standards::non_fungible_token::approval::NonFungibleTokenApprovalReceiver;
 use near_contract_standards::non_fungible_token::TokenId;
-use near_sdk::{env, log, near, require, AccountId, Gas, PanicOnDefault, PromiseOrValue};
+use near_sdk::{env, log, near, require, AccountId, Gas, PromiseOrValue};
 
 /// It is estimated that we need to attach 5 TGas for the code execution and 5 TGas for cross-contract call
 const GAS_FOR_NFT_ON_APPROVE: Gas = Gas::from_tgas(10);
 
 #[near(contract_state)]
-#[derive(PanicOnDefault)]
-pub struct ApprovalReceiver {
-    non_fungible_token_account_id: AccountId,
-}
+#[derive(Default)]
+pub struct ApprovalReceiver {}
 
 // Have to repeat the same trait for our own implementation.
 pub trait ValueReturnTrait {
     fn ok_go(&self, msg: String) -> PromiseOrValue<String>;
-}
-
-#[near]
-impl ApprovalReceiver {
-    #[init]
-    pub fn new(non_fungible_token_account_id: AccountId) -> Self {
-        Self { non_fungible_token_account_id: non_fungible_token_account_id.into() }
-    }
 }
 
 #[near]
@@ -43,10 +33,6 @@ impl NonFungibleTokenApprovalReceiver for ApprovalReceiver {
         msg: String,
     ) -> PromiseOrValue<String> {
         // Verifying that we were called by non-fungible token contract that we expect.
-        require!(
-            env::predecessor_account_id() == self.non_fungible_token_account_id,
-            "Only supports the one non-fungible token contract"
-        );
         log!(
             "in nft_on_approve; sender_id={}, previous_owner_id={}, token_id={}, msg={}",
             &token_id,

@@ -1,14 +1,78 @@
-use crate::init::{init, TOKEN_ID};
+use crate::common;
 use near_contract_standards::non_fungible_token::Token;
 
-use near_workspaces::types::NearToken;
+use near_workspaces::{network::Sandbox, types::NearToken, Worker};
 
 const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
+const TOKEN_ID: &str = "id-0";
 
 #[tokio::test]
-async fn test_simple_transfer() -> anyhow::Result<()> {
-    let worker = near_workspaces::sandbox().await?;
-    let (nft_contract, _, _, alice) = init(&worker).await?;
+async fn core() -> anyhow::Result<()> {
+    let nft_wasm = near_workspaces::compile_project(".").await.unwrap();
+    let token_receiver_wasm = near_workspaces::compile_project("./tests/contracts/token-receiver")
+        .await
+        .unwrap();
+
+    let worker: near_workspaces::Worker<near_workspaces::network::Sandbox> =
+        near_workspaces::sandbox().await?;
+
+    let simple_transfer = test_simple_transfer(&worker, &nft_wasm);
+    let transfer_call_fast_return_to_sender = test_transfer_call_fast_return_to_sender(
+        &worker,
+        &nft_wasm,
+        &token_receiver_wasm,
+    );
+    let transfer_call_slow_return_to_sender = test_transfer_call_slow_return_to_sender(
+        &worker,
+        &nft_wasm,
+        &token_receiver_wasm,
+    );
+    let transfer_call_fast_keep_with_sender = test_transfer_call_fast_keep_with_sender(
+        &worker,
+        &nft_wasm,
+        &token_receiver_wasm,
+    );
+    let transfer_call_slow_keep_with_sender = test_transfer_call_slow_keep_with_sender(
+        &worker,
+        &nft_wasm,
+        &token_receiver_wasm,
+    );
+    let transfer_call_receiver_panics = test_transfer_call_receiver_panics(
+        &worker,
+        &nft_wasm,
+        &token_receiver_wasm,
+    );
+    let transfer_call_receiver_panics_and_nft_resolve_transfer_produces_no_log_if_not_enough_gas = test_transfer_call_receiver_panics_and_nft_resolve_transfer_produces_no_log_if_not_enough_gas(&worker, &nft_wasm, &token_receiver_wasm);
+    let simple_transfer_no_logs_on_failure = test_simple_transfer_no_logs_on_failure(
+        &worker,
+        &nft_wasm,
+    );
+
+    simple_transfer.await?;
+    transfer_call_fast_return_to_sender.await?;
+    transfer_call_slow_return_to_sender.await?;
+    transfer_call_fast_keep_with_sender.await?;
+    transfer_call_slow_keep_with_sender.await?;
+    transfer_call_receiver_panics.await?;
+    transfer_call_receiver_panics_and_nft_resolve_transfer_produces_no_log_if_not_enough_gas
+        .await?;
+    simple_transfer_no_logs_on_failure.await?;
+
+    Ok(())
+}
+
+async fn test_simple_transfer(worker: &Worker<Sandbox>, nft_wasm: &Vec<u8>) -> anyhow::Result<()> {
+    let alice = worker.dev_create_account().await?;
+    let nft_contract = worker.dev_deploy(&nft_wasm).await?;
+    common::init_nft_contract(&nft_contract).await?;
+
+    common::mint_nft(
+        nft_contract.as_account(),
+        nft_contract.id(),
+        TOKEN_ID.into(),
+        nft_contract.id(),
+    )
+    .await?;
 
     let token = nft_contract
         .call("nft_token")
@@ -46,10 +110,22 @@ async fn test_simple_transfer() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn test_transfer_call_fast_return_to_sender() -> anyhow::Result<()> {
-    let worker = near_workspaces::sandbox().await?;
-    let (nft_contract, _, token_receiver_contract, _) = init(&worker).await?;
+async fn test_transfer_call_fast_return_to_sender(
+    worker: &Worker<Sandbox>,
+    nft_wasm: &Vec<u8>,
+    token_receiver_wasm: &Vec<u8>,
+) -> anyhow::Result<()> {
+    let nft_contract = worker.dev_deploy(&nft_wasm).await?;
+    let token_receiver_contract = worker.dev_deploy(&token_receiver_wasm).await?;
+
+    common::init_nft_contract(&nft_contract).await?;
+    common::mint_nft(
+        nft_contract.as_account(),
+        nft_contract.id(),
+        TOKEN_ID.into(),
+        nft_contract.id(),
+    )
+    .await?;
 
     let res = nft_contract
         .call("nft_transfer_call")
@@ -77,10 +153,22 @@ async fn test_transfer_call_fast_return_to_sender() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn test_transfer_call_slow_return_to_sender() -> anyhow::Result<()> {
-    let worker = near_workspaces::sandbox().await?;
-    let (nft_contract, _, token_receiver_contract, _) = init(&worker).await?;
+async fn test_transfer_call_slow_return_to_sender(
+    worker: &Worker<Sandbox>,
+    nft_wasm: &Vec<u8>,
+    token_receiver_wasm: &Vec<u8>,
+) -> anyhow::Result<()> {
+    let nft_contract = worker.dev_deploy(&nft_wasm).await?;
+    let token_receiver_contract = worker.dev_deploy(&token_receiver_wasm).await?;
+
+    common::init_nft_contract(&nft_contract).await?;
+    common::mint_nft(
+        nft_contract.as_account(),
+        nft_contract.id(),
+        TOKEN_ID.into(),
+        nft_contract.id(),
+    )
+    .await?;
 
     let res = nft_contract
         .call("nft_transfer_call")
@@ -108,10 +196,22 @@ async fn test_transfer_call_slow_return_to_sender() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn test_transfer_call_fast_keep_with_sender() -> anyhow::Result<()> {
-    let worker = near_workspaces::sandbox().await?;
-    let (nft_contract, _, token_receiver_contract, _) = init(&worker).await?;
+async fn test_transfer_call_fast_keep_with_sender(
+    worker: &Worker<Sandbox>,
+    nft_wasm: &Vec<u8>,
+    token_receiver_wasm: &Vec<u8>,
+) -> anyhow::Result<()> {
+    let nft_contract = worker.dev_deploy(&nft_wasm).await?;
+    let token_receiver_contract = worker.dev_deploy(&token_receiver_wasm).await?;
+
+    common::init_nft_contract(&nft_contract).await?;
+    common::mint_nft(
+        nft_contract.as_account(),
+        nft_contract.id(),
+        TOKEN_ID.into(),
+        nft_contract.id(),
+    )
+    .await?;
 
     let res = nft_contract
         .call("nft_transfer_call")
@@ -143,10 +243,22 @@ async fn test_transfer_call_fast_keep_with_sender() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn test_transfer_call_slow_keep_with_sender() -> anyhow::Result<()> {
-    let worker = near_workspaces::sandbox().await?;
-    let (nft_contract, _, token_receiver_contract, _) = init(&worker).await?;
+async fn test_transfer_call_slow_keep_with_sender(
+    worker: &Worker<Sandbox>,
+    nft_wasm: &Vec<u8>,
+    token_receiver_wasm: &Vec<u8>,
+) -> anyhow::Result<()> {
+    let nft_contract = worker.dev_deploy(&nft_wasm).await?;
+    let token_receiver_contract = worker.dev_deploy(&token_receiver_wasm).await?;
+
+    common::init_nft_contract(&nft_contract).await?;
+    common::mint_nft(
+        nft_contract.as_account(),
+        nft_contract.id(),
+        TOKEN_ID.into(),
+        nft_contract.id(),
+    )
+    .await?;
 
     let res = nft_contract
         .call("nft_transfer_call")
@@ -177,10 +289,22 @@ async fn test_transfer_call_slow_keep_with_sender() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-async fn test_transfer_call_receiver_panics() -> anyhow::Result<()> {
-    let worker = near_workspaces::sandbox().await?;
-    let (nft_contract, _, token_receiver_contract, _) = init(&worker).await?;
+async fn test_transfer_call_receiver_panics(
+    worker: &Worker<Sandbox>,
+    nft_wasm: &Vec<u8>,
+    token_receiver_wasm: &Vec<u8>,
+) -> anyhow::Result<()> {
+    let nft_contract = worker.dev_deploy(&nft_wasm).await?;
+    let token_receiver_contract = worker.dev_deploy(&token_receiver_wasm).await?;
+
+    common::init_nft_contract(&nft_contract).await?;
+    common::mint_nft(
+        nft_contract.as_account(),
+        nft_contract.id(),
+        TOKEN_ID.into(),
+        nft_contract.id(),
+    )
+    .await?;
 
     let res = nft_contract
         .call("nft_transfer_call")
@@ -211,11 +335,22 @@ async fn test_transfer_call_receiver_panics() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
 async fn test_transfer_call_receiver_panics_and_nft_resolve_transfer_produces_no_log_if_not_enough_gas(
+    worker: &Worker<Sandbox>,
+    nft_wasm: &Vec<u8>,
+    token_receiver_wasm: &Vec<u8>,
 ) -> anyhow::Result<()> {
-    let worker = near_workspaces::sandbox().await?;
-    let (nft_contract, _, token_receiver_contract, _) = init(&worker).await?;
+    let nft_contract = worker.dev_deploy(&nft_wasm).await?;
+    let token_receiver_contract = worker.dev_deploy(&token_receiver_wasm).await?;
+
+    common::init_nft_contract(&nft_contract).await?;
+    common::mint_nft(
+        nft_contract.as_account(),
+        nft_contract.id(),
+        TOKEN_ID.into(),
+        nft_contract.id(),
+    )
+    .await?;
 
     let res = nft_contract
         .call("nft_transfer_call")
@@ -246,10 +381,21 @@ async fn test_transfer_call_receiver_panics_and_nft_resolve_transfer_produces_no
     Ok(())
 }
 
-#[tokio::test]
-async fn test_simple_transfer_no_logs_on_failure() -> anyhow::Result<()> {
-    let worker = near_workspaces::sandbox().await?;
-    let (nft_contract, _, _, _) = init(&worker).await?;
+async fn test_simple_transfer_no_logs_on_failure(
+    worker: &Worker<Sandbox>,
+    nft_wasm: &Vec<u8>,
+) -> anyhow::Result<()> {
+    let nft_contract = worker.dev_deploy(&nft_wasm).await?;
+
+    common::init_nft_contract(&nft_contract).await?;
+    common::mint_nft(
+        nft_contract.as_account(),
+        nft_contract.id(),
+        TOKEN_ID.into(),
+        nft_contract.id(),
+    )
+    .await?;
+
 
     let res = nft_contract
         .call("nft_transfer")
