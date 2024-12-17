@@ -21,6 +21,8 @@ Install [`cargo-near`](https://github.com/near/cargo-near) and run:
 cargo near build
 ```
 
+> Note: to avoid issues, be sure to update your Rust compiler with `rustup update stable`
+
 ## How to Test Locally?
 
 ```bash
