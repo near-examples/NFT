@@ -48,7 +48,7 @@ near call <account-id> new_default_meta '{"owner_id": "<account-id>"}' --account
 near view <account-id> nft_metadata
 
 # Mint a NFT
-near call <account-id> nft_mint '{"token_id": "0", "receiver_id": "<account-id>", "token_metadata": { "title": "Olympus Mons", "description": "Tallest mountain in charted solar system", "media": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Olympus_Mons_alt.jpg/1024px-Olympus_Mons_alt.jpg", "copies": 1}}' --accountId <account-id> --deposit 0.1
+near call <account-id> nft_mint '{"token_id": "0", "token_owner_id": "<account-id>", "token_metadata": { "title": "Olympus Mons", "description": "Tallest mountain in charted solar system", "media": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Olympus_Mons_alt.jpg/1024px-Olympus_Mons_alt.jpg", "copies": 1}}' --accountId <account-id> --deposit 0.1
 
 # View tokens for owner
 near view <account-id> nft_tokens_for_owner '{"account_id": "<owner_id>"}'
