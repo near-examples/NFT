@@ -1,4 +1,4 @@
-# Non-fungible Token (NFT) Example 👋 
+# Non-fungible Token (NFT) Example 🖼️ 
 
 [![](https://img.shields.io/badge/⋈%20Examples-Basics-green)](https://docs.near.org/tutorials/welcome)
 [![](https://img.shields.io/badge/Contract-Rust-red)](contract-rs)
