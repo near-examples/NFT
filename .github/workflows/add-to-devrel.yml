@@ -5,7 +5,7 @@ on:
     types:
       - opened
       - reopened
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - reopened
@@ -19,4 +19,4 @@ jobs:
         with:
           # add to DevRel Project #117
           project-url: https://github.com/orgs/near/projects/117
-          github-token: ${{ secrets.GH_TOKEN }}
+          github-token: ${{ secrets.PROJECT_GH_TOKEN }}
