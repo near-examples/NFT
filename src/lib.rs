@@ -21,12 +21,12 @@ use near_contract_standards::non_fungible_token::core::{
 };
 use near_contract_standards::non_fungible_token::enumeration::NonFungibleTokenEnumeration;
 use near_contract_standards::non_fungible_token::metadata::{
-    NFTContractMetadata, NonFungibleTokenMetadataProvider, TokenMetadata, NFT_METADATA_SPEC,
+    NFTContractMetadata, TokenMetadata, NFT_METADATA_SPEC,
 };
 use near_contract_standards::non_fungible_token::NonFungibleToken;
 use near_contract_standards::non_fungible_token::{Token, TokenId};
 use near_sdk::collections::LazyOption;
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{U128, U64};
 use near_sdk::{
     env, near, require, AccountId, BorshStorageKey, PanicOnDefault, Promise, PromiseOrValue,
 };
@@ -108,24 +108,26 @@ impl Contract {
         self.tokens
             .internal_mint(token_id, token_owner_id, Some(token_metadata))
     }
-}
 
-#[near]
-impl NonFungibleTokenCore for Contract {
     #[payable]
-    fn nft_transfer(
+    pub fn nft_transfer(
         &mut self,
         receiver_id: AccountId,
         token_id: TokenId,
-        approval_id: Option<u64>,
+        approval_id: Option<U64>,
         memo: Option<String>,
     ) {
+        let approval_id = match approval_id {
+            Some(value) => Some(value.0),
+            None => None,
+        };
+
         self.tokens
             .nft_transfer(receiver_id, token_id, approval_id, memo);
     }
 
     #[payable]
-    fn nft_transfer_call(
+    pub fn nft_transfer_call(
         &mut self,
         receiver_id: AccountId,
         token_id: TokenId,
@@ -137,15 +139,12 @@ impl NonFungibleTokenCore for Contract {
             .nft_transfer_call(receiver_id, token_id, approval_id, memo, msg)
     }
 
-    fn nft_token(&self, token_id: TokenId) -> Option<Token> {
+    pub fn nft_token(&self, token_id: TokenId) -> Option<Token> {
         self.tokens.nft_token(token_id)
     }
-}
 
-#[near]
-impl NonFungibleTokenResolver for Contract {
     #[private]
-    fn nft_resolve_transfer(
+    pub fn nft_resolve_transfer(
         &mut self,
         previous_owner_id: AccountId,
         receiver_id: AccountId,
@@ -159,12 +158,9 @@ impl NonFungibleTokenResolver for Contract {
             approved_account_ids,
         )
     }
-}
 
-#[near]
-impl NonFungibleTokenApproval for Contract {
     #[payable]
-    fn nft_approve(
+    pub fn nft_approve(
         &mut self,
         token_id: TokenId,
         account_id: AccountId,
@@ -174,16 +170,16 @@ impl NonFungibleTokenApproval for Contract {
     }
 
     #[payable]
-    fn nft_revoke(&mut self, token_id: TokenId, account_id: AccountId) {
+    pub fn nft_revoke(&mut self, token_id: TokenId, account_id: AccountId) {
         self.tokens.nft_revoke(token_id, account_id);
     }
 
     #[payable]
-    fn nft_revoke_all(&mut self, token_id: TokenId) {
+    pub fn nft_revoke_all(&mut self, token_id: TokenId) {
         self.tokens.nft_revoke_all(token_id);
     }
 
-    fn nft_is_approved(
+    pub fn nft_is_approved(
         &self,
         token_id: TokenId,
         approved_account_id: AccountId,
@@ -192,23 +188,20 @@ impl NonFungibleTokenApproval for Contract {
         self.tokens
             .nft_is_approved(token_id, approved_account_id, approval_id)
     }
-}
 
-#[near]
-impl NonFungibleTokenEnumeration for Contract {
-    fn nft_total_supply(&self) -> U128 {
+    pub fn nft_total_supply(&self) -> U128 {
         self.tokens.nft_total_supply()
     }
 
-    fn nft_tokens(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<Token> {
+    pub fn nft_tokens(&self, from_index: Option<U128>, limit: Option<u64>) -> Vec<Token> {
         self.tokens.nft_tokens(from_index, limit)
     }
 
-    fn nft_supply_for_owner(&self, account_id: AccountId) -> U128 {
+    pub fn nft_supply_for_owner(&self, account_id: AccountId) -> U128 {
         self.tokens.nft_supply_for_owner(account_id)
     }
 
-    fn nft_tokens_for_owner(
+    pub fn nft_tokens_for_owner(
         &self,
         account_id: AccountId,
         from_index: Option<U128>,
@@ -217,11 +210,8 @@ impl NonFungibleTokenEnumeration for Contract {
         self.tokens
             .nft_tokens_for_owner(account_id, from_index, limit)
     }
-}
 
-#[near]
-impl NonFungibleTokenMetadataProvider for Contract {
-    fn nft_metadata(&self) -> NFTContractMetadata {
+    pub fn nft_metadata(&self) -> NFTContractMetadata {
         self.metadata.get().unwrap()
     }
 }

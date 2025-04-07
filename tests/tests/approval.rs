@@ -230,7 +230,7 @@ pub async fn test_approved_account_transfers_token(
         .args_json((
             alice.id(),
             TOKEN_ID,
-            Some(1u64),
+            "1",
             Some("gotcha! bahahaha".to_string()),
         ))
         .max_gas()
