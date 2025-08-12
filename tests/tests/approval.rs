@@ -66,7 +66,7 @@ pub async fn test_simple_approve(
         .call("nft_approve")
         .args_json((TOKEN_ID, alice.id(), Option::<String>::None))
         .max_gas()
-        .deposit(NearToken::from_yoctonear(510000000000000000000))
+        .deposit(NearToken::from_yoctonear(550000000000000000000))
         .transact()
         .await?;
     assert!(res.is_success());
@@ -136,7 +136,7 @@ pub async fn test_simple_approve(
             Option::<String>::None,
         ))
         .max_gas()
-        .deposit(NearToken::from_yoctonear(510000000000000000000))
+        .deposit(NearToken::from_yoctonear(550000000000000000000))
         .transact()
         .await?;
     assert!(res.is_success());
@@ -177,7 +177,7 @@ pub async fn test_approval_with_call(
             Some("return-now".to_string()),
         ))
         .max_gas()
-        .deposit(NearToken::from_yoctonear(450000000000000000000))
+        .deposit(NearToken::from_yoctonear(550000000000000000000))
         .transact()
         .await?;
     assert_eq!(res.json::<String>()?, "cool".to_string());
@@ -219,7 +219,7 @@ pub async fn test_approved_account_transfers_token(
         .call("nft_approve")
         .args_json((TOKEN_ID, alice.id(), Option::<String>::None))
         .max_gas()
-        .deposit(NearToken::from_yoctonear(510000000000000000000))
+        .deposit(NearToken::from_yoctonear(550000000000000000000))
         .transact()
         .await?;
     assert!(res.is_success());
@@ -274,7 +274,7 @@ pub async fn test_revoke(
         .call("nft_approve")
         .args_json((TOKEN_ID, alice.id(), Option::<String>::None))
         .max_gas()
-        .deposit(NearToken::from_yoctonear(510000000000000000000))
+        .deposit(NearToken::from_yoctonear(550000000000000000000))
         .transact()
         .await?;
     assert!(res.is_success());
@@ -288,7 +288,7 @@ pub async fn test_revoke(
             Option::<String>::None,
         ))
         .max_gas()
-        .deposit(NearToken::from_yoctonear(450000000000000000000))
+        .deposit(NearToken::from_yoctonear(550000000000000000000))
         .transact()
         .await?;
     assert!(res.is_success());
@@ -390,7 +390,7 @@ pub async fn test_revoke_all(
         .call("nft_approve")
         .args_json((TOKEN_ID, alice.id(), Option::<String>::None))
         .max_gas()
-        .deposit(NearToken::from_yoctonear(510000000000000000000))
+        .deposit(NearToken::from_yoctonear(550000000000000000000))
         .transact()
         .await?;
     assert!(res.is_success());
@@ -404,7 +404,7 @@ pub async fn test_revoke_all(
             Option::<String>::None,
         ))
         .max_gas()
-        .deposit(NearToken::from_yoctonear(450000000000000000000))
+        .deposit(NearToken::from_yoctonear(550000000000000000000))
         .transact()
         .await?;
     assert!(res.is_success());
