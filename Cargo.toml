@@ -3,16 +3,40 @@ name = "non-fungible-token"
 version = "1.1.0"
 authors = ["Near Inc <hello@near.org>"]
 edition = "2018"
+repository = "https://github.com/near-examples/NFT"
+
+# fields to configure build with WASM reproducibility, according to specs
+# in https://github.com/near/NEPs/blob/master/neps/nep-0330.md
+[package.metadata.near.reproducible_build]
+# docker image, descriptor of build environment
+image = "sourcescan/cargo-near:0.16.1-rust-1.86.0"
+# tag after colon above serves only descriptive purpose; image is identified by digest
+image_digest = "sha256:5dff91e3271ace8e679dec5c12b724108c43c2c441a52ba7c94d7ee9e20a87de"
+# list of environment variables names, whose values, if set, will be used as external build parameters
+# in a reproducible manner
+# supported by `sourcescan/cargo-near:0.10.1-rust-1.82.0` image or later images
+passed_env = []
+# build command inside of docker container
+# if docker image from default gallery is used https://hub.docker.com/r/sourcescan/cargo-near/tags,
+# the command may be any combination of flags of `cargo-near`,
+# supported by respective version of binary inside the container besides `--no-locked` flag
+container_build_command = [
+    "cargo",
+    "near",
+    "build",
+    "non-reproducible-wasm",
+    "--locked",
+]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-near-sdk = "5.5.0"
-near-contract-standards = "5.5.0"
+near-sdk = "5.12.0"
+near-contract-standards = "5.12.0"
 
 [dev-dependencies] 
-near-sdk = { version = "5.5.0", features = ["unit-testing"] }
-near-workspaces = { version = "0.14.1", features = ["unstable"] }
+near-sdk = { version = "5.12.0", features = ["unit-testing"] }
+near-workspaces = { version = "0.20.1", features = ["unstable"] }
 anyhow = "1.0"
 tokio = { version = "1.41.0", features = ["full"] }
