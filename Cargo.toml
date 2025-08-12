@@ -37,6 +37,6 @@ near-contract-standards = "5.12.0"
 
 [dev-dependencies] 
 near-sdk = { version = "5.12.0", features = ["unit-testing"] }
-near-workspaces = { version = "0.20.1", features = ["unstable"] }
+near-workspaces = { version = "0.19.0", features = ["unstable"] }
 anyhow = "1.0"
 tokio = { version = "1.41.0", features = ["full"] }
