@@ -8,6 +8,10 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install cargo-near
+        run: cargo install --locked cargo-near
+
       - name: Install and test modules
         run: |
           cargo test
