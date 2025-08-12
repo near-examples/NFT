@@ -45,6 +45,7 @@ pub async fn init_nft_contract(contract: &Contract) -> anyhow::Result<()> {
         .max_gas()
         .transact()
         .await?;
+    println!("Init NFT contract: {:?}", res);
     assert!(res.is_success());
 
     Ok(())
