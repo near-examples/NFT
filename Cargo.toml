@@ -8,11 +8,21 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-near-sdk = "5.5.0"
-near-contract-standards = "5.5.0"
+near-sdk = "5.24.0"
+near-contract-standards = "5.24.0"
 
 [dev-dependencies] 
-near-sdk = { version = "5.5.0", features = ["unit-testing"] }
-near-workspaces = { version = "0.14.1", features = ["unstable"] }
+near-sdk = { version = "5.24.0", features = ["unit-testing"] }
+near-sandbox = "0.3"
+near-api = "0.8"
+cargo-near-build = "=0.10"
+tokio = { version = "1.48.0", features = ["full"] }
+serde_json = "1"
+testresult = "0.4.1"
 anyhow = "1.0"
-tokio = { version = "1.41.0", features = ["full"] }
+# This is temporary fix for the build error since those crates with a higher version require a higher version of Rust compiler (1.88.0)
+cargo-platform = "=0.3.1"
+darling = "=0.20.11"
+bon = "=3.8.1"
+time = "=0.3.44"
+time-core = "=0.1.6"
