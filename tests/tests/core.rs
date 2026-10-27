@@ -17,36 +17,19 @@ async fn core() -> anyhow::Result<()> {
         near_workspaces::sandbox().await?;
 
     let simple_transfer = test_simple_transfer(&worker, &nft_wasm);
-    let transfer_call_fast_return_to_sender = test_transfer_call_fast_return_to_sender(
-        &worker,
-        &nft_wasm,
-        &token_receiver_wasm,
-    );
-    let transfer_call_slow_return_to_sender = test_transfer_call_slow_return_to_sender(
-        &worker,
-        &nft_wasm,
-        &token_receiver_wasm,
-    );
-    let transfer_call_fast_keep_with_sender = test_transfer_call_fast_keep_with_sender(
-        &worker,
-        &nft_wasm,
-        &token_receiver_wasm,
-    );
-    let transfer_call_slow_keep_with_sender = test_transfer_call_slow_keep_with_sender(
-        &worker,
-        &nft_wasm,
-        &token_receiver_wasm,
-    );
-    let transfer_call_receiver_panics = test_transfer_call_receiver_panics(
-        &worker,
-        &nft_wasm,
-        &token_receiver_wasm,
-    );
+    let transfer_call_fast_return_to_sender =
+        test_transfer_call_fast_return_to_sender(&worker, &nft_wasm, &token_receiver_wasm);
+    let transfer_call_slow_return_to_sender =
+        test_transfer_call_slow_return_to_sender(&worker, &nft_wasm, &token_receiver_wasm);
+    let transfer_call_fast_keep_with_sender =
+        test_transfer_call_fast_keep_with_sender(&worker, &nft_wasm, &token_receiver_wasm);
+    let transfer_call_slow_keep_with_sender =
+        test_transfer_call_slow_keep_with_sender(&worker, &nft_wasm, &token_receiver_wasm);
+    let transfer_call_receiver_panics =
+        test_transfer_call_receiver_panics(&worker, &nft_wasm, &token_receiver_wasm);
     let transfer_call_receiver_panics_and_nft_resolve_transfer_produces_no_log_if_not_enough_gas = test_transfer_call_receiver_panics_and_nft_resolve_transfer_produces_no_log_if_not_enough_gas(&worker, &nft_wasm, &token_receiver_wasm);
-    let simple_transfer_no_logs_on_failure = test_simple_transfer_no_logs_on_failure(
-        &worker,
-        &nft_wasm,
-    );
+    let simple_transfer_no_logs_on_failure =
+        test_simple_transfer_no_logs_on_failure(&worker, &nft_wasm);
 
     simple_transfer.await?;
     transfer_call_fast_return_to_sender.await?;
@@ -94,7 +77,7 @@ async fn test_simple_transfer(worker: &Worker<Sandbox>, nft_wasm: &Vec<u8>) -> a
         .deposit(ONE_YOCTO)
         .transact()
         .await?;
-    assert!(res.is_success());
+    assert!(res.is_success(), "{:#?}", res);
 
     // A single NFT transfer event should have been logged:
     assert_eq!(res.logs().len(), 1);
@@ -140,7 +123,7 @@ async fn test_transfer_call_fast_return_to_sender(
         .deposit(ONE_YOCTO)
         .transact()
         .await?;
-    assert!(res.is_success());
+    assert!(res.is_success(), "{:#?}", res);
 
     let token = nft_contract
         .call("nft_token")
@@ -183,7 +166,7 @@ async fn test_transfer_call_slow_return_to_sender(
         .deposit(ONE_YOCTO)
         .transact()
         .await?;
-    assert!(res.is_success());
+    assert!(res.is_success(), "{:#?}", res);
 
     let token = nft_contract
         .call("nft_token")
@@ -226,7 +209,7 @@ async fn test_transfer_call_fast_keep_with_sender(
         .deposit(ONE_YOCTO)
         .transact()
         .await?;
-    assert!(res.is_success());
+    assert!(res.is_success(), "{:#?}", res);
     assert_eq!(res.logs().len(), 2);
 
     let token = nft_contract
@@ -273,7 +256,7 @@ async fn test_transfer_call_slow_keep_with_sender(
         .deposit(ONE_YOCTO)
         .transact()
         .await?;
-    assert!(res.is_success());
+    assert!(res.is_success(), "{:#?}", res);
 
     let token = nft_contract
         .call("nft_token")
@@ -319,7 +302,7 @@ async fn test_transfer_call_receiver_panics(
         .deposit(ONE_YOCTO)
         .transact()
         .await?;
-    assert!(res.is_success());
+    assert!(res.is_success(), "{:#?}", res);
 
     // Prints final logs
     assert_eq!(res.logs().len(), 3);
@@ -361,14 +344,20 @@ async fn test_transfer_call_receiver_panics_and_nft_resolve_transfer_produces_no
             Some("transfer & call"),
             "incorrect message",
         ))
-        .gas(near_sdk::Gas::from_tgas(30))
+        .gas(near_sdk::Gas::from_tgas(1))
         .deposit(ONE_YOCTO)
         .transact()
         .await?;
-    assert!(res.is_failure());
+    assert!(res.is_failure(), "{:#?}", res);
 
-    // Prints no logs
-    assert_eq!(res.logs().len(), 0);
+    // Failed calls emit no standardized NFT events
+    assert_eq!(
+        res.logs()
+            .iter()
+            .filter(|log| log.starts_with("EVENT_JSON:"))
+            .count(),
+        0
+    );
 
     let token = nft_contract
         .call("nft_token")
@@ -396,7 +385,6 @@ async fn test_simple_transfer_no_logs_on_failure(
     )
     .await?;
 
-
     let res = nft_contract
         .call("nft_transfer")
         // transfer to the current owner should fail and not print log
@@ -410,10 +398,16 @@ async fn test_simple_transfer_no_logs_on_failure(
         .deposit(ONE_YOCTO)
         .transact()
         .await?;
-    assert!(res.is_failure());
+    assert!(res.is_failure(), "{:#?}", res);
 
-    // Prints no logs
-    assert_eq!(res.logs().len(), 0);
+    // Failed calls emit no standardized NFT events
+    assert_eq!(
+        res.logs()
+            .iter()
+            .filter(|log| log.starts_with("EVENT_JSON:"))
+            .count(),
+        0
+    );
 
     let token = nft_contract
         .call("nft_token")

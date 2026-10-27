@@ -31,3 +31,5 @@ yarn-error.log*
 
 **/target
 *.wasm
+# Keep contract dependency resolutions reproducible.
+!**/Cargo.lock

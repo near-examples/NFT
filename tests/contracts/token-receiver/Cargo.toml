@@ -8,8 +8,8 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-near-sdk = "5.5.0"
-near-contract-standards = "5.5.0"
+near-sdk = "5.29.1"
+near-contract-standards = "5.29.1"
 
 [dev-dependencies]
-near-sdk = { version = "5.5.0", features = ["unit-testing"] }
+near-sdk = { version = "5.29.1", features = ["unit-testing"] }
