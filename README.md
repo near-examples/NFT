@@ -52,8 +52,10 @@ cargo near create-dev-account
 cargo near deploy <account-id>
 
 # Initialize the contract
-near call <account-id> new_default_meta '{"owner_id": "<account-id>"}' --accountId <account-id>
+near call <account-id> new '{"owner_id": "<account-id>", "metadata": {"spec": "nft-1.0.0", "name": "My Collection", "symbol": "MYNFT"}}' --accountId <account-id>
 ```
+
+Initialization requires an explicit collection name and symbol in `metadata`. The contract does not provide default metadata or an embedded icon. The `icon` field is optional.
 
 ## Basic methods
 ```bash

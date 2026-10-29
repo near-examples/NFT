@@ -40,8 +40,15 @@ pub async fn mint_nft(
 
 pub async fn init_nft_contract(contract: &Contract) -> anyhow::Result<()> {
     let res = contract
-        .call("new_default_meta")
-        .args_json((contract.id(),))
+        .call("new")
+        .args_json(json!({
+            "owner_id": contract.id(),
+            "metadata": {
+                "spec": "nft-1.0.0",
+                "name": "Test Collection",
+                "symbol": "TEST"
+            }
+        }))
         .max_gas()
         .transact()
         .await?;
