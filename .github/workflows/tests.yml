@@ -1,5 +1,5 @@
 name: Tests
-on: push
+on: [push, pull_request]
 jobs:
   tests:
     strategy:
@@ -12,4 +12,4 @@ jobs:
         run: cargo install cargo-near --version 0.21.1 --locked --no-default-features
       - name: Install and test modules
         run: |
-          cargo test
+          cargo test --locked -- --test-threads=2
