@@ -14,7 +14,7 @@ Contract builds and integration-test fixtures compile from source; no live netwo
 [![](https://img.shields.io/badge/⋈%20Examples-Basics-green)](https://docs.near.org/tutorials/welcome)
 [![](https://img.shields.io/badge/Contract-Rust-red)](contract-rs)
 
-This repository contains an example implementation of a [non-fungible token] contract in Rust which uses [near-contract-standards] and workspaces-rs tests.
+This repository contains an example implementation of a [non-fungible token] contract in Rust which uses [near-contract-standards] and direct `near-sandbox` and `near-api` tests.
 
   [non-fungible token]: https://nomicon.io/Standards/NonFungibleToken/README.html
   [near-contract-standards]: https://github.com/near/near-sdk-rs/tree/master/near-contract-standards
@@ -37,7 +37,7 @@ cargo near build
 ## How to Test Locally?
 
 ```bash
-cargo test
+cargo test --locked -- --test-threads=2
 ```
 
 ## How to Deploy?

@@ -13,6 +13,9 @@ near-contract-standards = "5.29.1"
 
 [dev-dependencies] 
 near-sdk = { version = "5.29.1", features = ["unit-testing"] }
-near-workspaces = { version = "0.23.0", features = ["unstable", "interop_sdk"] }
+near-sandbox = "0.3"
+near-api = "0.8.6"
+cargo-near-build = "0.11.5"
+testresult = "0.4.1"
 anyhow = "1.0"
 tokio = { version = "1.41.0", features = ["full"] }
